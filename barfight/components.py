@@ -21,3 +21,9 @@ class Position:
 @dataclass
 class Sprite:
     sprite: pyglet.sprite.Sprite
+
+
+@dataclass
+class BoxCollider:
+    width: float
+    height: float
