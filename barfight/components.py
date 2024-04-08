@@ -7,6 +7,12 @@ from pyglet.math import Vec2
 class Player: ...
 
 
+class Enemy: ...
+
+
+class Wall: ...
+
+
 @dataclass
 class Velocity:
     direction: Vec2 = field(default_factory=Vec2)

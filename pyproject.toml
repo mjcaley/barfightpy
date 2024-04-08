@@ -6,7 +6,7 @@ authors = ["Mike Caley <mike.caley@thomsonreuters.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.10"
 esper = "^3.2"
 pyglet = "^2.0.14"
 loguru = "^0.7.2"
