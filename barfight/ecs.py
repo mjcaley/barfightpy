@@ -1,12 +1,13 @@
 from typing import Any, Callable, Protocol
-import esper
-from pyglet.math import Vec2
-import pyglet.window
 
+import esper
+import pyglet.window
+from pyglet.math import Vec2
 
 # Events
 
 COMPONENT_ADDED_EVENT = "component_added"
+
 
 class ComponentAddedProtocol(Protocol):
     def on_component_added(self, entity: int, component: Any): ...
@@ -14,11 +15,13 @@ class ComponentAddedProtocol(Protocol):
 
 COMPONENT_REMOVED_EVENT = "component_removed"
 
+
 class ComponentRemovedProtocol(Protocol):
     def on_component_removed(self, entity: int, component: Any): ...
 
 
 DRAW_EVENT = "draw"
+
 
 class DrawProtocol(Protocol):
     def on_draw(self, window: pyglet.window.Window): ...
@@ -26,18 +29,21 @@ class DrawProtocol(Protocol):
 
 EXIT_EVENT = "exit"
 
+
 class ExitProtocol(Protocol):
     def on_exit(self): ...
 
 
 COLLISION_EVENT = "collision"
 
+
 class CollisionProtcol(Protocol):
     def on_collsion(self, entity: int, target: int, penetration: Vec2): ...
 
 
 # Systems
-    
+
+
 class SystemProtocol(Protocol):
     def process(self, *args, **kwargs): ...
 

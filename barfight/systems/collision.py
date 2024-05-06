@@ -1,86 +1,207 @@
 from dataclasses import dataclass
-import esper
-from loguru import logger
+from math import inf
+
 from pyglet.math import Vec2
 
 from .. import ecs
-from ..components import BoxCollider, Player, Position, Velocity, Wall
+from ..components import BoxCollider, Player, Position, Wall
 
 
-# Reference
-# - https://blog.hamaluik.ca/posts/simple-aabb-collision-using-minkowski-difference/
-# - https://blog.hamaluik.ca/posts/swept-aabb-collision-using-minkowski-difference/
-
-@dataclass
 class AABB:
-    center: Vec2
-    extents: Vec2
+    def __init__(self, entity: int, position: Position, width: float, height: float):
+        self._entity = entity
+        self._position = position
+        self._half_width = width / 2
+        self._half_height = height / 2
 
     @property
-    def min(self) -> Vec2:
-        return Vec2(self.center.x - self.extents.x, self.center.y - self.extents.y)
-    
+    def entity(self) -> int:
+        return self._entity
+
     @property
-    def max(self) -> Vec2:
-        return Vec2(self.center.x + self.extents.x, self.center.y + self.extents.y)
-    
+    def low(self) -> Vec2:
+        return Vec2(
+            self.position.position.x - self._half_width,
+            self.position.position.y - self._half_height,
+        )
+
     @property
-    def size(self) -> Vec2:
-        return Vec2(self.extents.x * 2, self.extents.y * 2)
-    
-    def minkowski_difference(self, other: "AABB") -> "AABB":
-        top_left = self.min - other.max
-        full_size = self.size + other.size
+    def high(self) -> Vec2:
+        return Vec2(
+            self.position.position.x + self._half_width,
+            self.position.position.y + self._half_height,
+        )
 
-        return AABB(top_left + (full_size / 2), full_size / 2)
+    @property
+    def position(self) -> Position:
+        return self._position
 
-    def closest_point_on_bounds_to_point(self, point: Vec2) -> Vec2:
-        min_distance = abs(point.x - self.min.x)
-        bounds_point = Vec2(self.min.x, point.y)
+    @property
+    def min_x(self):
+        return self.low.x
 
-        if abs(self.max.x - point.x) < min_distance:
-            min_distance = abs(self.max.x - point.x)
-            bounds_point = Vec2(self.max.x, point.y)
-        if abs(self.max.y - point.y) < min_distance:
-            min_distance = abs(self.max.y - point.y)
-            bounds_point = Vec2(point.x, self.max.y)
-        if abs(self.min.y - point.y) < min_distance:
-            min_distance = abs(self.min.y - point.y)
-            bounds_point = Vec2(point.x, self.min.y)
-        
-        return bounds_point
+    @property
+    def max_x(self):
+        return self.high.x
+
+    @property
+    def min_y(self):
+        return self.low.y
+
+    @property
+    def max_y(self):
+        return self.high.y
+
+
+class Line:
+    def __init__(self, position: Vec2, direction: Vec2):
+        self._position = position
+        self._direction = direction.normalize()
+
+    @property
+    def position(self) -> Vec2:
+        return self._position
+
+    @property
+    def direction(self) -> Vec2:
+        return self._direction
+
+
+def point_rect_collides(point: Vec2, rect: AABB) -> bool:
+    return (
+        point.x >= rect.low.x
+        and point.x <= rect.high.x
+        and point.y >= rect.low.y
+        and point.y <= rect.high.y
+    )
+
+
+def point_rect_resolve(point: Vec2, rect: AABB) -> Vec2:
+    resolutions = [
+        Vec2(rect.min_x, 0) - point,
+        Vec2(rect.max_x, 0) - point,
+        Vec2(0, rect.min_y) - point,
+        Vec2(0, rect.max_y) - point,
+    ]
+
+    def distance(v: Vec2) -> float:
+        return point.distance(v)
+
+    nearest = min(resolutions, key=distance)
+
+    return nearest
+
+
+def rect_vs_rect(first: AABB, second: AABB) -> bool:
+    return (
+        first.min_x < second.max_x
+        and first.max_x > second.min_x
+        and first.min_y < second.max_y
+        and first.max_y > second.min_y
+    )
+
+
+def rect_rect_resolve(first: AABB, second: AABB) -> Vec2:
+    distance = inf
+    nearest = Vec2(0, 0)
+
+    left = abs(first.max_x - second.min_x)
+    if left < distance:
+        distance = left
+        nearest = Vec2(-distance, 0)
+    right = abs(first.min_x - second.max_x)
+    if right < distance:
+        distance = right
+        nearest = Vec2(distance, 0)
+    up = abs(first.min_y - second.max_y)
+    if up < distance:
+        distance = up
+        nearest = Vec2(0, distance)
+    down = abs(first.max_y - second.min_y)
+    if down < distance:
+        distance = down
+        nearest = Vec2(0, -distance)
+
+    return nearest
+
+
+def line_vs_rect(line: Line, rect: AABB) -> float:
+    if line.direction.x == 0:
+        t_low_x = -inf
+        t_high_x = inf
+    else:
+        t_low_x = (rect.min_x - line.position.x) / line.direction.x
+        t_high_x = (rect.max_x - line.position.x) / line.direction.x
+    if line.direction.y == 0:
+        t_low_y = -inf
+        t_high_y = inf
+    else:
+        t_low_y = (rect.min_y - line.position.y) / line.direction.y
+        t_high_y = (rect.max_y - line.position.y) / line.direction.y
+
+    t_close_x = min(t_low_x, t_high_x)
+    t_far_x = max(t_low_x, t_high_x)
+    t_close_y = min(t_low_y, t_high_y)
+    t_far_y = max(t_low_y, t_high_y)
+
+    t_close = max(t_close_x, t_close_y)
+    t_far = min(t_far_x, t_far_y)
+
+    if t_close > t_far:
+        return False
+
+    return t_close
+
+
+def line_rect_intersection(line: Line, t: float) -> Vec2:
+    return line.position + (line.direction * t)
 
 
 @dataclass
 class Hit:
     source: int
     target: int
-    resolve: Vec2
+
+
+def distance(bodies: tuple[AABB, AABB]) -> float:
+    first, second = bodies
+    line = Line(
+        first.position.position, first.position.position - second.position.position
+    )
+    t = abs(line_vs_rect(line, second))
+
+    return t
 
 
 class CollisionSystem(ecs.SystemProtocol):
     def process(self, dt: float):
-        for lentity, (lposition, lcollider) in ecs.get_components(
-            Position, BoxCollider
+        collisions = self.get_collisions()
+        collisions.sort(key=distance)
+        self.resolve_collisions(collisions)
+
+    def get_collisions(self) -> list[tuple[AABB, AABB]]:
+        collisions = []
+
+        for lentity, (lpos, lcollider, _) in ecs.get_components(
+            Position, BoxCollider, Player
         ):
-            for rentity, (rposition, rcollider) in ecs.get_components(
-                Position, BoxCollider
+            laabb = AABB(lentity, lpos, lcollider.width, lcollider.height)
+            for rentity, (rpos, rcollider, _) in ecs.get_components(
+                Position, BoxCollider, Wall
             ):
+                raabb = AABB(rentity, rpos, rcollider.width, rcollider.height)
                 if lentity == rentity:
                     continue
-                laabb = AABB(lposition.position, Vec2(lcollider.width, lcollider.height) / 2)
-                raabb = AABB(rposition.position, Vec2(rcollider.width, rcollider.height) / 2)
-                md = raabb.minkowski_difference(laabb)
-                if md.min.x <= 0 and md.max.x >= 0 and md.min.y <= 0 and md.max.y >= 0:
-                    penetration = md.closest_point_on_bounds_to_point(Vec2(0, 0))
-                    ecs.dispatch_event(ecs.COLLISION_EVENT, lentity, rentity, penetration)
 
+                if rect_vs_rect(laabb, raabb):
+                    collisions.append((laabb, raabb))
 
-class PlayerCollisionSystem(ecs.SystemProtocol):
-    def process(self, *args, **kwargs):
-        ...
+        return collisions
 
-    def on_collision(self, lentity: int, rentity: int, penetration: Vec2):
-        if ecs.has_component(lentity, Player):
-            position = ecs.try_component(lentity, Position)
-            position.position += penetration
+    def resolve_collisions(self, collisions: list[tuple[AABB, AABB]]):
+        for laabb, raabb in collisions:
+            if rect_vs_rect(laabb, raabb):
+                resolve = rect_rect_resolve(laabb, raabb)
+                laabb.position.position += resolve
+
+                ecs.dispatch_event(ecs.COLLISION_EVENT, Hit(laabb.entity, raabb.entity))

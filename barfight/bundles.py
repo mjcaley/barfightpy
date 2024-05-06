@@ -15,7 +15,7 @@ def add_player():
         Position(),
         Velocity(speed=120),
         Sprite(pyglet.sprite.Sprite(image)),
-        BoxCollider(100, 100)
+        BoxCollider(100, 100),
     )
 
     return entity
@@ -30,7 +30,7 @@ def add_enemy(x: float, y: float):
         Position(Vec2(x, y)),
         Velocity(speed=120),
         Sprite(pyglet.sprite.Sprite(image)),
-        BoxCollider(100, 100)
+        BoxCollider(100, 100),
     )
 
     return entity
@@ -40,12 +40,12 @@ def add_wall(x: float, y: float, width: float, height: float):
     image = pyglet.image.load("assets/wall.png")
     image.anchor_x = image.width // 2
     image.anchor_y = image.width // 2
-    
+
     entity = ecs.create_entity(
         Wall(),
         Position(Vec2(x, y)),
         Sprite(pyglet.sprite.Sprite(image)),
-        BoxCollider(100, 100)
+        BoxCollider(100, 100),
     )
 
     return entity
