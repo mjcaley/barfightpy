@@ -17,7 +17,6 @@ def main():
     debug_system = DebugSystem()
     ecs.add_system(debug_system, 100)
     ecs.set_handler(ecs.COLLISION_EVENT, debug_system.on_collision)
-    ecs.set_handler(ecs.DRAW_EVENT, debug_system.on_draw)
     ecs.set_handler(ecs.COMPONENT_ADDED_EVENT, debug_system.on_component_added)
     ecs.set_handler(ecs.COMPONENT_REMOVED_EVENT, debug_system.on_component_removed)
 
@@ -33,6 +32,7 @@ def main():
     draw_system = DrawSystem()
     ecs.add_system(draw_system)
     ecs.set_handler(ecs.DRAW_EVENT, draw_system.on_draw)
+    ecs.set_handler(ecs.COMPONENT_ADDED_EVENT, draw_system.on_component_added)
 
     # Wire events
     @window.event

@@ -2,7 +2,7 @@ import pyglet
 from pyglet.math import Vec2
 
 from . import ecs
-from .components import (BoxCollider, Enemy, Player, Position, Sprite,
+from .components import (BoxCollider, Enemy, Layer, Player, Position, Sprite,
                          Velocity, Wall)
 
 
@@ -15,7 +15,7 @@ def add_player():
         Player(),
         Position(),
         Velocity(speed=120),
-        Sprite(pyglet.sprite.Sprite(image)),
+        Sprite(pyglet.sprite.Sprite(image), Layer.Game),
         BoxCollider(100, 100),
     )
 
@@ -30,7 +30,7 @@ def add_enemy(x: float, y: float):
     entity = ecs.create_entity(
         Position(Vec2(x, y)),
         Velocity(speed=120),
-        Sprite(pyglet.sprite.Sprite(image)),
+        Sprite(pyglet.sprite.Sprite(image), Layer.Game),
         BoxCollider(100, 100),
         Enemy(),
     )
@@ -46,7 +46,7 @@ def add_wall(x: float, y: float, width: float, height: float):
     entity = ecs.create_entity(
         Wall(),
         Position(Vec2(x, y)),
-        Sprite(pyglet.sprite.Sprite(image)),
+        Sprite(pyglet.sprite.Sprite(image), Layer.Game),
         BoxCollider(100, 100),
     )
 

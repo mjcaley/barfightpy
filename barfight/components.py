@@ -1,14 +1,18 @@
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum, IntEnum, auto
 
 import pyglet
 from pyglet.math import Vec2
-from pyglet.shapes import Box
 
 
 class PlayerMode(Enum):
     Idle = auto()
     Attacking = auto()
+
+
+class Layer(IntEnum):
+    Game = 0
+    Debug = 100
 
 
 class Player:
@@ -41,6 +45,7 @@ class Position:
 @dataclass
 class Sprite:
     sprite: pyglet.sprite.Sprite
+    layer: Layer
 
 
 @dataclass
@@ -50,5 +55,6 @@ class BoxCollider:
 
 
 @dataclass
-class DebugCollider:
-    shape: Box
+class Shape:
+    shape: pyglet.shapes.ShapeBase
+    layer: Layer

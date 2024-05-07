@@ -1,22 +1,39 @@
 from pyglet.graphics import Batch, Group
-from pyglet.shapes import Box
 from pyglet.window import Window
 
 from barfight import ecs
 
-from ..components import BoxCollider, Position, Sprite
+from ..components import Layer, Position, Shape, Sprite
 
 
-class DrawSystem(ecs.SystemProtocol, ecs.DrawProtocol):
+class DrawSystem(ecs.SystemProtocol, ecs.DrawProtocol, ecs.ComponentAddedProtocol):
     def __init__(self):
+        self.game_layer = Group(Layer.Game)
+        self.debug_layer = Group(Layer.Debug)
         self.batch = Batch()
-        self.group = Group(order=0)
 
     def process(self, *_): ...
 
     def on_draw(self, window: Window):
-        batch = Batch()
         for _, (position, sprite) in ecs.get_components(Position, Sprite):
             sprite.sprite.update(x=position.position.x, y=position.position.y)
-            sprite.sprite.batch = self.batch
+        for _, (position, shape) in ecs.get_components(Position, Shape):
+            shape.shape.x = position.position.x
+            shape.shape.y = position.position.y
         self.batch.draw()
+
+    def on_component_added(self, entity: int, component: ecs.Any):
+        if isinstance(component, Sprite):
+            component.sprite.batch = self.batch
+            match component.layer:
+                case Layer.Game:
+                    component.sprite.group = self.game_layer
+                case Layer.Debug:
+                    component.sprite.group = self.debug_layer
+        elif isinstance(component, Shape):
+            component.shape.batch = self.batch
+            match component.layer:
+                case Layer.Game:
+                    component.shape.group = self.game_layer
+                case Layer.Debug:
+                    component.shape.group = self.debug_layer

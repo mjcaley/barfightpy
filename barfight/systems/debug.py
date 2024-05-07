@@ -4,7 +4,7 @@ import pyglet
 from loguru import logger
 
 from .. import ecs
-from ..components import BoxCollider, DebugCollider, Position, Velocity
+from ..components import BoxCollider, Layer, Shape, Position, Velocity
 
 
 class DebugSystem(
@@ -12,7 +12,6 @@ class DebugSystem(
     ecs.ComponentAddedProtocol,
     ecs.ComponentRemovedProtocol,
     ecs.CollisionProtcol,
-    ecs.DrawProtocol,
 ):
     def __init__(self):
         self.batch = pyglet.graphics.Batch()
@@ -39,25 +38,17 @@ class DebugSystem(
 
     def on_component_added(self, entity: int, component: Any):
         if isinstance(component, BoxCollider):
-            shape = pyglet.shapes.Box(
-                0,
-                0,
-                component.width,
-                component.height,
-                color=(50, 25, 255),
-                batch=self.batch,
-                group=self.group,
-            )
+            shape = pyglet.shapes.Box(0,0,component.width,component.height,color=(50, 25, 255))
             shape.anchor_position = (component.width / 2, component.height / 2)
-            ecs.add_component(entity, DebugCollider(shape))
+            ecs.add_component(entity, Shape(shape, Layer.Debug))
 
     def on_component_removed(self, entity: int, component: Any):
-        if type(component, BoxCollider):
-            ecs.remove_component(entity, DebugCollider)
+        if isinstance(component, BoxCollider):
+            ecs.remove_component(entity, Shape)
 
     def on_draw(self, window: pyglet.window.Window):
         for _, (position, debug_collider) in ecs.get_components(
-            Position, DebugCollider
+            Position, Shape
         ):
             debug_collider.shape.x = position.position.x
             debug_collider.shape.y = position.position.y
