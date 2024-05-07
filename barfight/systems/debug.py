@@ -4,7 +4,7 @@ import pyglet
 from loguru import logger
 
 from .. import ecs
-from ..components import BoxCollider, Layer, Shape, Position, Velocity
+from ..components import BoxCollider, Layer, Position, Shape, Velocity
 
 
 class DebugSystem(
@@ -34,7 +34,9 @@ class DebugSystem(
 
     def on_component_added(self, entity: int, component: Any):
         if isinstance(component, BoxCollider):
-            shape = pyglet.shapes.Box(0,0,component.width,component.height,color=(50, 25, 255))
+            shape = pyglet.shapes.Box(
+                0, 0, component.width, component.height, color=(50, 25, 255)
+            )
             shape.anchor_position = (component.width / 2, component.height / 2)
             ecs.add_component(entity, Shape(shape, Layer.Debug))
 
