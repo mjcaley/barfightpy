@@ -38,7 +38,7 @@ COLLISION_EVENT = "collision"
 
 
 class CollisionProtcol(Protocol):
-    def on_collsion(self, entity: int, target: int, penetration: Vec2): ...
+    def on_collision(self, source: int, target: int): ...
 
 
 # Systems

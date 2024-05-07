@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from math import inf
 
 from pyglet.math import Vec2
@@ -157,12 +156,6 @@ def line_rect_intersection(line: Line, t: float) -> Vec2:
     return line.position + (line.direction * t)
 
 
-@dataclass
-class Hit:
-    source: int
-    target: int
-
-
 def distance(bodies: tuple[AABB, AABB]) -> float:
     first, second = bodies
     line = Line(
@@ -204,4 +197,4 @@ class CollisionSystem(ecs.SystemProtocol):
                 resolve = rect_rect_resolve(laabb, raabb)
                 laabb.position.position += resolve
 
-                ecs.dispatch_event(ecs.COLLISION_EVENT, Hit(laabb.entity, raabb.entity))
+                ecs.dispatch_event(ecs.COLLISION_EVENT, laabb.entity, raabb.entity)

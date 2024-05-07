@@ -1,8 +1,7 @@
 from typing import Any
+
 import pyglet
 from loguru import logger
-
-from barfight.systems.collision import Hit
 
 from .. import ecs
 from ..components import BoxCollider, DebugCollider, Position, Velocity
@@ -21,18 +20,18 @@ class DebugSystem(
 
     def process(self, *args): ...
 
-    def on_collision(self, hit: Hit):
-        lposition, lcollider = ecs.try_components(hit.source, Position, BoxCollider)
-        lvelocity = ecs.try_component(hit.source, Velocity)
-        rposition, rcollider = ecs.try_components(hit.target, Position, BoxCollider)
-        rvelocity = ecs.try_component(hit.target, Velocity)
+    def on_collision(self, source: int, target: int):
+        lposition, lcollider = ecs.try_components(source, Position, BoxCollider)
+        lvelocity = ecs.try_component(source, Velocity)
+        rposition, rcollider = ecs.try_components(target, Position, BoxCollider)
+        rvelocity = ecs.try_component(target, Velocity)
         logger.debug(
             "Collision detected - {lentity} [Position {lposition}] [Velocity {lvelocity}] [Collider {lcollider}] : {rentity} [Position {rposition}] [Velocity {rvelocity}] [Collider {rcollider}]",
-            lentity=hit.source,
+            lentity=source,
             lposition=lposition,
             lvelocity=lvelocity,
             lcollider=lcollider,
-            rentity=hit.target,
+            rentity=target,
             rposition=rposition,
             rvelocity=rvelocity,
             rcollider=rcollider,
