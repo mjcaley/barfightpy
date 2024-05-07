@@ -13,10 +13,6 @@ class DebugSystem(
     ecs.ComponentRemovedProtocol,
     ecs.CollisionProtcol,
 ):
-    def __init__(self):
-        self.batch = pyglet.graphics.Batch()
-        self.group = pyglet.graphics.Group(order=100)
-
     def process(self, *args): ...
 
     def on_collision(self, source: int, target: int):
@@ -45,11 +41,3 @@ class DebugSystem(
     def on_component_removed(self, entity: int, component: Any):
         if isinstance(component, BoxCollider):
             ecs.remove_component(entity, Shape)
-
-    def on_draw(self, window: pyglet.window.Window):
-        for _, (position, debug_collider) in ecs.get_components(
-            Position, Shape
-        ):
-            debug_collider.shape.x = position.position.x
-            debug_collider.shape.y = position.position.y
-        self.batch.draw()
