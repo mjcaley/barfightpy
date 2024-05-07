@@ -52,5 +52,6 @@ def main():
     wall2 = add_wall(600, 200, 100, 100)
     wall2 = add_wall(700, 200, 100, 100)
     wall2 = add_wall(800, 200, 100, 100)
+    enemy1 = add_enemy(400, 300)
 
     pyglet.app.run()

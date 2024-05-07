@@ -175,13 +175,9 @@ class CollisionSystem(ecs.SystemProtocol):
     def get_collisions(self) -> list[tuple[AABB, AABB]]:
         collisions = []
 
-        for lentity, (lpos, lcollider, _) in ecs.get_components(
-            Position, BoxCollider, Player
-        ):
+        for lentity, (lpos, lcollider) in ecs.get_components(Position, BoxCollider):
             laabb = AABB(lentity, lpos, lcollider.width, lcollider.height)
-            for rentity, (rpos, rcollider, _) in ecs.get_components(
-                Position, BoxCollider, Wall
-            ):
+            for rentity, (rpos, rcollider) in ecs.get_components(Position, BoxCollider):
                 raabb = AABB(rentity, rpos, rcollider.width, rcollider.height)
                 if lentity == rentity:
                     continue
@@ -193,8 +189,11 @@ class CollisionSystem(ecs.SystemProtocol):
 
     def resolve_collisions(self, collisions: list[tuple[AABB, AABB]]):
         for laabb, raabb in collisions:
-            if rect_vs_rect(laabb, raabb):
-                resolve = rect_rect_resolve(laabb, raabb)
-                laabb.position.position += resolve
+            if ecs.has_component(laabb.entity, Player) and ecs.has_component(
+                raabb.entity, Wall
+            ):
+                if rect_vs_rect(laabb, raabb):
+                    resolve = rect_rect_resolve(laabb, raabb)
+                    laabb.position.position += resolve
 
-                ecs.dispatch_event(ecs.COLLISION_EVENT, laabb.entity, raabb.entity)
+                    ecs.dispatch_event(ecs.COLLISION_EVENT, laabb.entity, raabb.entity)

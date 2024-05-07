@@ -2,7 +2,8 @@ import pyglet
 from pyglet.math import Vec2
 
 from . import ecs
-from .components import BoxCollider, Player, Position, Sprite, Velocity, Wall
+from .components import (BoxCollider, Enemy, Player, Position, Sprite,
+                         Velocity, Wall)
 
 
 def add_player():
@@ -31,6 +32,7 @@ def add_enemy(x: float, y: float):
         Velocity(speed=120),
         Sprite(pyglet.sprite.Sprite(image)),
         BoxCollider(100, 100),
+        Enemy(),
     )
 
     return entity

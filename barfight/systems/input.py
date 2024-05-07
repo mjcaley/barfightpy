@@ -2,7 +2,8 @@ from pyglet.math import Vec2
 from pyglet.window import key
 
 from .. import ecs
-from ..components import Attack, BoxCollider, Player, PlayerMode, Position, Velocity
+from ..components import (Attack, BoxCollider, Player, PlayerMode, Position,
+                          Velocity)
 
 
 class InputSystem(ecs.SystemProtocol):
