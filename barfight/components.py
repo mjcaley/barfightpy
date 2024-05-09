@@ -29,7 +29,7 @@ class Wall: ...
 @dataclass
 class Attack:
     entity: int
-    active: bool = True
+    cleanup: bool = False
 
 
 @dataclass

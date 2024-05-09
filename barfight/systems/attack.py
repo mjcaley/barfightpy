@@ -9,9 +9,9 @@ from .collision import AABB
 class AttackSystem(ecs.SystemProtocol, protocols.CollisionProtocol):
     def process(self, *args, **kwargs):
         for entity, (attack,) in ecs.get_components(Attack):
-            match attack.active:
-                case True:
-                    attack.active = False
+            match attack.cleanup:
+                case False:
+                    attack.cleanup = True
                 case False:
                     ecs.remove_component(entity, Attack)
 
