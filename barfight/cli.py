@@ -3,9 +3,11 @@ from pyglet.window import Window
 
 from . import ecs
 from .bundles import add_enemy, add_player, add_wall
+from .systems.attack import AttackSystem
 from .systems.collision import CollisionSystem
 from .systems.debug import DebugSystem
 from .systems.draw import DrawSystem
+from .systems.health import HealthSystem
 from .systems.input import InputSystem
 from .systems.movement import MovementSystem
 from .systems.player import PlayerSystem
@@ -23,9 +25,10 @@ def main():
     input_system = InputSystem()
     ecs.add_system(input_system)
 
-    ecs.add_system(MovementSystem())
+    movement_system = MovementSystem()
+    ecs.add_system(movement_system)
+    ecs.set_handler(ecs.COLLISION_EVENT, movement_system.on_collision)
 
-    ecs.add_system(CollisionSystem())
     collision_system = CollisionSystem()
     ecs.add_system(collision_system)
 
@@ -45,6 +48,13 @@ def main():
 
     player_system = PlayerSystem()
     ecs.add_system(player_system)
+
+    health_system = HealthSystem()
+    ecs.add_system(health_system)
+
+    attack_system = AttackSystem()
+    ecs.add_system(attack_system)
+    ecs.set_handler(ecs.COLLISION_EVENT, attack_system.on_collision)
 
     player = add_player()
     wall1 = add_wall(400, 200, 100, 100)

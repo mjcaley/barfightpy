@@ -29,6 +29,13 @@ class Wall: ...
 @dataclass
 class Attack:
     entity: int
+    active: bool = True
+
+
+@dataclass
+class Health:
+    current: int
+    maximum: int
 
 
 @dataclass

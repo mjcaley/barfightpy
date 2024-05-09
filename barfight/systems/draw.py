@@ -1,12 +1,14 @@
 from pyglet.graphics import Batch, Group
 from pyglet.window import Window
 
-from barfight import ecs
-
+from .. import ecs
 from ..components import Layer, Position, Shape, Sprite
+from . import protocols
 
 
-class DrawSystem(ecs.SystemProtocol, ecs.DrawProtocol, ecs.ComponentAddedProtocol):
+class DrawSystem(
+    ecs.SystemProtocol, protocols.DrawProtocol, protocols.ComponentAddedProtocol
+):
     def __init__(self):
         self.game_layer = Group(Layer.Game)
         self.debug_layer = Group(Layer.Debug)

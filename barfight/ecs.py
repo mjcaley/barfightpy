@@ -1,47 +1,13 @@
 from typing import Any, Callable, Protocol
 
 import esper
-import pyglet.window
-from pyglet.math import Vec2
-
-# Events
 
 COMPONENT_ADDED_EVENT = "component_added"
-
-
-class ComponentAddedProtocol(Protocol):
-    def on_component_added(self, entity: int, component: Any): ...
-
-
 COMPONENT_REMOVED_EVENT = "component_removed"
-
-
-class ComponentRemovedProtocol(Protocol):
-    def on_component_removed(self, entity: int, component: Any): ...
-
-
 DRAW_EVENT = "draw"
-
-
-class DrawProtocol(Protocol):
-    def on_draw(self, window: pyglet.window.Window): ...
-
-
 EXIT_EVENT = "exit"
-
-
-class ExitProtocol(Protocol):
-    def on_exit(self): ...
-
-
 COLLISION_EVENT = "collision"
-
-
-class CollisionProtcol(Protocol):
-    def on_collision(self, source: int, target: int): ...
-
-
-# Systems
+DAMAGE_EVENT = "damage"
 
 
 class SystemProtocol(Protocol):
@@ -93,6 +59,10 @@ def create_entity(*components: Any) -> int:
         esper.dispatch_event(COMPONENT_ADDED_EVENT, entity, component)
 
     return entity
+
+
+def delete_entity(entity: int):
+    esper.delete_entity(entity)
 
 
 def set_handler(name: str, func: Callable[..., None]):

@@ -1,9 +1,10 @@
+from collections import defaultdict
 from math import inf
 
 from pyglet.math import Vec2
 
 from .. import ecs
-from ..components import BoxCollider, Player, Position, Wall
+from ..components import BoxCollider, Position
 
 
 class AABB:
@@ -156,24 +157,17 @@ def line_rect_intersection(line: Line, t: float) -> Vec2:
     return line.position + (line.direction * t)
 
 
-def distance(bodies: tuple[AABB, AABB]) -> float:
-    first, second = bodies
-    line = Line(
-        first.position.position, first.position.position - second.position.position
-    )
-    t = abs(line_vs_rect(line, second))
+def distance(point: Vec2, rect: AABB) -> float:
+    line = Line(point, point - rect.position.position)
+    t = abs(line_vs_rect(line, rect))
+    intersection = line_rect_intersection(line, t)
 
-    return t
+    return intersection.distance(point)
 
 
 class CollisionSystem(ecs.SystemProtocol):
     def process(self, dt: float):
-        collisions = self.get_collisions()
-        collisions.sort(key=distance)
-        self.resolve_collisions(collisions)
-
-    def get_collisions(self) -> list[tuple[AABB, AABB]]:
-        collisions = []
+        collisions = defaultdict(list)
 
         for lentity, (lpos, lcollider) in ecs.get_components(Position, BoxCollider):
             laabb = AABB(lentity, lpos, lcollider.width, lcollider.height)
@@ -183,17 +177,8 @@ class CollisionSystem(ecs.SystemProtocol):
                     continue
 
                 if rect_vs_rect(laabb, raabb):
-                    collisions.append((laabb, raabb))
+                    collisions[laabb].append(raabb)
+                    collisions[raabb].append(laabb)
 
-        return collisions
-
-    def resolve_collisions(self, collisions: list[tuple[AABB, AABB]]):
-        for laabb, raabb in collisions:
-            if ecs.has_component(laabb.entity, Player) and ecs.has_component(
-                raabb.entity, Wall
-            ):
-                if rect_vs_rect(laabb, raabb):
-                    resolve = rect_rect_resolve(laabb, raabb)
-                    laabb.position.position += resolve
-
-                    ecs.dispatch_event(ecs.COLLISION_EVENT, laabb.entity, raabb.entity)
+        for source, collisions in collisions.items():
+            ecs.dispatch_event(ecs.COLLISION_EVENT, source, collisions)
