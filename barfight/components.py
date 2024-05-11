@@ -5,8 +5,9 @@ import pyglet
 from pyglet.math import Vec2
 
 
-class PlayerMode(Enum):
+class PlayerState(Enum):
     Idle = auto()
+    Walking = auto()
     Attacking = auto()
 
 
@@ -15,9 +16,12 @@ class Layer(IntEnum):
     Debug = 100
 
 
+@dataclass
 class Player:
-    mode: PlayerMode = PlayerMode.Idle
-    expires: float = 0
+    max_speed: int
+    direction: Vec2 = field(default_factory=Vec2)
+    state: PlayerState = PlayerState.Idle
+    cooldown: float = 0
 
 
 class Enemy: ...

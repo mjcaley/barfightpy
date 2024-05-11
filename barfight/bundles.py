@@ -12,9 +12,9 @@ def add_player():
     image.anchor_y = image.height // 2
 
     entity = ecs.create_entity(
-        Player(),
+        Player(max_speed=120),
         Position(),
-        Velocity(speed=120),
+        Velocity(),
         Sprite(pyglet.sprite.Sprite(image), Layer.Game),
         BoxCollider(100, 100),
         Health(100, 100),

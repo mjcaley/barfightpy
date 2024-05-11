@@ -1,13 +1,18 @@
 from typing import Any, Callable, Protocol
 
 import esper
+from pyglet.window import key
 
 COMPONENT_ADDED_EVENT = "component_added"
 COMPONENT_REMOVED_EVENT = "component_removed"
 DRAW_EVENT = "draw"
+KEY_UP_EVENT = "key_up"
+KEY_DOWN_EVENT = "key_down"
 EXIT_EVENT = "exit"
 COLLISION_EVENT = "collision"
 DAMAGE_EVENT = "damage"
+PLAYER_DIRECTION_EVENT = "player_direction"
+PLAYER_ATTACK_EVENT = "player_attack"
 
 
 class SystemProtocol(Protocol):

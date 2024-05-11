@@ -1,6 +1,7 @@
 import pyglet
 from pyglet.window import Window
 
+from .match_extensions import patch_vec2
 from . import ecs
 from .bundles import add_enemy, add_player, add_wall
 from .systems.attack import AttackSystem
@@ -14,6 +15,8 @@ from .systems.player import PlayerSystem
 
 
 def main():
+    patch_vec2()
+
     window = Window(800, 600, "Bar Fight")
 
     debug_system = DebugSystem()
@@ -24,6 +27,8 @@ def main():
 
     input_system = InputSystem()
     ecs.add_system(input_system)
+    ecs.set_handler(ecs.KEY_UP_EVENT, input_system.on_key_up)
+    ecs.set_handler(ecs.KEY_DOWN_EVENT, input_system.on_key_down)
 
     movement_system = MovementSystem()
     ecs.add_system(movement_system)
@@ -43,11 +48,21 @@ def main():
         window.clear()
         ecs.dispatch_event(ecs.DRAW_EVENT, window)
 
+    @window.event
+    def on_key_press(key: int, modifiers: int):
+        ecs.dispatch_event(ecs.KEY_DOWN_EVENT, key, modifiers)
+
+    @window.event
+    def on_key_release(key: int, modifiers: int):
+        ecs.dispatch_event(ecs.KEY_UP_EVENT, key, modifiers)
+
     window.push_handlers(input_system.handler)
     pyglet.clock.schedule_interval(ecs.update, interval=1.0 / 60)
 
     player_system = PlayerSystem()
     ecs.add_system(player_system)
+    ecs.set_handler(ecs.PLAYER_ATTACK_EVENT, player_system.on_player_attack)
+    ecs.set_handler(ecs.PLAYER_DIRECTION_EVENT, player_system.on_player_direction)
 
     health_system = HealthSystem()
     ecs.add_system(health_system)
