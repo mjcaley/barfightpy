@@ -1,9 +1,9 @@
 import pyglet
 from pyglet.window import Window
 
-from .match_extensions import patch_vec2
 from . import ecs
 from .bundles import add_enemy, add_player, add_wall
+from .match_extensions import patch_vec2
 from .systems.attack import AttackSystem
 from .systems.collision import CollisionSystem
 from .systems.debug import DebugSystem

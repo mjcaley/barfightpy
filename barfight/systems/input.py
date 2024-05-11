@@ -1,10 +1,9 @@
 from pyglet.math import Vec2
 from pyglet.window import key
 
-
-from .protocols import InputProtocol
 from .. import ecs
 from ..components import Player
+from .protocols import InputProtocol
 
 
 class InputSystem(ecs.SystemProtocol, InputProtocol):
@@ -30,5 +29,4 @@ class InputSystem(ecs.SystemProtocol, InputProtocol):
         if symbol == key.N:
             ecs.dispatch_event(ecs.PLAYER_ATTACK_EVENT)
 
-    def on_key_up(self, symbol: int, modifiers: int):
-        ...
+    def on_key_up(self, symbol: int, modifiers: int): ...

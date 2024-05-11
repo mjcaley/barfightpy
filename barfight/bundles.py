@@ -2,8 +2,18 @@ import pyglet
 from pyglet.math import Vec2
 
 from . import ecs
-from .components import (Attack, BoxCollider, Enemy, Health, Layer, Player,
-                         Position, Sprite, Velocity, Wall)
+from .components import (
+    Attack,
+    BoxCollider,
+    Enemy,
+    Health,
+    Layer,
+    Player,
+    Position,
+    Sprite,
+    Velocity,
+    Wall,
+)
 
 
 def add_player():
