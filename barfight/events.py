@@ -1,10 +1,18 @@
-from dataclasses import dataclass
 from typing import Any, Protocol
 
-import pyglet
 from pyglet.math import Vec2
+from pyglet.window import Window
 
-from .collision import AABB
+COMPONENT_ADDED_EVENT = "component_added"
+COMPONENT_REMOVED_EVENT = "component_removed"
+DRAW_EVENT = "draw"
+KEY_UP_EVENT = "key_up"
+KEY_DOWN_EVENT = "key_down"
+EXIT_EVENT = "exit"
+COLLISION_EVENT = "collision"
+DAMAGE_EVENT = "damage"
+PLAYER_DIRECTION_EVENT = "player_direction"
+PLAYER_ATTACK_EVENT = "player_attack"
 
 
 class ComponentAddedProtocol(Protocol):
@@ -21,7 +29,7 @@ class InputProtocol(Protocol):
 
 
 class DrawProtocol(Protocol):
-    def on_draw(self, window: pyglet.window.Window): ...
+    def on_draw(self, window: Window): ...
 
 
 class ExitProtocol(Protocol):
@@ -29,7 +37,7 @@ class ExitProtocol(Protocol):
 
 
 class CollisionProtocol(Protocol):
-    def on_collision(self, source: AABB, collisions: list[AABB]): ...
+    def on_collision(self, source: int, collisions: list[int]): ...
 
 
 class PlayerStateProtocol(Protocol):

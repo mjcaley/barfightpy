@@ -1,18 +1,8 @@
 from typing import Any, Callable, Protocol
 
 import esper
-from pyglet.window import key
 
-COMPONENT_ADDED_EVENT = "component_added"
-COMPONENT_REMOVED_EVENT = "component_removed"
-DRAW_EVENT = "draw"
-KEY_UP_EVENT = "key_up"
-KEY_DOWN_EVENT = "key_down"
-EXIT_EVENT = "exit"
-COLLISION_EVENT = "collision"
-DAMAGE_EVENT = "damage"
-PLAYER_DIRECTION_EVENT = "player_direction"
-PLAYER_ATTACK_EVENT = "player_attack"
+from . import events
 
 
 class SystemProtocol(Protocol):
@@ -29,13 +19,13 @@ def remove_system(system_type: type[SystemProtocol]):
 
 def add_component(entity: int, component: Any):
     esper.add_component(entity, component)
-    esper.dispatch_event(COMPONENT_ADDED_EVENT, entity, component)
+    esper.dispatch_event(events.COMPONENT_ADDED_EVENT, entity, component)
 
 
 def remove_component(entity: int, component_type: type[Any]):
     component = esper.get_component(component_type)
     esper.remove_component(entity, component_type)
-    esper.dispatch_event(COMPONENT_REMOVED_EVENT, entity, component)
+    esper.dispatch_event(events.COMPONENT_REMOVED_EVENT, entity, component)
 
 
 def get_component(entity: int, component: type[Any]) -> Any:
@@ -61,7 +51,7 @@ def try_components(entity: int, *components: Any) -> tuple:
 def create_entity(*components: Any) -> int:
     entity = esper.create_entity(*components)
     for component in components:
-        esper.dispatch_event(COMPONENT_ADDED_EVENT, entity, component)
+        esper.dispatch_event(events.COMPONENT_ADDED_EVENT, entity, component)
 
     return entity
 

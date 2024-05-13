@@ -1,8 +1,8 @@
 import pytest
 from pyglet.math import Vec2
 
-from barfight.components import BoxCollider, Position
-from barfight.systems.collision import AABB, Line, line_rect_intersection, line_vs_rect, point_rect_collides, point_rect_resolve, rect_rect_resolve, rect_vs_rect
+from barfight.components import Position
+from barfight.systems import AABB, Line, line_rect_intersection, line_vs_rect, point_rect_collides, point_rect_resolve, rect_rect_resolve, rect_vs_rect
 
 
 def test_point_rect_collides():
