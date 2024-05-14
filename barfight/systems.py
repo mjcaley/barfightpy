@@ -112,7 +112,7 @@ class AttackSystem(ecs.SystemProtocol, CollisionProtocol):
     def process(self, *args, **kwargs):
         for entity, (attack,) in ecs.get_components(Attack):
             if attack.cleanup:
-                ecs.remove_component(entity, Attack)
+                ecs.delete_entity(entity)
             else:
                 attack.cleanup = True
 
