@@ -118,7 +118,7 @@ class AttackSystem(ecs.SystemProtocol, CollisionProtocol):
             else:
                 attack.cleanup = True
 
-    def on_collision(self, source: int, collisions: list[int]):
+    def on_collision(self, source: int, collisions: set[int]):
         if not (attack := ecs.try_component(source, Attack)):
             return
 
@@ -196,7 +196,7 @@ def rect_rect_resolve(first: AABB, second: AABB) -> Vec2:
     return nearest
 
 
-def line_vs_rect(line: Line, rect: AABB) -> float:
+def line_vs_rect(line: Line, rect: AABB) -> float | bool:
     if line.direction.x == 0:
         t_low_x = -inf
         t_high_x = inf
@@ -238,18 +238,18 @@ def distance(point: Vec2, rect: AABB) -> float:
 
 class CollisionSystem(ecs.SystemProtocol):
     def process(self, dt: float):
-        collisions = defaultdict(list)
+        collisions = defaultdict(set)
 
         for lentity, (lpos, lcollider) in ecs.get_components(Position, BoxCollider):
             laabb = AABB(lentity, lpos, lcollider.width, lcollider.height)
             for rentity, (rpos, rcollider) in ecs.get_components(Position, BoxCollider):
-                raabb = AABB(rentity, rpos, rcollider.width, rcollider.height)
                 if lentity == rentity:
                     continue
+                raabb = AABB(rentity, rpos, rcollider.width, rcollider.height)
 
                 if rect_vs_rect(laabb, raabb):
-                    collisions[lentity].append(rentity)
-                    collisions[rentity].append(lentity)
+                    collisions[lentity].add(rentity)
+                    collisions[rentity].add(lentity)
 
         for source, collisions in collisions.items():
             ecs.dispatch_event(events.COLLISION_EVENT, source, collisions)
@@ -268,7 +268,7 @@ class DebugSystem(
 ):
     def process(self, *args): ...
 
-    def on_collision(self, source: int, collisions: list[int]):
+    def on_collision(self, source: int, collisions: set[int]):
         lposition, lcollider = ecs.try_components(source, Position, BoxCollider)
         lvelocity = ecs.try_component(source, Velocity)
 
@@ -394,7 +394,7 @@ class MovementSystem(ecs.SystemProtocol, CollisionProtocol):
         ):
             position.position += velocity.direction * velocity.speed * dt
 
-    def on_collision(self, source: int, collisions: list[int]):
+    def on_collision(self, source: int, collisions: set[int]):
         if not ecs.has_component(source, Player):
             return
 

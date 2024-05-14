@@ -1,8 +1,10 @@
 import pytest
 from pyglet.math import Vec2
 
-from barfight.components import Position
-from barfight.systems import AABB, Line, line_rect_intersection, line_vs_rect, point_rect_collides, point_rect_resolve, rect_rect_resolve, rect_vs_rect
+from barfight import ecs
+from barfight import events
+from barfight.components import BoxCollider, Position
+from barfight.systems import AABB, CollisionSystem, Line, line_rect_intersection, line_vs_rect, point_rect_collides, point_rect_resolve, rect_rect_resolve, rect_vs_rect
 
 
 def test_point_rect_collides():
@@ -57,3 +59,25 @@ def test_line_rect_intersection():
     resolution = line_rect_intersection(Line(Vec2(0, 0), Vec2(1, 0)), 10)
 
     assert Vec2(10, 0) == resolution
+
+
+def test_collision_process(ecs_world):
+    collision_events = {}
+    def collision_callback(source: int, collisions: list[int]):
+        collision_events[source] = collisions
+
+    c = CollisionSystem()
+    ecs.set_handler(events.COLLISION_EVENT, collision_callback)
+    ecs.add_system(c)
+    
+    colliding1 = ecs.create_entity(Position(Vec2(0, 0)), BoxCollider(height=10, width=10))
+    colliding2 = ecs.create_entity(Position(Vec2(0, 0)), BoxCollider(height=10, width=10))
+    not_colliding = ecs.create_entity(Position(Vec2(20, 20)), BoxCollider(height=10, width=10))
+
+    ecs.update(0)
+
+    assert colliding1 in collision_events
+    assert {colliding2} == collision_events[colliding1]
+    assert colliding2 in collision_events
+    assert {colliding1} == collision_events[colliding2]
+    assert not_colliding not in collision_events

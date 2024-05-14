@@ -9,6 +9,14 @@ class SystemProtocol(Protocol):
     def process(self, *args, **kwargs): ...
 
 
+def switch_world(name: str):
+    esper.switch_world(name)
+
+
+def delete_world(name: str):
+    esper.delete_world(name)
+
+
 def add_system(system: SystemProtocol, priority: int = 0):
     esper.add_processor(system, priority)
 

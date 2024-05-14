@@ -37,7 +37,7 @@ class ExitProtocol(Protocol):
 
 
 class CollisionProtocol(Protocol):
-    def on_collision(self, source: int, collisions: list[int]): ...
+    def on_collision(self, source: int, collisions: set[int]): ...
 
 
 class PlayerStateProtocol(Protocol):
