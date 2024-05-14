@@ -224,6 +224,52 @@ def line_vs_rect(line: Line, rect: AABB) -> float | bool:
     return t_close
 
 
+# def line_vs_rect(line: Line, rect: AABB) -> float | None:
+    # https://noonat.github.io/intersect/#aabb-vs-segment
+
+    # Calculate
+    # const scaleX = 1.0 / delta.x;
+    # const scaleY = 1.0 / delta.y;
+    # const signX = sign(scaleX);
+    # const signY = sign(scaleY);
+    # const nearTimeX = (this.pos.x - signX * (this.half.x + paddingX) - pos.x) * scaleX;
+    # const nearTimeY = (this.pos.y - signY * (this.half.y + paddingY) - pos.y) * scaleY;
+    # const farTimeX = (this.pos.x + signX * (this.half.x + paddingX) - pos.x) * scaleX;
+    # const farTimeY = (this.pos.y + signY * (this.half.y + paddingY) - pos.y) * scaleY;
+
+    # If the closest time of collision on either axis is further than the far time on the opposite axis, we can’t be colliding
+    # if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
+    #   return null;
+    # }
+
+    # Otherwise find greater near times
+    # const nearTime = nearTimeX > nearTimeY ? nearTimeX : nearTimeY;
+    # const farTime = farTimeX < farTimeY ? farTimeX : farTimeY;
+
+    # If the near time is greater than or equal to 1, the line starts in front of the nearest edge, but finishes before it reaches it.
+    # If the far time is less than or equal to 0, the line starts in front of the far side of the box, and points away from the box.
+    # if (nearTime >= 1 || farTime <= 0) {
+    #   return null;
+    # }
+
+    # If the near time is greater than zero, the segment starts outside and is entering the box. Otherwise, the segment starts inside the box, and is exiting it.
+    # const hit = new Hit(this);
+    # hit.time = clamp(nearTime, 0, 1);
+    # if (nearTimeX > nearTimeY) {
+    #     hit.normal.x = -signX;
+    #     hit.normal.y = 0;
+    # } else {
+    #     hit.normal.x = 0;
+    #     hit.normal.y = -signY;
+    # }
+    # hit.delta.x = (1.0 - hit.time) * -delta.x;
+    # hit.delta.y = (1.0 - hit.time) * -delta.y;
+    # hit.pos.x = pos.x + delta.x * hit.time;
+    # hit.pos.y = pos.y + delta.y * hit.time;
+    # return hit;
+    # }
+
+
 def line_rect_intersection(line: Line, t: float) -> Vec2:
     return line.position + (line.direction * t)
 
