@@ -24,8 +24,8 @@ def add_component(entity: int, component: Any):
 
 def remove_component(entity: int, component_type: type[Any]):
     component = esper.get_component(component_type)
-    esper.remove_component(entity, component_type)
     esper.dispatch_event(events.COMPONENT_REMOVED_EVENT, entity, component)
+    esper.remove_component(entity, component_type)
 
 
 def get_component(entity: int, component: type[Any]) -> Any:
@@ -57,6 +57,8 @@ def create_entity(*components: Any) -> int:
 
 
 def delete_entity(entity: int):
+    for component in esper.components_for_entity(entity):
+        esper.dispatch_event(events.COMPONENT_REMOVED_EVENT, entity, component)
     esper.delete_entity(entity)
 
 
