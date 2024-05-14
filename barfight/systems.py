@@ -9,6 +9,8 @@ from pyglet.graphics import Batch, Group
 from pyglet.math import Vec2
 from pyglet.window import Window, key
 
+from .bundles import add_attack
+
 from . import ecs, events, patch
 from .components import (
     Attack,
@@ -435,6 +437,7 @@ class PlayerSystem(ecs.SystemProtocol, PlayerStateProtocol):
                 ...
             case direction:
                 player.state = PlayerState.Walking
+                player.facing = player.direction.x
                 velocity.direction = direction
                 velocity.speed = player.max_speed
 
@@ -445,6 +448,7 @@ class PlayerSystem(ecs.SystemProtocol, PlayerStateProtocol):
                 velocity.direction = player.direction
                 velocity.speed = 0
             case _:
+                player.facing = player.direction.x
                 velocity.direction = player.direction
 
     def attacking(
@@ -459,34 +463,33 @@ class PlayerSystem(ecs.SystemProtocol, PlayerStateProtocol):
                 velocity.speed = 0
             case 0, _:
                 player.state = PlayerState.Walking
+                player.facing = player.direction.x
                 velocity.direction = player.direction
                 velocity.speed = player.max_speed
 
     def on_player_attack(self):
-        for entity, (player, position, velocity) in ecs.get_components(
-            Player, Position, Velocity
+        for entity, (player, position, velocity, collider) in ecs.get_components(
+            Player, Position, Velocity, BoxCollider
         ):
+            attack_pos = Vec2(position.position.x, position.position.y)
+            attack_size = 20
+            if player.facing == 1:
+                attack_pos.x += collider.width / 2 + attack_size / 2
+            else:
+                attack_pos.x -= collider.width / 2 + attack_size / 2
+
             match player.state, player.cooldown:
                 case PlayerState.Idle | PlayerState.Walking, _:
                     player.state = PlayerState.Attacking
                     velocity.speed = 0
                     player.cooldown = 0.2
-                    ecs.create_entity(
-                        Attack(entity),
-                        Position(
-                            Vec2(position.position.x + 50, position.position.y)
-                        ),  # Position based off player's collider
-                        BoxCollider(20, 20),
-                    )
+                    
+                    add_attack(entity, attack_pos, attack_size)
+                    
                 case PlayerState.Attacking, 0:
                     player.cooldown = 0.2
-                    ecs.create_entity(
-                        Attack(entity),
-                        Position(
-                            Vec2(position.position.x + 50, position.position.y)
-                        ),  # Position based off player's collider
-                        BoxCollider(20, 20),
-                    )
+
+                    add_attack(entity, attack_pos, attack_size)
 
 
 # endregion

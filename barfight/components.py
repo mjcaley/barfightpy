@@ -20,6 +20,7 @@ class Layer(IntEnum):
 class Player:
     max_speed: int
     direction: Vec2 = field(default_factory=Vec2)
+    facing: float = 1
     state: PlayerState = PlayerState.Idle
     cooldown: float = 0
 
