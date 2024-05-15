@@ -4,7 +4,7 @@ from pyglet.math import Vec2
 from barfight import ecs
 from barfight import events
 from barfight.components import BoxCollider, Position
-from barfight.systems import AABB, CollisionSystem, Line, line_rect_intersection, line_vs_rect, point_rect_collides, point_rect_resolve, rect_rect_resolve, rect_vs_rect
+from barfight.systems import AABB, CollisionSystem, Ray, distance, ray_vs_rect, point_rect_collides, point_rect_resolve, rect_rect_resolve, rect_vs_rect
 
 
 def test_point_rect_collides():
@@ -43,26 +43,25 @@ def test_rect_rect_resolve(rect1: AABB, rect2: AABB, expected: Vec2):
     assert expected == resolution
 
 
-@pytest.mark.parametrize("line,rect,expected", [
-    (Line(Vec2(-2, 0), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), 1.0),      # From left
-    (Line(Vec2(2, 0), Vec2(-1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), 1.0),      # From right
-    (Line(Vec2(0, -2), Vec2(0, 1)), AABB(0, Position(Vec2(0, 0)), 2, 2), 1.0),      # From bottom
-    (Line(Vec2(0, 2), Vec2(0, -1)), AABB(0, Position(Vec2(0, 0)), 2, 2), 1.0),      # From top
-    (Line(Vec2(-0.5, 0), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), 0.0),    # Inside
-    (Line(Vec2(0, 10), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), None),     # Outside
-    (Line(Vec2(10, 10), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), None),    # Outside
-    (Line(Vec2(-10, -10), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), None),  # Outside
+
+@pytest.mark.parametrize("ray_pos,ray_dir,expected", [
+    (Vec2(0, 0), Vec2(1, 1), Vec2(1, 1)),
+    (Vec2(5, 0), Vec2(-1, 1), Vec2(4, 1)),
+    (Vec2(5, 5), Vec2(-1, -1), Vec2(4, 4)),
+    (Vec2(0, 5), Vec2(1, -1), Vec2(1, 4)),
 ])
-def test_line_vs_rect(line: Line, rect: AABB, expected: float):
-    collision = line_vs_rect(line, rect)
+def test_line_vs_rect2(ray_pos, ray_dir, expected):
+    ray = Ray(ray_pos, ray_dir)
+    rect = AABB(0, Position(Vec2(2.5, 2.5)), 3, 3)
+    intersection = ray_vs_rect(ray, rect)
 
-    assert expected == collision
+    assert expected == intersection
 
 
-def test_line_rect_intersection():
-    resolution = line_rect_intersection(Line(Vec2(0, 0), Vec2(1, 0)), 10)
+def test_distance():
+    d = distance(Vec2(-5, 0), AABB(0, Position(Vec2(0, 0)), 2, 2))
 
-    assert Vec2(10, 0) == resolution
+    assert 4 == d
 
 
 def test_collision_process(ecs_world):

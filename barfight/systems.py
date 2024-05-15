@@ -43,6 +43,12 @@ class AABB:
         self._half_width = width / 2
         self._half_height = height / 2
 
+    def __str__(self) -> str:
+        return f"AABB(entity={self._entity}, position={self._position}, width={self._half_width * 2}, height={self._half_height * 2})"
+
+    def __repr__(self) -> str:
+        return f"AABB(entity={self._entity}, position={self._position}, width={self._half_width * 2}, height={self._half_height * 2})"
+
     @classmethod
     def from_entity(cls, entity: int) -> Self:
         if components := ecs.try_components(entity, Position, BoxCollider):
@@ -90,19 +96,16 @@ class AABB:
         return self.high.y
 
 
-class Line:
+class Ray:
     def __init__(self, position: Vec2, direction: Vec2):
         self._position = position
         self._direction = direction.normalize()
-        if direction.x == 0:
-            inv_x = inf
-        else:
-            inv_x = 1.0 / direction.x
-        if direction.y == 0:
-            inv_y = inf
-        else:
-            inv_y = 1.0 / direction.y
-        self._direction_inv = Vec2(inv_x, inv_y)
+
+    def __str__(self) -> str:
+        return f"Ray(position={self._position}, direction={self._direction})"
+
+    def __repr__(self) -> str:
+        return f"Ray(position={self._position}, direction={self._direction})"
 
     @property
     def position(self) -> Vec2:
@@ -111,10 +114,6 @@ class Line:
     @property
     def direction(self) -> Vec2:
         return self._direction
-
-    @property
-    def direction_inv(self) -> Vec2:
-        return self._direction_inv
 
 
 # endregion
@@ -208,35 +207,41 @@ def rect_rect_resolve(first: AABB, second: AABB) -> Vec2:
     return nearest
 
 
-def line_vs_rect(line: Line, rect: AABB) -> float | None:
-    # https://tavianator.com/2022/ray_box_boundary.html
-    tmin = 0.0
+def ray_vs_rect(ray: Ray, rect: AABB) -> Vec2 | None:
+    tmin = -inf
     tmax = inf
 
-    t1_x = (rect.min_x - line.position.x) * line.direction_inv.x
-    t2_x = (rect.max_x - line.position.x) * line.direction_inv.x
-    tmin = min(max(t1_x, tmin), max(t2_x, tmin))
-    tmax = max(min(t1_x, tmax), min(t2_x, tmax))
+    if ray.direction.x != 0:
+        tx1 = (rect.min_x - ray.position.x) / ray.direction.x
+        tx2 = (rect.max_x - ray.position.x) / ray.direction.x
+        tmin = max(tmin, min(tx1, tx2))
+        tmax = min(tmax, max(tx1, tx2))
+    else:
+        if ray.position.x < rect.min_x or ray.position.x > rect.max_x:
+            return None
 
-    t1_y = (rect.min_y - line.position.y) * line.direction_inv.y
-    t2_y = (rect.max_y - line.position.y) * line.direction_inv.y
-    tmin = min(max(t1_y, tmin), max(t2_y, tmin))
-    tmax = max(min(t1_y, tmax), min(t2_y, tmax))
+    if ray.direction.y != 0:
+        ty1 = (rect.min_y - ray.position.y) / ray.direction.y
+        ty2 = (rect.max_y - ray.position.y) / ray.direction.y
+        tmin = max(tmin, min(ty1, ty2))
+        tmax = min(tmax, max(ty1, ty2))
+    else:
+        if ray.position.y < rect.min_y or ray.position.y > rect.max_y:
+            return None
 
-    return tmin if tmax > max(tmin, 0.0) else None
-
-
-def line_rect_intersection(line: Line, t: float) -> Vec2:
-    return line.position + (line.direction * t)
+    if tmax >= tmin >= 0:
+        intersection = ray.position + (ray.direction * tmin)
+        return intersection
+    else:
+        return None
 
 
 def distance(point: Vec2, rect: AABB) -> float | None:
-    line = Line(point, point - rect.position.position)
-    if t := line_vs_rect(line, rect):
-        intersection = line_rect_intersection(line, abs(t))
+    ray = Ray(point, rect.position.position - point)
+    if intersection := ray_vs_rect(ray, rect):
         return intersection.distance(point)
     else:
-        return None
+        return inf
 
 
 class CollisionSystem(ecs.SystemProtocol):
