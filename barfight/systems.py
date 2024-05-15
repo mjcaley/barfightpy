@@ -9,9 +9,8 @@ from pyglet.graphics import Batch, Group
 from pyglet.math import Vec2
 from pyglet.window import Window, key
 
-from .bundles import add_attack
-
 from . import ecs, events, patch
+from .bundles import add_attack
 from .components import (
     Attack,
     BoxCollider,
@@ -95,6 +94,15 @@ class Line:
     def __init__(self, position: Vec2, direction: Vec2):
         self._position = position
         self._direction = direction.normalize()
+        if direction.x == 0:
+            inv_x = inf
+        else:
+            inv_x = 1.0 / direction.x
+        if direction.y == 0:
+            inv_y = inf
+        else:
+            inv_y = 1.0 / direction.y
+        self._direction_inv = Vec2(inv_x, inv_y)
 
     @property
     def position(self) -> Vec2:
@@ -103,6 +111,10 @@ class Line:
     @property
     def direction(self) -> Vec2:
         return self._direction
+
+    @property
+    def direction_inv(self) -> Vec2:
+        return self._direction_inv
 
 
 # endregion
@@ -196,90 +208,35 @@ def rect_rect_resolve(first: AABB, second: AABB) -> Vec2:
     return nearest
 
 
-def line_vs_rect(line: Line, rect: AABB) -> float | bool:
-    if line.direction.x == 0:
-        t_low_x = -inf
-        t_high_x = inf
-    else:
-        t_low_x = (rect.min_x - line.position.x) / line.direction.x
-        t_high_x = (rect.max_x - line.position.x) / line.direction.x
-    if line.direction.y == 0:
-        t_low_y = -inf
-        t_high_y = inf
-    else:
-        t_low_y = (rect.min_y - line.position.y) / line.direction.y
-        t_high_y = (rect.max_y - line.position.y) / line.direction.y
+def line_vs_rect(line: Line, rect: AABB) -> float | None:
+    # https://tavianator.com/2022/ray_box_boundary.html
+    tmin = 0.0
+    tmax = inf
 
-    t_close_x = min(t_low_x, t_high_x)
-    t_far_x = max(t_low_x, t_high_x)
-    t_close_y = min(t_low_y, t_high_y)
-    t_far_y = max(t_low_y, t_high_y)
+    t1_x = (rect.min_x - line.position.x) * line.direction_inv.x
+    t2_x = (rect.max_x - line.position.x) * line.direction_inv.x
+    tmin = min(max(t1_x, tmin), max(t2_x, tmin))
+    tmax = max(min(t1_x, tmax), min(t2_x, tmax))
 
-    t_close = max(t_close_x, t_close_y)
-    t_far = min(t_far_x, t_far_y)
+    t1_y = (rect.min_y - line.position.y) * line.direction_inv.y
+    t2_y = (rect.max_y - line.position.y) * line.direction_inv.y
+    tmin = min(max(t1_y, tmin), max(t2_y, tmin))
+    tmax = max(min(t1_y, tmax), min(t2_y, tmax))
 
-    if t_close > t_far:
-        return False
-
-    return t_close
-
-
-# def line_vs_rect(line: Line, rect: AABB) -> float | None:
-    # https://noonat.github.io/intersect/#aabb-vs-segment
-
-    # Calculate
-    # const scaleX = 1.0 / delta.x;
-    # const scaleY = 1.0 / delta.y;
-    # const signX = sign(scaleX);
-    # const signY = sign(scaleY);
-    # const nearTimeX = (this.pos.x - signX * (this.half.x + paddingX) - pos.x) * scaleX;
-    # const nearTimeY = (this.pos.y - signY * (this.half.y + paddingY) - pos.y) * scaleY;
-    # const farTimeX = (this.pos.x + signX * (this.half.x + paddingX) - pos.x) * scaleX;
-    # const farTimeY = (this.pos.y + signY * (this.half.y + paddingY) - pos.y) * scaleY;
-
-    # If the closest time of collision on either axis is further than the far time on the opposite axis, we can’t be colliding
-    # if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
-    #   return null;
-    # }
-
-    # Otherwise find greater near times
-    # const nearTime = nearTimeX > nearTimeY ? nearTimeX : nearTimeY;
-    # const farTime = farTimeX < farTimeY ? farTimeX : farTimeY;
-
-    # If the near time is greater than or equal to 1, the line starts in front of the nearest edge, but finishes before it reaches it.
-    # If the far time is less than or equal to 0, the line starts in front of the far side of the box, and points away from the box.
-    # if (nearTime >= 1 || farTime <= 0) {
-    #   return null;
-    # }
-
-    # If the near time is greater than zero, the segment starts outside and is entering the box. Otherwise, the segment starts inside the box, and is exiting it.
-    # const hit = new Hit(this);
-    # hit.time = clamp(nearTime, 0, 1);
-    # if (nearTimeX > nearTimeY) {
-    #     hit.normal.x = -signX;
-    #     hit.normal.y = 0;
-    # } else {
-    #     hit.normal.x = 0;
-    #     hit.normal.y = -signY;
-    # }
-    # hit.delta.x = (1.0 - hit.time) * -delta.x;
-    # hit.delta.y = (1.0 - hit.time) * -delta.y;
-    # hit.pos.x = pos.x + delta.x * hit.time;
-    # hit.pos.y = pos.y + delta.y * hit.time;
-    # return hit;
-    # }
+    return tmin if tmax > max(tmin, 0.0) else None
 
 
 def line_rect_intersection(line: Line, t: float) -> Vec2:
     return line.position + (line.direction * t)
 
 
-def distance(point: Vec2, rect: AABB) -> float:
+def distance(point: Vec2, rect: AABB) -> float | None:
     line = Line(point, point - rect.position.position)
-    t = abs(line_vs_rect(line, rect))
-    intersection = line_rect_intersection(line, t)
-
-    return intersection.distance(point)
+    if t := line_vs_rect(line, rect):
+        intersection = line_rect_intersection(line, abs(t))
+        return intersection.distance(point)
+    else:
+        return None
 
 
 class CollisionSystem(ecs.SystemProtocol):
@@ -529,9 +486,9 @@ class PlayerSystem(ecs.SystemProtocol, PlayerStateProtocol):
                     player.state = PlayerState.Attacking
                     velocity.speed = 0
                     player.cooldown = 0.2
-                    
+
                     add_attack(entity, attack_pos, attack_size)
-                    
+
                 case PlayerState.Attacking, 0:
                     player.cooldown = 0.2
 

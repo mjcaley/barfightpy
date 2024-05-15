@@ -1,8 +1,7 @@
 import pyglet
 from pyglet.window import Window
 
-from . import ecs
-from . import events
+from . import ecs, events
 from .bundles import add_enemy, add_player, add_wall
 from .systems import (
     AttackSystem,

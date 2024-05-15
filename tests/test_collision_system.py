@@ -44,14 +44,14 @@ def test_rect_rect_resolve(rect1: AABB, rect2: AABB, expected: Vec2):
 
 
 @pytest.mark.parametrize("line,rect,expected", [
-    (Line(Vec2(-2, 0), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), 1),
-    (Line(Vec2(2, 0), Vec2(-1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), 1),
-    (Line(Vec2(0, -2), Vec2(0, 1)), AABB(0, Position(Vec2(0, 0)), 2, 2), 1),
-    (Line(Vec2(0, 2), Vec2(0, -1)), AABB(0, Position(Vec2(0, 0)), 2, 2), 1),
-    (Line(Vec2(-0.5, 0), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), False),
-    (Line(Vec2(0, 10), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), False),
-    (Line(Vec2(10, 10), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), False),
-    (Line(Vec2(-10, -10), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), False),
+    (Line(Vec2(-2, 0), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), 1.0),      # From left
+    (Line(Vec2(2, 0), Vec2(-1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), 1.0),      # From right
+    (Line(Vec2(0, -2), Vec2(0, 1)), AABB(0, Position(Vec2(0, 0)), 2, 2), 1.0),      # From bottom
+    (Line(Vec2(0, 2), Vec2(0, -1)), AABB(0, Position(Vec2(0, 0)), 2, 2), 1.0),      # From top
+    (Line(Vec2(-0.5, 0), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), 0.0),    # Inside
+    (Line(Vec2(0, 10), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), None),     # Outside
+    (Line(Vec2(10, 10), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), None),    # Outside
+    (Line(Vec2(-10, -10), Vec2(1, 0)), AABB(0, Position(Vec2(0, 0)), 2, 2), None),  # Outside
 ])
 def test_line_vs_rect(line: Line, rect: AABB, expected: float):
     collision = line_vs_rect(line, rect)
