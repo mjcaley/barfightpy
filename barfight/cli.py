@@ -1,5 +1,6 @@
 import pyglet
 from pyglet.window import Window
+from pyglet.window.key import KeyStateHandler
 
 from . import ecs, events
 from .bundles import add_enemy, add_player, add_wall
@@ -24,7 +25,9 @@ def main():
     ecs.set_handler(events.COMPONENT_ADDED_EVENT, debug_system.on_component_added)
     ecs.set_handler(events.COMPONENT_REMOVED_EVENT, debug_system.on_component_removed)
 
-    input_system = InputSystem()
+    key_state_handler = KeyStateHandler()
+    window.push_handlers(key_state_handler)
+    input_system = InputSystem(key_state_handler)
     ecs.add_system(input_system)
     ecs.set_handler(events.KEY_UP_EVENT, input_system.on_key_up)
     ecs.set_handler(events.KEY_DOWN_EVENT, input_system.on_key_down)

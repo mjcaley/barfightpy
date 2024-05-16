@@ -365,8 +365,8 @@ class HealthSystem(ecs.SystemProtocol):
 
 
 class InputSystem(ecs.SystemProtocol, InputProtocol):
-    def __init__(self):
-        self.handler = key.KeyStateHandler()
+    def __init__(self, handler: key.KeyStateHandler):
+        self.handler = handler
 
     def process(self, *_):
         direction = Vec2()
