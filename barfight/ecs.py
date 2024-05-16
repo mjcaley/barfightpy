@@ -70,6 +70,10 @@ def delete_entity(entity: int):
     esper.delete_entity(entity)
 
 
+def entity_exists(entity: int) -> bool:
+    return esper.entity_exists(entity)
+
+
 def set_handler(name: str, func: Callable[..., None]):
     esper.set_handler(name, func)
 
