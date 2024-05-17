@@ -37,7 +37,7 @@ from .events import (
 
 
 class AABB:
-    def __init__(self, entity: int, position: Position, width: float, height: float):
+    def __init__(self, entity: int, position: Vec2, width: float, height: float):
         self._entity = entity
         self._position = position
         self._half_width = width / 2
@@ -53,7 +53,7 @@ class AABB:
     def from_entity(cls, entity: int) -> Self:
         if components := ecs.try_components(entity, Position, BoxCollider):
             position, collider = components
-            return cls(entity, position, collider.width, collider.height)
+            return cls(entity, position.position, collider.width, collider.height)
         else:
             raise RuntimeError("Missing required components to create instance")
 
@@ -64,19 +64,19 @@ class AABB:
     @property
     def low(self) -> Vec2:
         return Vec2(
-            self.position.position.x - self._half_width,
-            self.position.position.y - self._half_height,
+            self.position.x - self._half_width,
+            self.position.y - self._half_height,
         )
 
     @property
     def high(self) -> Vec2:
         return Vec2(
-            self.position.position.x + self._half_width,
-            self.position.position.y + self._half_height,
+            self.position.x + self._half_width,
+            self.position.y + self._half_height,
         )
 
     @property
-    def position(self) -> Position:
+    def position(self) -> Vec2:
         return self._position
 
     @property
@@ -237,7 +237,7 @@ def ray_vs_rect(ray: Ray, rect: AABB) -> Vec2 | None:
 
 
 def distance(point: Vec2, rect: AABB) -> float | None:
-    ray = Ray(point, rect.position.position - point)
+    ray = Ray(point, rect.position - point)
     if intersection := ray_vs_rect(ray, rect):
         return intersection.distance(point)
     else:
@@ -249,11 +249,11 @@ class CollisionSystem(ecs.SystemProtocol):
         collisions = defaultdict(set)
 
         for lentity, (lpos, lcollider) in ecs.get_components(Position, BoxCollider):
-            laabb = AABB(lentity, lpos, lcollider.width, lcollider.height)
+            laabb = AABB(lentity, lpos.position, lcollider.width, lcollider.height)
             for rentity, (rpos, rcollider) in ecs.get_components(Position, BoxCollider):
                 if lentity == rentity:
                     continue
-                raabb = AABB(rentity, rpos, rcollider.width, rcollider.height)
+                raabb = AABB(rentity, rpos.position, rcollider.width, rcollider.height)
 
                 if rect_vs_rect(laabb, raabb):
                     collisions[lentity].add(rentity)
@@ -412,7 +412,6 @@ class MovementSystem(ecs.SystemProtocol, CollisionProtocol):
             key=partial(distance, laabb.position.position),
         )
 
-        # collisions.sort(key=partial(distance, source.position.position))
         for target in raabbs:
             if not ecs.has_component(target.entity, Wall):
                 continue
