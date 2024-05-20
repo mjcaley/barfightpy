@@ -409,7 +409,7 @@ class MovementSystem(ecs.SystemProtocol, CollisionProtocol):
         laabb = AABB.from_entity(source)
         raabbs = sorted(
             (AABB.from_entity(target) for target in collisions),
-            key=partial(distance, laabb.position.position),
+            key=partial(distance, laabb.position),
         )
 
         for target in raabbs:
@@ -417,7 +417,8 @@ class MovementSystem(ecs.SystemProtocol, CollisionProtocol):
                 continue
             if rect_vs_rect(laabb, target):
                 resolve = rect_rect_resolve(laabb, target)
-                laabb.position.position += resolve
+                position = ecs.get_component(source, Position)
+                position.position += resolve
 
 
 # endregion
