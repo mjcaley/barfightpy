@@ -87,9 +87,12 @@ def test_rect_rect_resolve(rect1: AABB, rect2: AABB, expected: Vec2):
         (Vec2(5, 0), Vec2(-1, 1), Vec2(4, 1)),
         (Vec2(5, 5), Vec2(-1, -1), Vec2(4, 4)),
         (Vec2(0, 5), Vec2(1, -1), Vec2(1, 4)),
+        (Vec2(-5, 2.5), Vec2(0, 1), None),
+        (Vec2(2.5, -5), Vec2(1, 0), None),
+        (Vec2(2.5, 2.5), Vec2(1, 0), None)
     ],
 )
-def test_line_vs_rect2(ray_pos, ray_dir, expected):
+def test_ray_vs_rect(ray_pos, ray_dir, expected):
     ray = Ray(ray_pos, ray_dir)
     rect = AABB(0, Vec2(2.5, 2.5), 3, 3)
     intersection = ray_vs_rect(ray, rect)
