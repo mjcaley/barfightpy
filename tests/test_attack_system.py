@@ -22,10 +22,10 @@ def test_attack_collision_without_attack_component(ecs_world):
     a = AttackSystem()
     ecs.add_system(a)
     ecs.set_handler(events.COLLISION_EVENT, a.on_collision)
-    
+
     player_entity = randint(100, 1000)
     non_attack_entity = ecs.create_entity()
-    
+
     health = Health(10, 10)
     target_entity = ecs.create_entity(health)
 
@@ -34,16 +34,15 @@ def test_attack_collision_without_attack_component(ecs_world):
     assert 10 == health.current
 
 
-
 def test_attack_collision_decrements_health(ecs_world):
     a = AttackSystem()
     ecs.add_system(a)
     ecs.set_handler(events.COLLISION_EVENT, a.on_collision)
-    
+
     player_entity = randint(100, 1000)
     attack_entity = ecs.create_entity()
     ecs.add_component(attack_entity, Attack(player_entity))
-    
+
     health = Health(10, 10)
     target_entity = ecs.create_entity(health)
 
@@ -56,7 +55,7 @@ def test_attack_collision_ignores_attacker(ecs_world):
     a = AttackSystem()
     ecs.add_system(a)
     ecs.set_handler(events.COLLISION_EVENT, a.on_collision)
-    
+
     health = Health(10, 10)
     player_entity = ecs.create_entity(health)
 

@@ -1,6 +1,6 @@
 from collections import defaultdict
 from functools import partial
-from math import inf
+from math import copysign, inf
 from typing import Any, Self
 
 import pyglet
@@ -441,7 +441,7 @@ class PlayerSystem(ecs.SystemProtocol, PlayerStateProtocol):
 
     def idle(self, player: Player, position: Position, velocity: Velocity):
         match player.direction:
-            case Vec2(0, 0):
+            case Vec2(x=0, y=0):
                 ...
             case direction:
                 player.state = PlayerState.Walking
@@ -451,7 +451,7 @@ class PlayerSystem(ecs.SystemProtocol, PlayerStateProtocol):
 
     def walking(self, player: Player, position: Position, velocity: Velocity):
         match player.direction:
-            case Vec2(0, 0):
+            case Vec2(x=0, y=0):
                 player.state = PlayerState.Idle
                 velocity.direction = player.direction
                 velocity.speed = 0
@@ -465,7 +465,7 @@ class PlayerSystem(ecs.SystemProtocol, PlayerStateProtocol):
         match player.cooldown, player.direction:
             case cooldown, _ if cooldown > 0:
                 player.cooldown = max(0, player.cooldown - dt)
-            case 0, Vec2(0, 0):
+            case 0, Vec2(x=0, y=0):
                 player.state = PlayerState.Idle
                 velocity.direction = player.direction
                 velocity.speed = 0
@@ -479,12 +479,12 @@ class PlayerSystem(ecs.SystemProtocol, PlayerStateProtocol):
         for entity, (player, position, velocity, collider) in ecs.get_components(
             Player, Position, Velocity, BoxCollider
         ):
-            attack_pos = Vec2(position.position.x, position.position.y)
             attack_size = 20
-            if player.facing == 1:
-                attack_pos.x += collider.width / 2 + attack_size / 2
-            else:
-                attack_pos.x -= collider.width / 2 + attack_size / 2
+            attack_pos = Vec2(
+                position.position.x
+                + copysign(collider.width / 2 + attack_size / 2, position.position.x),
+                position.position.y,
+            )
 
             match player.state, player.cooldown:
                 case PlayerState.Idle | PlayerState.Walking, _:
