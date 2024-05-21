@@ -24,6 +24,12 @@ barfight = "barfight.cli:main"
 [tool.isort]
 profile = "black"
 
+[tool.coverage.report]
+exclude_also = [
+    "def __repr__",
+    "def __str__",
+]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
