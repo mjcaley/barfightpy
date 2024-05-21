@@ -482,7 +482,7 @@ class PlayerSystem(ecs.SystemProtocol, PlayerStateProtocol):
             attack_size = 20
             attack_pos = Vec2(
                 position.position.x
-                + copysign(collider.width / 2 + attack_size / 2, position.position.x),
+                + copysign(collider.width / 2 + attack_size / 2, player.facing),
                 position.position.y,
             )
 
