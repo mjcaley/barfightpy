@@ -1,3 +1,4 @@
+from math import inf
 import pytest
 from pyglet.math import Vec2
 
@@ -100,10 +101,16 @@ def test_ray_vs_rect(ray_pos, ray_dir, expected):
     assert expected == intersection
 
 
-def test_distance():
+def test_distance_hits():
     d = distance(Vec2(-5, 0), AABB(0, Vec2(0, 0), 2, 2))
 
     assert 4 == d
+
+
+def test_distance_misses():
+    d = distance(Vec2(0, 0), AABB(0, Vec2(0, 0), 10, 10))
+
+    assert inf == d
 
 
 def test_collision_process(ecs_world):
