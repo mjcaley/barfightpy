@@ -24,6 +24,9 @@ barfight = "barfight.cli:main"
 [tool.isort]
 profile = "black"
 
+[tool.coverage.run]
+include =["barfight/*"]
+
 [tool.coverage.report]
 exclude_also = [
     "def __repr__",
