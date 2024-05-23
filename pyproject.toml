@@ -2,7 +2,7 @@
 name = "barfight"
 version = "0.1.0"
 description = ""
-authors = ["Mike Caley <mike.caley@thomsonreuters.com>"]
+authors = ["Michael Caley <mjcaley@darkarctic.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
