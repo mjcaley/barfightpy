@@ -21,28 +21,24 @@ def main():
 
     debug_system = DebugSystem()
     ecs.add_system(debug_system, 100)
-    ecs.set_handler(events.COLLISION_EVENT, debug_system.on_collision)
-    ecs.set_handler(events.COMPONENT_ADDED_EVENT, debug_system.on_component_added)
-    ecs.set_handler(events.COMPONENT_REMOVED_EVENT, debug_system.on_component_removed)
+    ecs.add_handlers(debug_system)
 
     key_state_handler = KeyStateHandler()
     window.push_handlers(key_state_handler)
     input_system = InputSystem(key_state_handler)
     ecs.add_system(input_system)
-    ecs.set_handler(events.KEY_UP_EVENT, input_system.on_key_up)
-    ecs.set_handler(events.KEY_DOWN_EVENT, input_system.on_key_down)
+    ecs.add_handlers(input_system)
 
     movement_system = MovementSystem()
     ecs.add_system(movement_system)
-    ecs.set_handler(events.COLLISION_EVENT, movement_system.on_collision)
+    ecs.add_handlers(movement_system)
 
     collision_system = CollisionSystem()
     ecs.add_system(collision_system)
 
     draw_system = DrawSystem()
     ecs.add_system(draw_system)
-    ecs.set_handler(events.DRAW_EVENT, draw_system.on_draw)
-    ecs.set_handler(events.COMPONENT_ADDED_EVENT, draw_system.on_component_added)
+    ecs.add_handlers(draw_system)
 
     # Wire events
     @window.event
@@ -63,15 +59,14 @@ def main():
 
     player_system = PlayerSystem()
     ecs.add_system(player_system)
-    ecs.set_handler(events.PLAYER_ATTACK_EVENT, player_system.on_player_attack)
-    ecs.set_handler(events.PLAYER_DIRECTION_EVENT, player_system.on_player_direction)
+    ecs.add_handlers(player_system)
 
     health_system = HealthSystem()
     ecs.add_system(health_system)
 
     attack_system = AttackSystem()
     ecs.add_system(attack_system)
-    ecs.set_handler(events.COLLISION_EVENT, attack_system.on_collision)
+    ecs.add_handlers(attack_system)
 
     player = add_player()
     wall1 = add_wall(400, 200, 100, 100)

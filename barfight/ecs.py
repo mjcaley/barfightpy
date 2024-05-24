@@ -74,6 +74,44 @@ def entity_exists(entity: int) -> bool:
     return esper.entity_exists(entity)
 
 
+def add_handlers(system: Any):
+    if isinstance(system, events.CollisionProtocol):
+        esper.set_handler(events.COLLISION_EVENT, system.on_collision)
+    if isinstance(system, events.ComponentAddedProtocol):
+        esper.set_handler(events.COMPONENT_ADDED_EVENT, system.on_component_added)
+    if isinstance(system, events.ComponentRemovedProtocol):
+        esper.set_handler(events.COMPONENT_REMOVED_EVENT, system.on_component_removed)
+    if isinstance(system, events.DrawProtocol):
+        esper.set_handler(events.DRAW_EVENT, system.on_draw)
+    if isinstance(system, events.ExitProtocol):
+        esper.set_handler(events.EXIT_EVENT, system.on_exit)
+    if isinstance(system, events.InputProtocol):
+        esper.set_handler(events.KEY_DOWN_EVENT, system.on_key_down)
+        esper.set_handler(events.KEY_UP_EVENT, system.on_key_up)
+    if isinstance(system, events.PlayerStateProtocol):
+        esper.set_handler(events.PLAYER_ATTACK_EVENT, system.on_player_attack)
+        esper.set_handler(events.PLAYER_DIRECTION_EVENT, system.on_player_direction)
+
+
+def remove_handlers(system: Any):
+    if isinstance(system, events.CollisionProtocol):
+        esper.remove_handler(events.COLLISION_EVENT, system.on_collision)
+    if isinstance(system, events.ComponentAddedProtocol):
+        esper.remove_handler(events.COMPONENT_ADDED_EVENT, system.on_component_added)
+    if isinstance(system, events.ComponentRemovedProtocol):
+        esper.remove_handler(events.COMPONENT_REMOVED_EVENT, system.on_component_removed)
+    if isinstance(system, events.DrawProtocol):
+        esper.remove_handler(events.DRAW_EVENT, system.on_draw)
+    if isinstance(system, events.ExitProtocol):
+        esper.remove_handler(events.EXIT_EVENT, system.on_exit)
+    if isinstance(system, events.InputProtocol):
+        esper.remove_handler(events.KEY_DOWN_EVENT, system.on_key_down)
+        esper.remove_handler(events.KEY_UP_EVENT, system.on_key_up)
+    if isinstance(system, events.PlayerStateProtocol):
+        esper.remove_handler(events.PLAYER_ATTACK_EVENT, system.on_player_attack)
+        esper.remove_handler(events.PLAYER_DIRECTION_EVENT, system.on_player_direction)
+
+
 def set_handler(name: str, func: Callable[..., None]):
     esper.set_handler(name, func)
 
