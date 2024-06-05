@@ -13,16 +13,13 @@ class Point:
 @dataclass
 class Rectangle:
     min: Vec2 = field(default_factory=Vec2)
-    max: Vec2 = field(default_factory=lambda: Vec2(1, 1))
-    layer: int = 0b0
-    mask: int = 0b0
-    data: Any = None
+    max: Vec2 = field(default_factory=Vec2)
 
     def contains_point(self, other: Point) -> bool:
-        return other >= self.min and other <= self.max
+        return other.x >= self.min.x and other.y >= self.min.y and other.x <= self.max.x and other.y <= self.max.y
 
     def contains_rect(self, other: Self) -> bool:
-        return other.min >= self.min and other.max <= self.max
+        return other.min.x >= self.min.x and other.max.x <= self.max.x and other.min.y >= self.min.y and other.max.y <= self.max.y
     
     def overlaps(self, other: Self) -> bool:
         return (
@@ -41,15 +38,70 @@ class Ray:
     mask: int = 0b0
 
 
+@dataclass
+class Body:
+    rectangle: Rectangle
+    layer: int = 0b0
+    mask: int = 0b0
+    data: Any = None
+
+
+class QuadNode:
+    def __init__(self, boundary: Rectangle, capacity: int):
+        self.boundary = boundary
+        self.capacity = capacity
+        self.items: list[Body] = []
+
+        self.is_divided = False
+        self.bottom_left: QuadNode | None = None
+        self.bottom_right: QuadNode | None = None
+        self.top_left: QuadNode | None = None
+        self.top_right: QuadNode | None = None
+
+    def insert(self, body: Body) -> bool:
+        if not self.boundary.contains_rect(body.rectangle):
+            return False
+        elif len(self.items) < self.capacity:
+            self.items.append(body)
+            return True
+        else:
+            if not self.is_divided:
+                self.subdivide()
+            
+            if self.bottom_left.insert(body):
+                return True
+            elif self.bottom_right.insert(body):
+                return True
+            elif self.top_left.insert(body):
+                return True
+            elif self.top_right.insert(body):
+                return True
+            else:
+                return False
+
+    def subdivide(self):
+        left_x = self.boundary.min.x
+        middle_x = self.boundary.min.x + (self.boundary.max.x - self.boundary.min.x) / 2
+        right_x = self.boundary.max.x
+
+        bottom_y = self.boundary.min.y
+        middle_y = self.boundary.min.y + (self.boundary.max.y - self.boundary.min.y) / 2
+        top_y = self.boundary.max.y
+
+        self.bottom_left = QuadNode(Rectangle(Vec2(left_x, bottom_y), Vec2(middle_x, middle_y)), 0)
+        self.bottom_right = QuadNode(Rectangle(Vec2(middle_x, bottom_y), Vec2(right_x, middle_y)), 0)
+        self.top_left = QuadNode(Rectangle(Vec2(left_x, middle_y), Vec2(middle_x, top_y)), 0)
+        self.top_right = QuadNode(Rectangle(Vec2(middle_x, middle_y), Vec2(right_x, top_y)), 0)
+        
+        self.is_divided = True
+
 
 class QuadTree:
     max_depth = 8
 
-    def __init__(self, size: Rectangle = None, depth: int = 0):
-        self.size = size or Rectangle()
-        self.depth = depth
-        self.items: list[Rectangle] = []
-        self.children: tuple[Rectangle | None] = (None, None, None, None)
+    def __init__(self, boundary: Rectangle):
+        self.boundary = boundary
+        self.root: QuadNode = QuadNode(self.boundary)
 
     def clear(self):
         ...
