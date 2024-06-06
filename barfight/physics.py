@@ -47,9 +47,10 @@ class Body:
 
 
 class QuadNode:
-    def __init__(self, boundary: Rectangle, capacity: int):
+    def __init__(self, boundary: Rectangle, capacity: int, max_depth: int = 8):
         self.boundary = boundary
         self.capacity = capacity
+        self.depth = max_depth
         self.items: list[Body] = []
 
         self.is_divided = False
@@ -61,23 +62,24 @@ class QuadNode:
     def insert(self, body: Body) -> bool:
         if not self.boundary.contains_rect(body.rectangle):
             return False
-        elif len(self.items) < self.capacity:
+        
+        if self.depth <= 0 or len(self.items) < self.capacity and not self.is_divided:
             self.items.append(body)
             return True
+        
+        self.subdivide()
+        
+        if self.bottom_left.insert(body):
+            return True
+        elif self.bottom_right.insert(body):
+            return True
+        elif self.top_left.insert(body):
+            return True
+        elif self.top_right.insert(body):
+            return True
         else:
-            if not self.is_divided:
-                self.subdivide()
-            
-            if self.bottom_left.insert(body):
-                return True
-            elif self.bottom_right.insert(body):
-                return True
-            elif self.top_left.insert(body):
-                return True
-            elif self.top_right.insert(body):
-                return True
-            else:
-                return False
+            self.items.append(body)
+            return True
 
     def subdivide(self):
         left_x = self.boundary.min.x
@@ -88,12 +90,17 @@ class QuadNode:
         middle_y = self.boundary.min.y + (self.boundary.max.y - self.boundary.min.y) / 2
         top_y = self.boundary.max.y
 
-        self.bottom_left = QuadNode(Rectangle(Vec2(left_x, bottom_y), Vec2(middle_x, middle_y)), 0)
-        self.bottom_right = QuadNode(Rectangle(Vec2(middle_x, bottom_y), Vec2(right_x, middle_y)), 0)
-        self.top_left = QuadNode(Rectangle(Vec2(left_x, middle_y), Vec2(middle_x, top_y)), 0)
-        self.top_right = QuadNode(Rectangle(Vec2(middle_x, middle_y), Vec2(right_x, top_y)), 0)
+        self.bottom_left = QuadNode(Rectangle(Vec2(left_x, bottom_y), Vec2(middle_x, middle_y)), self.capacity, self.depth - 1)
+        self.bottom_right = QuadNode(Rectangle(Vec2(middle_x, bottom_y), Vec2(right_x, middle_y)), self.capacity, self.depth - 1)
+        self.top_left = QuadNode(Rectangle(Vec2(left_x, middle_y), Vec2(middle_x, top_y)), self.capacity, self.depth - 1)
+        self.top_right = QuadNode(Rectangle(Vec2(middle_x, middle_y), Vec2(right_x, top_y)), self.capacity, self.depth - 1)
         
         self.is_divided = True
+
+        current = self.items
+        self.items = []
+        for item in current:
+            self.insert(item)
 
 
 class QuadTree:
