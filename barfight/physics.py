@@ -80,6 +80,14 @@ class QuadNode:
         else:
             self.items.append(body)
             return True
+        
+    def remove(self, body: Body):
+        self.items.remove(body)
+        if self.is_divided:
+            self.bottom_left.remove(body)
+            self.bottom_right.remove(body)
+            self.top_left.remove(body)
+            self.top_right.remove(body)
 
     def subdivide(self):
         left_x = self.boundary.min.x
@@ -108,9 +116,25 @@ class QuadTree:
 
     def __init__(self, boundary: Rectangle):
         self.boundary = boundary
-        self.root: QuadNode = QuadNode(self.boundary)
+        self.root: QuadNode = QuadNode(self.boundary, max_depth=self.max_depth)
+
+    def insert(self, body: Body):
+        if not self.root.insert(body):
+            raise ValueError("Not within the boundary")
+
+    def remove(self, body: Body):
+        self.root.remove(body)
 
     def clear(self):
+        self.root = QuadNode(self.boundary)
+
+    def colliding(self):
+        ...
+
+    def collides_with_rect(self, rect: Rectangle):
+        ...
+
+    def collides_with_ray(self, ray: Ray):
         ...
 
 
