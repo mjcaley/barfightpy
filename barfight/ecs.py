@@ -99,7 +99,9 @@ def remove_handlers(system: Any):
     if isinstance(system, events.ComponentAddedProtocol):
         esper.remove_handler(events.COMPONENT_ADDED_EVENT, system.on_component_added)
     if isinstance(system, events.ComponentRemovedProtocol):
-        esper.remove_handler(events.COMPONENT_REMOVED_EVENT, system.on_component_removed)
+        esper.remove_handler(
+            events.COMPONENT_REMOVED_EVENT, system.on_component_removed
+        )
     if isinstance(system, events.DrawProtocol):
         esper.remove_handler(events.DRAW_EVENT, system.on_draw)
     if isinstance(system, events.ExitProtocol):
