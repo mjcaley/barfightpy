@@ -2,7 +2,8 @@ import pytest
 from pyglet.math import Vec2
 
 from barfight import ecs, events
-from barfight.components import BoxCollider, Player, PlayerState, Position, Velocity
+from barfight.components import PhysicsBody, Player, PlayerState, Position, Velocity
+from barfight.physics import Body, Rectangle
 from barfight.systems import PlayerSystem
 
 
@@ -11,7 +12,8 @@ def player_entity(ecs_world):
     player = Player(max_speed=10)
     position = Position()
     velocity = Velocity()
-    ecs.create_entity(player, position, velocity, BoxCollider(10, 10))
+    physics_body = PhysicsBody(Body(Rectangle(Vec2(), Vec2())))
+    ecs.create_entity(player, position, velocity, physics_body)
 
     yield player, position, velocity
 

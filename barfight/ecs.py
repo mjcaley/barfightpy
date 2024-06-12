@@ -91,6 +91,8 @@ def add_handlers(system: Any):
     if isinstance(system, events.PlayerStateProtocol):
         esper.set_handler(events.PLAYER_ATTACK_EVENT, system.on_player_attack)
         esper.set_handler(events.PLAYER_DIRECTION_EVENT, system.on_player_direction)
+    if isinstance(system, events.PositionChangedProtocol):
+        esper.set_handler(events.POSITION_CHANGED_EVENT, system.on_position_changed)
 
 
 def remove_handlers(system: Any):
@@ -99,7 +101,9 @@ def remove_handlers(system: Any):
     if isinstance(system, events.ComponentAddedProtocol):
         esper.remove_handler(events.COMPONENT_ADDED_EVENT, system.on_component_added)
     if isinstance(system, events.ComponentRemovedProtocol):
-        esper.remove_handler(events.COMPONENT_REMOVED_EVENT, system.on_component_removed)
+        esper.remove_handler(
+            events.COMPONENT_REMOVED_EVENT, system.on_component_removed
+        )
     if isinstance(system, events.DrawProtocol):
         esper.remove_handler(events.DRAW_EVENT, system.on_draw)
     if isinstance(system, events.ExitProtocol):
@@ -110,6 +114,8 @@ def remove_handlers(system: Any):
     if isinstance(system, events.PlayerStateProtocol):
         esper.remove_handler(events.PLAYER_ATTACK_EVENT, system.on_player_attack)
         esper.remove_handler(events.PLAYER_DIRECTION_EVENT, system.on_player_direction)
+    if isinstance(system, events.PositionChangedProtocol):
+        esper.remove_handler(events.POSITION_CHANGED_EVENT, system.on_position_changed)
 
 
 def set_handler(name: str, func: Callable[..., None]):

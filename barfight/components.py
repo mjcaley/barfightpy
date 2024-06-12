@@ -4,6 +4,8 @@ from enum import Enum, IntEnum, auto
 import pyglet
 from pyglet.math import Vec2
 
+from .physics import Body
+
 
 class PlayerState(Enum):
     Idle = auto()
@@ -61,9 +63,8 @@ class Sprite:
 
 
 @dataclass
-class BoxCollider:
-    width: float
-    height: float
+class PhysicsBody:
+    body: Body
 
 
 @dataclass

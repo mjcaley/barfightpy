@@ -1,23 +1,26 @@
 import pyglet
+from pyglet.math import Vec2
 from pyglet.window import Window
 from pyglet.window.key import KeyStateHandler
 
 from . import ecs, events
 from .bundles import add_enemy, add_player, add_wall
+from .physics import PhysicsWorld
 from .systems import (
     AttackSystem,
-    CollisionSystem,
     DebugSystem,
     DrawSystem,
     HealthSystem,
     InputSystem,
     MovementSystem,
+    PhysicsSystem,
     PlayerSystem,
 )
 
 
 def main():
     window = Window(800, 600, "Bar Fight")
+    world = PhysicsWorld(Vec2(-200, -200), Vec2(1000, 800))
 
     debug_system = DebugSystem()
     ecs.add_system(debug_system, 100)
@@ -33,8 +36,9 @@ def main():
     ecs.add_system(movement_system)
     ecs.add_handlers(movement_system)
 
-    collision_system = CollisionSystem()
-    ecs.add_system(collision_system)
+    physics_system = PhysicsSystem(world)
+    ecs.add_system(physics_system)
+    ecs.add_handlers(physics_system)
 
     draw_system = DrawSystem()
     ecs.add_system(draw_system)

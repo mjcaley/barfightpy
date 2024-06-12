@@ -4,16 +4,26 @@ from pyglet.math import Vec2
 from . import ecs
 from .components import (
     Attack,
-    BoxCollider,
     Enemy,
     Health,
     Layer,
+    PhysicsBody,
     Player,
     Position,
     Sprite,
     Velocity,
     Wall,
 )
+from .physics import Body, BodyKind, Rectangle
+
+# fmt: off
+CHARACTER_LAYER = 0b0001
+OBSTACLE_LAYER =  0b0010
+ATTACK_LAYER =    0b0100
+CHARACTER_MASK =  0b0010
+OBSTACLE_MASK =   0b0000
+ATTACK_MASK =     0b0001
+# fmt: on
 
 
 def add_player():
@@ -26,8 +36,18 @@ def add_player():
         Position(),
         Velocity(),
         Sprite(pyglet.sprite.Sprite(image), Layer.Game),
-        BoxCollider(100, 100),
         Health(100, 100),
+    )
+    ecs.add_component(
+        entity,
+        PhysicsBody(
+            Body(
+                Rectangle.from_dimensions(Vec2(0, 0), 100, 100),
+                layer=CHARACTER_LAYER,
+                mask=CHARACTER_MASK,
+                data=entity,
+            )
+        ),
     )
 
     return entity
@@ -43,8 +63,11 @@ def add_enemy(x: float, y: float):
         Position(Vec2(x, y)),
         Velocity(speed=120),
         Sprite(pyglet.sprite.Sprite(image), Layer.Game),
-        BoxCollider(100, 100),
         Health(100, 100),
+    )
+    ecs.add_component(
+        entity,
+        PhysicsBody(Body(Rectangle.from_dimensions(Vec2(x, y), 100, 100), data=entity)),
     )
 
     return entity
@@ -59,15 +82,37 @@ def add_wall(x: float, y: float, width: float, height: float):
         Wall(),
         Position(Vec2(x, y)),
         Sprite(pyglet.sprite.Sprite(image), Layer.Game),
-        BoxCollider(width, height),
+    )
+    ecs.add_component(
+        entity,
+        PhysicsBody(
+            Body(
+                Rectangle.from_dimensions(Vec2(x, y), width, height),
+                kind=BodyKind.Static,
+                layer=OBSTACLE_LAYER,
+                mask=OBSTACLE_MASK,
+                data=entity,
+            )
+        ),
     )
 
     return entity
 
 
-def add_attack(entity: int, position: Vec2, size: float):
-    ecs.create_entity(
+def add_attack(entity: int, min: Vec2, max: Vec2):
+    rect = Rectangle(min, max)
+    entity = ecs.create_entity(
         Attack(entity),
-        Position(position),
-        BoxCollider(size, size),
+        Position(rect.center),
+    )
+    ecs.add_component(
+        entity,
+        PhysicsBody(
+            Body(
+                rect,
+                layer=ATTACK_LAYER,
+                mask=ATTACK_MASK,
+                data=entity,
+            )
+        ),
     )

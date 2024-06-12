@@ -13,9 +13,9 @@ from . import ecs, events, patch
 from .bundles import add_attack
 from .components import (
     Attack,
-    BoxCollider,
     Health,
     Layer,
+    PhysicsBody,
     Player,
     PlayerState,
     Position,
@@ -32,91 +32,7 @@ from .events import (
     InputProtocol,
     PlayerStateProtocol,
 )
-
-# region Data
-
-
-class AABB:
-    def __init__(self, entity: int, position: Vec2, width: float, height: float):
-        self._entity = entity
-        self._position = position
-        self._half_width = width / 2
-        self._half_height = height / 2
-
-    def __str__(self) -> str:
-        return f"AABB(entity={self._entity}, position={self._position}, width={self._half_width * 2}, height={self._half_height * 2})"
-
-    def __repr__(self) -> str:
-        return f"AABB(entity={self._entity}, position={self._position}, width={self._half_width * 2}, height={self._half_height * 2})"
-
-    @classmethod
-    def from_entity(cls, entity: int) -> Self:
-        if components := ecs.try_components(entity, Position, BoxCollider):
-            position, collider = components
-            return cls(entity, position.position, collider.width, collider.height)
-        else:
-            raise RuntimeError("Missing required components to create instance")
-
-    @property
-    def entity(self) -> int:
-        return self._entity
-
-    @property
-    def low(self) -> Vec2:
-        return Vec2(
-            self.position.x - self._half_width,
-            self.position.y - self._half_height,
-        )
-
-    @property
-    def high(self) -> Vec2:
-        return Vec2(
-            self.position.x + self._half_width,
-            self.position.y + self._half_height,
-        )
-
-    @property
-    def position(self) -> Vec2:
-        return self._position
-
-    @property
-    def min_x(self):
-        return self.low.x
-
-    @property
-    def max_x(self):
-        return self.high.x
-
-    @property
-    def min_y(self):
-        return self.low.y
-
-    @property
-    def max_y(self):
-        return self.high.y
-
-
-class Ray:
-    def __init__(self, position: Vec2, direction: Vec2):
-        self._position = position
-        self._direction = direction.normalize()
-
-    def __str__(self) -> str:
-        return f"Ray(position={self._position}, direction={self._direction})"
-
-    def __repr__(self) -> str:
-        return f"Ray(position={self._position}, direction={self._direction})"
-
-    @property
-    def position(self) -> Vec2:
-        return self._position
-
-    @property
-    def direction(self) -> Vec2:
-        return self._direction
-
-
-# endregion
+from .physics import Arbiter, Body, PhysicsWorld
 
 # region Attack
 
@@ -146,125 +62,6 @@ class AttackSystem(ecs.SystemProtocol, CollisionProtocol):
 # endregion
 
 
-# region Collision
-
-
-def point_rect_collides(point: Vec2, rect: AABB) -> bool:
-    return (
-        point.x >= rect.low.x
-        and point.x <= rect.high.x
-        and point.y >= rect.low.y
-        and point.y <= rect.high.y
-    )
-
-
-def point_rect_resolve(point: Vec2, rect: AABB) -> Vec2:
-    resolutions = [
-        Vec2(rect.min_x, 0) - point,
-        Vec2(rect.max_x, 0) - point,
-        Vec2(0, rect.min_y) - point,
-        Vec2(0, rect.max_y) - point,
-    ]
-
-    def distance(v: Vec2) -> float:
-        return point.distance(v)
-
-    nearest = min(resolutions, key=distance)
-
-    return nearest
-
-
-def rect_vs_rect(first: AABB, second: AABB) -> bool:
-    return (
-        first.min_x < second.max_x
-        and first.max_x > second.min_x
-        and first.min_y < second.max_y
-        and first.max_y > second.min_y
-    )
-
-
-def rect_rect_resolve(first: AABB, second: AABB) -> Vec2:
-    distance = inf
-    nearest = Vec2(0, 0)
-
-    left = abs(first.max_x - second.min_x)
-    if left < distance:
-        distance = left
-        nearest = Vec2(-distance, 0)
-    right = abs(first.min_x - second.max_x)
-    if right < distance:
-        distance = right
-        nearest = Vec2(distance, 0)
-    up = abs(first.min_y - second.max_y)
-    if up < distance:
-        distance = up
-        nearest = Vec2(0, distance)
-    down = abs(first.max_y - second.min_y)
-    if down < distance:
-        distance = down
-        nearest = Vec2(0, -distance)
-
-    return nearest
-
-
-def ray_vs_rect(ray: Ray, rect: AABB) -> Vec2 | None:
-    tmin = -inf
-    tmax = inf
-
-    if ray.direction.x != 0:
-        tx1 = (rect.min_x - ray.position.x) / ray.direction.x
-        tx2 = (rect.max_x - ray.position.x) / ray.direction.x
-        tmin = max(tmin, min(tx1, tx2))
-        tmax = min(tmax, max(tx1, tx2))
-    else:
-        if ray.position.x < rect.min_x or ray.position.x > rect.max_x:
-            return None
-
-    if ray.direction.y != 0:
-        ty1 = (rect.min_y - ray.position.y) / ray.direction.y
-        ty2 = (rect.max_y - ray.position.y) / ray.direction.y
-        tmin = max(tmin, min(ty1, ty2))
-        tmax = min(tmax, max(ty1, ty2))
-    else:
-        if ray.position.y < rect.min_y or ray.position.y > rect.max_y:
-            return None
-
-    if tmax >= tmin >= 0:
-        intersection = ray.position + (ray.direction * tmin)
-        return intersection
-    else:
-        return None
-
-
-def distance(point: Vec2, rect: AABB) -> float | None:
-    ray = Ray(point, rect.position - point)
-    if intersection := ray_vs_rect(ray, rect):
-        return intersection.distance(point)
-    else:
-        return inf
-
-
-class CollisionSystem(ecs.SystemProtocol):
-    def process(self, dt: float):
-        collisions = defaultdict(set)
-
-        for lentity, (lpos, lcollider) in ecs.get_components(Position, BoxCollider):
-            laabb = AABB(lentity, lpos.position, lcollider.width, lcollider.height)
-            for rentity, (rpos, rcollider) in ecs.get_components(Position, BoxCollider):
-                if lentity == rentity:
-                    continue
-                raabb = AABB(rentity, rpos.position, rcollider.width, rcollider.height)
-
-                if rect_vs_rect(laabb, raabb):
-                    collisions[lentity].add(rentity)
-                    collisions[rentity].add(lentity)
-
-        for source, collisions in collisions.items():
-            ecs.dispatch_event(events.COLLISION_EVENT, source, collisions)
-
-
-# endregion
-
 # region Debug
 
 
@@ -277,11 +74,11 @@ class DebugSystem(
     def process(self, *args): ...
 
     def on_collision(self, source: int, collisions: set[int]):
-        lposition, lcollider = ecs.try_components(source, Position, BoxCollider)
+        lposition, lcollider = ecs.try_components(source, Position, PhysicsBody)
         lvelocity = ecs.try_component(source, Velocity)
 
         for target in collisions:
-            rposition, rcollider = ecs.try_components(target, Position, BoxCollider)
+            rposition, rcollider = ecs.try_components(target, Position, PhysicsBody)
             rvelocity = ecs.try_component(target, Velocity)
             logger.debug(
                 "Collision detected - {lentity} [Position {lposition}] [Velocity {lvelocity}] [Collider {lcollider}] : {rentity} [Position {rposition}] [Velocity {rvelocity}] [Collider {rcollider}]",
@@ -296,15 +93,18 @@ class DebugSystem(
             )
 
     def on_component_added(self, entity: int, component: Any):
-        if isinstance(component, BoxCollider):
+        if isinstance(component, PhysicsBody):
             shape = pyglet.shapes.Box(
-                0, 0, component.width, component.height, color=(50, 25, 255)
+                component.body.rectangle.min.x,
+                component.body.rectangle.min.y,
+                component.body.rectangle.max.x - component.body.rectangle.min.x,
+                component.body.rectangle.max.y - component.body.rectangle.min.y,
+                color=(50, 25, 255),
             )
-            shape.anchor_position = (component.width / 2, component.height / 2)
             ecs.add_component(entity, Shape(shape, Layer.Debug))
 
     def on_component_removed(self, entity: int, component: Any):
-        if isinstance(component, BoxCollider):
+        if isinstance(component, PhysicsBody):
             ecs.remove_component(entity, Shape)
 
 
@@ -324,9 +124,9 @@ class DrawSystem(ecs.SystemProtocol, DrawProtocol, ComponentAddedProtocol):
     def on_draw(self, window: Window):
         for _, (position, sprite) in ecs.get_components(Position, Sprite):
             sprite.sprite.update(x=position.position.x, y=position.position.y)
-        for _, (position, shape) in ecs.get_components(Position, Shape):
-            shape.shape.x = position.position.x
-            shape.shape.y = position.position.y
+        for _, (physics_body, shape) in ecs.get_components(PhysicsBody, Shape):
+            shape.shape.x = physics_body.body.rectangle.min.x
+            shape.shape.y = physics_body.body.rectangle.min.y
         self.batch.draw()
 
     def on_component_added(self, entity: int, component: ecs.Any):
@@ -395,30 +195,64 @@ class InputSystem(ecs.SystemProtocol, InputProtocol):
 # region Movement
 
 
-class MovementSystem(ecs.SystemProtocol, CollisionProtocol):
+class MovementSystem(ecs.SystemProtocol):
     def process(self, dt: float):
         for entity, (_, position, velocity) in ecs.get_components(
             Player, Position, Velocity
         ):
-            position.position += velocity.direction * velocity.speed * dt
+            change = velocity.direction * velocity.speed * dt
+            if change != Vec2(0, 0):
+                position.position += velocity.direction * velocity.speed * dt
+                ecs.dispatch_event(events.POSITION_CHANGED_EVENT, entity)
 
-    def on_collision(self, source: int, collisions: set[int]):
-        if not ecs.has_component(source, Player):
-            return
 
-        laabb = AABB.from_entity(source)
-        raabbs = sorted(
-            (AABB.from_entity(target) for target in collisions),
-            key=partial(distance, laabb.position),
+# endregion
+
+# region Physics
+
+
+class PhysicsSystem(
+    ecs.SystemProtocol,
+    events.ComponentAddedProtocol,
+    events.ComponentRemovedProtocol,
+    events.PositionChangedProtocol,
+):
+    def __init__(self, world: PhysicsWorld):
+        self.world = world
+        self.world.on_collision_callback = self.on_physics_collision
+        self.world.position_change_callback = self.on_physics_position_change
+        self.world.on_sensor_callback = self.on_sensor
+
+    def process(self, dt: float):
+        self.world.step()
+
+    def on_component_added(self, entity: int, component: Any):
+        if isinstance(component, PhysicsBody):
+            self.world.insert(component.body)
+
+    def on_component_removed(self, entity: int, component: Any):
+        if isinstance(component, PhysicsBody):
+            self.world.remove(component.body)
+
+    def on_position_changed(self, entity: int):
+        position, physics_body = ecs.try_components(entity, Position, PhysicsBody)
+        if position and physics_body:
+            physics_body.body.rectangle.center = position.position
+            self.world.remove(physics_body.body)
+            self.world.insert(physics_body.body)
+
+    def on_physics_position_change(self, body: Body):
+        position = ecs.get_component(body.data, Position)
+        physics_body = ecs.get_component(body.data, PhysicsBody)
+        position.position = physics_body.body.rectangle.center
+
+    def on_physics_collision(self, arbiter: Arbiter):
+        logger.debug(
+            f"{arbiter.first_body.data} collides with {arbiter.second_body.data} first time: {arbiter.is_first_collision}"
         )
+        ...
 
-        for target in raabbs:
-            if not ecs.has_component(target.entity, Wall):
-                continue
-            if rect_vs_rect(laabb, target):
-                resolve = rect_rect_resolve(laabb, target)
-                position = ecs.get_component(source, Position)
-                position.position += resolve
+    def on_sensor(self, arbiter: Arbiter): ...
 
 
 # endregion
@@ -476,15 +310,28 @@ class PlayerSystem(ecs.SystemProtocol, PlayerStateProtocol):
                 velocity.speed = player.max_speed
 
     def on_player_attack(self):
-        for entity, (player, position, velocity, collider) in ecs.get_components(
-            Player, Position, Velocity, BoxCollider
+        for entity, (player, position, velocity, physics_body) in ecs.get_components(
+            Player, Position, Velocity, PhysicsBody
         ):
             attack_size = 20
-            attack_pos = Vec2(
-                position.position.x
-                + copysign(collider.width / 2 + attack_size / 2, player.facing),
-                position.position.y,
-            )
+            if player.facing == 1:
+                attack_min = Vec2(
+                    physics_body.body.rectangle.max.x,
+                    physics_body.body.rectangle.center.y - attack_size / 2,
+                )
+                attack_max = Vec2(
+                    physics_body.body.rectangle.max.x + attack_size,
+                    physics_body.body.rectangle.center.y + attack_size / 2,
+                )
+            else:
+                attack_min = Vec2(
+                    physics_body.body.rectangle.min.x - attack_size,
+                    physics_body.body.rectangle.center.y - attack_size / 2,
+                )
+                attack_max = Vec2(
+                    physics_body.body.rectangle.min.x,
+                    physics_body.body.rectangle.center.y + attack_size / 2,
+                )
 
             match player.state, player.cooldown:
                 case PlayerState.Idle | PlayerState.Walking, _:
@@ -492,12 +339,12 @@ class PlayerSystem(ecs.SystemProtocol, PlayerStateProtocol):
                     velocity.speed = 0
                     player.cooldown = 0.2
 
-                    add_attack(entity, attack_pos, attack_size)
+                    add_attack(entity, attack_min, attack_max)
 
                 case PlayerState.Attacking, 0:
                     player.cooldown = 0.2
 
-                    add_attack(entity, attack_pos, attack_size)
+                    add_attack(entity, attack_min, attack_max)
 
 
 # endregion

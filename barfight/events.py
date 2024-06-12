@@ -10,6 +10,7 @@ KEY_UP_EVENT = "key_up"
 KEY_DOWN_EVENT = "key_down"
 EXIT_EVENT = "exit"
 COLLISION_EVENT = "collision"
+POSITION_CHANGED_EVENT = "position_changed"
 DAMAGE_EVENT = "damage"
 PLAYER_DIRECTION_EVENT = "player_direction"
 PLAYER_ATTACK_EVENT = "player_attack"
@@ -50,3 +51,8 @@ class CollisionProtocol(Protocol):
 class PlayerStateProtocol(Protocol):
     def on_player_attack(self): ...
     def on_player_direction(self, direction: Vec2): ...
+
+
+@runtime_checkable
+class PositionChangedProtocol(Protocol):
+    def on_position_changed(self, entity: int): ...
