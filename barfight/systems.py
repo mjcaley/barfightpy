@@ -45,18 +45,24 @@ class AttackSystem(ecs.SystemProtocol, CollisionProtocol):
             else:
                 attack.cleanup = True
 
-    def on_collision(self, source: int, collisions: set[int]):
-        if not (attack := ecs.try_component(source, Attack)):
+    def on_collision(self, arbiter: Arbiter):
+        ...
+
+    def on_sensor(self, arbiter: Arbiter):
+        health = ecs.try_component(arbiter.first_body.data, Health)
+        attack = ecs.try_component(arbiter.second_body.data, Attack)
+        if not health and not attack:
             return
 
-        for target in collisions:
-            if attack.entity == target:
-                continue
-            if health := ecs.try_component(target, Health):
-                health.current -= 10
-                logger.debug("Entity {} hit {}", source, target)
+        if attack.entity == arbiter.first_body.data:
+            return
+            
+        health.current -= 10
+        logger.debug(
+            "Entity {} hit {}", arbiter.first_body.data, arbiter.second_body.data
+        )
 
-        ecs.delete_entity(source)
+        ecs.delete_entity(arbiter.second_body.data)
 
 
 # endregion
@@ -73,24 +79,44 @@ class DebugSystem(
 ):
     def process(self, *args): ...
 
-    def on_collision(self, source: int, collisions: set[int]):
-        lposition, lcollider = ecs.try_components(source, Position, PhysicsBody)
-        lvelocity = ecs.try_component(source, Velocity)
+    def on_collision(self, arbiter: Arbiter):
+        lposition, lcollider = ecs.try_components(
+            arbiter.first_body.data, Position, PhysicsBody
+        )
+        lvelocity = ecs.try_component(arbiter.first_body.data, Velocity)
 
-        for target in collisions:
-            rposition, rcollider = ecs.try_components(target, Position, PhysicsBody)
-            rvelocity = ecs.try_component(target, Velocity)
-            logger.debug(
-                "Collision detected - {lentity} [Position {lposition}] [Velocity {lvelocity}] [Collider {lcollider}] : {rentity} [Position {rposition}] [Velocity {rvelocity}] [Collider {rcollider}]",
-                lentity=source,
-                lposition=lposition,
-                lvelocity=lvelocity,
-                lcollider=lcollider,
-                rentity=target,
-                rposition=rposition,
-                rvelocity=rvelocity,
-                rcollider=rcollider,
-            )
+        rposition, rcollider = ecs.try_components(
+            arbiter.second_body.data, Position, PhysicsBody
+        )
+        rvelocity = ecs.try_component(arbiter.second_body.data, Velocity)
+        logger.debug(
+            "Collision detected - {lentity} [Position {lposition}] [Velocity {lvelocity}] [Collider {lcollider}] : {rentity} [Position {rposition}] [Velocity {rvelocity}] [Collider {rcollider}]",
+            lentity=arbiter.first_body.data,
+            lposition=lposition,
+            lvelocity=lvelocity,
+            lcollider=lcollider,
+            rentity=arbiter.second_body.data,
+            rposition=rposition,
+            rvelocity=rvelocity,
+            rcollider=rcollider,
+        )
+
+    def on_sensor(self, arbiter: Arbiter):
+        lposition, lbody = ecs.try_components(
+            arbiter.first_body.data, Position, PhysicsBody
+        )
+        rposition, rbody = ecs.try_components(
+            arbiter.second_body.data, Position, PhysicsBody
+        )
+        logger.debug(
+            "Sensor detected - {lentity} {lposition} {lbody} - {rentity} {rposition} {rbody}",
+            lentity=arbiter.first_body.data,
+            lposition=lposition,
+            lbody=lbody,
+            rentity=arbiter.second_body.data,
+            rposition=rposition,
+            rbody=rbody,
+        )
 
     def on_component_added(self, entity: int, component: Any):
         if isinstance(component, PhysicsBody):
@@ -221,7 +247,7 @@ class PhysicsSystem(
         self.world = world
         self.world.on_collision_callback = self.on_physics_collision
         self.world.position_change_callback = self.on_physics_position_change
-        self.world.on_sensor_callback = self.on_sensor
+        self.world.on_sensor_callback = self.on_physics_sensor
 
     def process(self, dt: float):
         self.world.step()
@@ -250,9 +276,11 @@ class PhysicsSystem(
         logger.debug(
             f"{arbiter.first_body.data} collides with {arbiter.second_body.data} first time: {arbiter.is_first_collision}"
         )
-        ...
+        ecs.dispatch_event(events.COLLISION_EVENT, arbiter)
 
-    def on_sensor(self, arbiter: Arbiter): ...
+    def on_physics_sensor(self, arbiter: Arbiter):
+        ecs.dispatch_event(events.SENSOR_EVENT, arbiter)
+
 
 
 # endregion

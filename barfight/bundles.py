@@ -110,6 +110,7 @@ def add_attack(entity: int, min: Vec2, max: Vec2):
         PhysicsBody(
             Body(
                 rect,
+                kind=BodyKind.Sensor,
                 layer=ATTACK_LAYER,
                 mask=ATTACK_MASK,
                 data=entity,

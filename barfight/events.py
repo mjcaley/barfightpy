@@ -3,6 +3,8 @@ from typing import Any, Protocol, runtime_checkable
 from pyglet.math import Vec2
 from pyglet.window import Window
 
+from .physics import Arbiter
+
 COMPONENT_ADDED_EVENT = "component_added"
 COMPONENT_REMOVED_EVENT = "component_removed"
 DRAW_EVENT = "draw"
@@ -10,6 +12,7 @@ KEY_UP_EVENT = "key_up"
 KEY_DOWN_EVENT = "key_down"
 EXIT_EVENT = "exit"
 COLLISION_EVENT = "collision"
+SENSOR_EVENT = "sensor"
 POSITION_CHANGED_EVENT = "position_changed"
 DAMAGE_EVENT = "damage"
 PLAYER_DIRECTION_EVENT = "player_direction"
@@ -44,7 +47,8 @@ class ExitProtocol(Protocol):
 
 @runtime_checkable
 class CollisionProtocol(Protocol):
-    def on_collision(self, source: int, collisions: set[int]): ...
+    def on_collision(self, arbiter: Arbiter): ...
+    def on_sensor(self, arbiter: Arbiter): ...
 
 
 @runtime_checkable

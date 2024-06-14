@@ -77,6 +77,7 @@ def entity_exists(entity: int) -> bool:
 def add_handlers(system: Any):
     if isinstance(system, events.CollisionProtocol):
         esper.set_handler(events.COLLISION_EVENT, system.on_collision)
+        esper.set_handler(events.SENSOR_EVENT, system.on_sensor)
     if isinstance(system, events.ComponentAddedProtocol):
         esper.set_handler(events.COMPONENT_ADDED_EVENT, system.on_component_added)
     if isinstance(system, events.ComponentRemovedProtocol):
@@ -98,6 +99,7 @@ def add_handlers(system: Any):
 def remove_handlers(system: Any):
     if isinstance(system, events.CollisionProtocol):
         esper.remove_handler(events.COLLISION_EVENT, system.on_collision)
+        esper.remove_handler(events.SENSOR_EVENT, system.on_sensor)
     if isinstance(system, events.ComponentAddedProtocol):
         esper.remove_handler(events.COMPONENT_ADDED_EVENT, system.on_component_added)
     if isinstance(system, events.ComponentRemovedProtocol):
