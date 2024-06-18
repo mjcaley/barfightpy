@@ -201,6 +201,10 @@ class QuadTree:
             self.top_left.remove(body)
             self.top_right.remove(body)
 
+            if not all(self.bottom_left.bodies, self.bottom_right.bodies, self.top_left.bodies, self.top_right.bodies):
+                self.bottom_left = self.bottom_right = self.top_left = self.top_right = None
+                self.is_divided = False
+
     def subdivide(self):
         left_x = self.boundary.min.x
         middle_x = self.boundary.min.x + (self.boundary.max.x - self.boundary.min.x) / 2
