@@ -45,8 +45,7 @@ class AttackSystem(ecs.SystemProtocol, CollisionProtocol):
             else:
                 attack.cleanup = True
 
-    def on_collision(self, arbiter: Arbiter):
-        ...
+    def on_collision(self, arbiter: Arbiter): ...
 
     def on_sensor(self, arbiter: Arbiter):
         health = ecs.try_component(arbiter.first_body.data, Health)
@@ -56,7 +55,7 @@ class AttackSystem(ecs.SystemProtocol, CollisionProtocol):
 
         if attack.entity == arbiter.first_body.data:
             return
-            
+
         health.current -= 10
         logger.debug(
             "Entity {} hit {}", arbiter.first_body.data, arbiter.second_body.data
@@ -280,7 +279,6 @@ class PhysicsSystem(
 
     def on_physics_sensor(self, arbiter: Arbiter):
         ecs.dispatch_event(events.SENSOR_EVENT, arbiter)
-
 
 
 # endregion
