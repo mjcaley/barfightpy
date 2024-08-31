@@ -9,7 +9,7 @@ from pyglet.graphics import Batch, Group
 from pyglet.math import Vec2
 from pyglet.window import Window, key
 
-from . import ecs, events, patch
+from . import ecs, events
 from .bundles import add_attack
 from .components import (
     Attack,
