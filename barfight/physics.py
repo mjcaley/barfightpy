@@ -328,10 +328,14 @@ class PhysicsWorld:
         self.max = max
         self.max_depth = max_depth
         self.root = QuadTree(Rectangle(self.min, self.max), self.max_depth)
-        self.active_collisions = set()
+        self.active_collisions: set[tuple[Body, Body]] = set()
         self.position_change_callback = None
         self.on_collision_callback = None
         self.on_sensor_callback = None
+
+    @property
+    def boundary(self) -> Rectangle:
+        return self.root.boundary
 
     def insert(self, body: Body):
         if not self.root.insert(body):
@@ -392,6 +396,9 @@ class PhysicsWorld:
 
     def query(self, area: Rectangle) -> list[Body]:
         return self.root.query(area)
+    
+    def is_colliding(self, area: Rectangle) -> bool:
+        return self.query(area) != []
 
     def nearest(self, point: Point):
         return self.root.nearest(point)
