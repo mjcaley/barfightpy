@@ -21,6 +21,9 @@ class Rectangle:
     min: Vec2 = field(default_factory=Vec2)
     max: Vec2 = field(default_factory=Vec2)
 
+    def __hash__(self):
+        return hash(self.min.x) + hash(self.min.y) + hash(self.max.x) + hash(self.max.y)
+
     @classmethod
     def from_dimensions(cls, position: Vec2, width: float, height: float) -> Self:
         return cls(
@@ -201,8 +204,15 @@ class QuadTree:
             self.top_left.remove(body)
             self.top_right.remove(body)
 
-            if not all(self.bottom_left.bodies, self.bottom_right.bodies, self.top_left.bodies, self.top_right.bodies):
-                self.bottom_left = self.bottom_right = self.top_left = self.top_right = None
+            if not all(
+                self.bottom_left.bodies,
+                self.bottom_right.bodies,
+                self.top_left.bodies,
+                self.top_right.bodies,
+            ):
+                self.bottom_left = self.bottom_right = self.top_left = (
+                    self.top_right
+                ) = None
                 self.is_divided = False
 
     def subdivide(self):
@@ -328,10 +338,14 @@ class PhysicsWorld:
         self.max = max
         self.max_depth = max_depth
         self.root = QuadTree(Rectangle(self.min, self.max), self.max_depth)
-        self.active_collisions = set()
+        self.active_collisions: set[tuple[Body, Body]] = set()
         self.position_change_callback = None
         self.on_collision_callback = None
         self.on_sensor_callback = None
+
+    @property
+    def boundary(self) -> Rectangle:
+        return self.root.boundary
 
     def insert(self, body: Body):
         if not self.root.insert(body):
@@ -392,6 +406,9 @@ class PhysicsWorld:
 
     def query(self, area: Rectangle) -> list[Body]:
         return self.root.query(area)
+
+    def is_colliding(self, area: Rectangle) -> bool:
+        return self.query(area) != []
 
     def nearest(self, point: Point):
         return self.root.nearest(point)

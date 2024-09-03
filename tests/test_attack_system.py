@@ -2,6 +2,7 @@ from random import randint
 
 from barfight import ecs, events
 from barfight.components import Attack, Health
+from barfight.physics import Arbiter
 from barfight.systems import AttackSystem
 
 
