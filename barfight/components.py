@@ -4,6 +4,8 @@ from enum import Enum, IntEnum, auto
 import pyglet
 from pyglet.math import Vec2
 
+from barfight.pathfinding import Cell
+
 from .physics import Body
 
 
@@ -71,3 +73,10 @@ class PhysicsBody:
 class Shape:
     shape: pyglet.shapes.ShapeBase
     layer: Layer
+
+
+@dataclass
+class Path:
+    goal: Vec2
+    next_path: Vec2
+    path: list[Cell]

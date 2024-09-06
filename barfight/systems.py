@@ -371,3 +371,12 @@ class PlayerSystem(ecs.SystemProtocol, PlayerStateProtocol):
 
 
 # endregion
+
+# region AI
+
+
+class AI(ecs.SystemProtocol):
+    def process(self, dt: float): ...
+
+
+# endregion
