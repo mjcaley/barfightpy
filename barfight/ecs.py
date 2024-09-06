@@ -1,4 +1,4 @@
-from typing import Any, Callable, Protocol
+from typing import Any, Callable, Protocol, Type
 
 import esper
 
@@ -48,7 +48,7 @@ def has_component(entity: int, component: type[Any]) -> bool:
     return esper.has_component(entity, component)
 
 
-def try_component(entity: int, component: Any) -> Any:
+def try_component(entity: int, component: Type[Any]) -> Any:
     return esper.try_component(entity, component)
 
 

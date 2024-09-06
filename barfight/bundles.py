@@ -26,7 +26,7 @@ ATTACK_MASK =     0b0001
 # fmt: on
 
 
-def add_player():
+def add_player() -> int:
     image = pyglet.image.load("assets/player.png")
     image.anchor_x = image.width // 2
     image.anchor_y = image.height // 2
@@ -53,7 +53,7 @@ def add_player():
     return entity
 
 
-def add_enemy(x: float, y: float):
+def add_enemy(x: float, y: float) -> int:
     image = pyglet.image.load("assets/player.png")
     image.anchor_x = image.width // 2
     image.anchor_y = image.height // 2
@@ -73,7 +73,7 @@ def add_enemy(x: float, y: float):
     return entity
 
 
-def add_wall(x: float, y: float, width: float, height: float):
+def add_wall(x: float, y: float, width: float, height: float) -> int:
     image = pyglet.image.load("assets/wall.png")
     image.anchor_x = image.width // 2
     image.anchor_y = image.width // 2
@@ -99,7 +99,7 @@ def add_wall(x: float, y: float, width: float, height: float):
     return entity
 
 
-def add_attack(entity: int, min: Vec2, max: Vec2):
+def add_attack(entity: int, min: Vec2, max: Vec2) -> int:
     rect = Rectangle(min, max)
     entity = ecs.create_entity(
         Attack(entity),
@@ -117,3 +117,5 @@ def add_attack(entity: int, min: Vec2, max: Vec2):
             )
         ),
     )
+
+    return entity
