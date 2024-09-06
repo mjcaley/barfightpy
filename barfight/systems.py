@@ -1,7 +1,4 @@
-from collections import defaultdict
-from functools import partial
-from math import copysign, inf
-from typing import Any, Self
+from typing import Any
 
 import pyglet
 from loguru import logger
@@ -22,7 +19,6 @@ from .components import (
     Shape,
     Sprite,
     Velocity,
-    Wall,
 )
 from .events import (
     CollisionProtocol,
@@ -33,6 +29,7 @@ from .events import (
     PlayerStateProtocol,
 )
 from .physics import Arbiter, Body, PhysicsWorld
+
 
 # region Attack
 

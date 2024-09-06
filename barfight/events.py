@@ -5,6 +5,7 @@ from pyglet.window import Window
 
 from .physics import Arbiter
 
+
 COMPONENT_ADDED_EVENT = "component_added"
 COMPONENT_REMOVED_EVENT = "component_removed"
 DRAW_EVENT = "draw"
