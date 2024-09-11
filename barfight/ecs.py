@@ -40,7 +40,7 @@ def get_component(entity: int, component: type[Any]) -> Any:
     return esper.component_for_entity(entity, component)
 
 
-def get_components(*component_types: Any) -> list[tuple[int, tuple[Any]]]:
+def get_components(*component_types: Any) -> list[tuple[int, tuple]]:
     return esper.get_components(*component_types)
 
 

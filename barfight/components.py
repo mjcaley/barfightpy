@@ -9,7 +9,7 @@ from barfight.pathfinding import Cell
 from .physics import Body
 
 
-class PlayerState(Enum):
+class ActorState(Enum):
     Idle = auto()
     Walking = auto()
     Attacking = auto()
@@ -21,12 +21,15 @@ class Layer(IntEnum):
 
 
 @dataclass
-class Player:
+class Actor:
     max_speed: int
     direction: Vec2 = field(default_factory=Vec2)
     facing: float = 1
-    state: PlayerState = PlayerState.Idle
+    state: ActorState = ActorState.Idle
     cooldown: float = 0
+
+
+class Player: ...
 
 
 class Enemy: ...
@@ -78,5 +81,8 @@ class Shape:
 @dataclass
 class Path:
     goal: Vec2
-    next_path: Vec2
+    next_path: Vec2 | None
     path: list[Cell]
+
+
+class Follow: ...

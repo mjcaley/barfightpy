@@ -7,6 +7,7 @@ from . import ecs, events
 from .bundles import add_enemy, add_player, add_wall
 from .physics import PhysicsWorld
 from .systems import (
+    ActorSystem,
     AttackSystem,
     DebugSystem,
     DrawSystem,
@@ -14,7 +15,6 @@ from .systems import (
     InputSystem,
     MovementSystem,
     PhysicsSystem,
-    PlayerSystem,
 )
 
 
@@ -61,7 +61,7 @@ def main():
     window.push_handlers(input_system.handler)
     pyglet.clock.schedule_interval(ecs.update, interval=1.0 / 60)
 
-    player_system = PlayerSystem()
+    player_system = ActorSystem()
     ecs.add_system(player_system)
     ecs.add_handlers(player_system)
 

@@ -9,18 +9,23 @@ from pyglet.window import Window, key
 from . import ecs, events
 from .bundles import add_attack
 from .components import (
+    Actor,
+    ActorState,
     Attack,
+    Enemy,
+    Follow,
     Health,
     Layer,
+    Path,
     PhysicsBody,
     Player,
-    PlayerState,
     Position,
     Shape,
     Sprite,
     Velocity,
 )
 from .events import (
+    AIStateProtocol,
     CollisionProtocol,
     ComponentAddedProtocol,
     ComponentRemovedProtocol,
@@ -28,6 +33,7 @@ from .events import (
     InputProtocol,
     PlayerStateProtocol,
 )
+from .pathfinding import Pathfinding
 from .physics import Arbiter, Body, PhysicsWorld
 
 
@@ -202,8 +208,7 @@ class InputSystem(ecs.SystemProtocol, InputProtocol):
             direction.x += 1
         direction.normalize()
 
-        for _, (player,) in ecs.get_components(Player):
-            player.direction = direction
+        ecs.dispatch_event(events.PLAYER_DIRECTION_EVENT, direction)
 
     def on_key_down(self, symbol: int, modifiers: int):
         if symbol == key.N:
@@ -220,7 +225,7 @@ class InputSystem(ecs.SystemProtocol, InputProtocol):
 class MovementSystem(ecs.SystemProtocol):
     def process(self, dt: float):
         for entity, (_, position, velocity) in ecs.get_components(
-            Player, Position, Velocity
+            Actor, Position, Velocity
         ):
             change = velocity.direction * velocity.speed * dt
             if change != Vec2(0, 0):
@@ -280,94 +285,112 @@ class PhysicsSystem(
 
 # endregion
 
-# region Player
+# region Actor
 
 
-class PlayerSystem(ecs.SystemProtocol, PlayerStateProtocol):
+class ActorSystem(ecs.SystemProtocol, PlayerStateProtocol, AIStateProtocol):
     def process(self, dt: float):
-        for entity, (player, position, velocity) in ecs.get_components(
-            Player, Position, Velocity
+        for _, (actor, position, velocity) in ecs.get_components(
+            Actor, Position, Velocity
         ):
-            match player.state:
-                case PlayerState.Idle:
-                    self.idle(player, position, velocity)
-                case PlayerState.Walking:
-                    self.walking(player, position, velocity)
-                case PlayerState.Attacking:
-                    self.attacking(dt, player, position, velocity)
+            match actor.state:
+                case ActorState.Idle:
+                    self.idle(actor, position, velocity)
+                case ActorState.Walking:
+                    self.walking(actor, position, velocity)
+                case ActorState.Attacking:
+                    self.attacking(dt, actor, position, velocity)
 
-    def idle(self, player: Player, position: Position, velocity: Velocity):
-        match player.direction:
+    def idle(self, actor: Actor, position: Position, velocity: Velocity):
+        match actor.direction:
             case Vec2(x=0, y=0):
                 ...
             case direction:
-                player.state = PlayerState.Walking
-                player.facing = player.direction.x
+                actor.state = ActorState.Walking
+                actor.facing = actor.direction.x
                 velocity.direction = direction
-                velocity.speed = player.max_speed
+                velocity.speed = actor.max_speed
 
-    def walking(self, player: Player, position: Position, velocity: Velocity):
-        match player.direction:
+    def walking(self, actor: Actor, position: Position, velocity: Velocity):
+        match actor.direction:
             case Vec2(x=0, y=0):
-                player.state = PlayerState.Idle
-                velocity.direction = player.direction
+                actor.state = ActorState.Idle
+                velocity.direction = actor.direction
                 velocity.speed = 0
             case _:
-                player.facing = player.direction.x
-                velocity.direction = player.direction
+                actor.facing = actor.direction.x
+                velocity.direction = actor.direction
 
     def attacking(
-        self, dt: float, player: Player, position: Position, velocity: Velocity
+        self, dt: float, actor: Actor, position: Position, velocity: Velocity
     ):
-        match player.cooldown, player.direction:
+        match actor.cooldown, actor.direction:
             case cooldown, _ if cooldown > 0:
-                player.cooldown = max(0, player.cooldown - dt)
+                actor.cooldown = max(0, actor.cooldown - dt)
             case 0, Vec2(x=0, y=0):
-                player.state = PlayerState.Idle
-                velocity.direction = player.direction
+                actor.state = ActorState.Idle
+                velocity.direction = actor.direction
                 velocity.speed = 0
             case 0, _:
-                player.state = PlayerState.Walking
-                player.facing = player.direction.x
-                velocity.direction = player.direction
-                velocity.speed = player.max_speed
+                actor.state = ActorState.Walking
+                actor.facing = actor.direction.x
+                velocity.direction = actor.direction
+                velocity.speed = actor.max_speed
+
+    def _actor_attack(
+        self, entity: int, actor: Actor, velocity: Velocity, physics_body: PhysicsBody
+    ):
+        attack_size = 20
+        if actor.facing == 1:
+            attack_min = Vec2(
+                physics_body.body.rectangle.max.x,
+                physics_body.body.rectangle.center.y - attack_size / 2,
+            )
+            attack_max = Vec2(
+                physics_body.body.rectangle.max.x + attack_size,
+                physics_body.body.rectangle.center.y + attack_size / 2,
+            )
+        else:
+            attack_min = Vec2(
+                physics_body.body.rectangle.min.x - attack_size,
+                physics_body.body.rectangle.center.y - attack_size / 2,
+            )
+            attack_max = Vec2(
+                physics_body.body.rectangle.min.x,
+                physics_body.body.rectangle.center.y + attack_size / 2,
+            )
+
+        match actor.state, actor.cooldown:
+            case ActorState.Idle | ActorState.Walking, _:
+                actor.state = ActorState.Attacking
+                velocity.speed = 0
+                actor.cooldown = 0.2
+
+                add_attack(entity, attack_min, attack_max)
+
+            case ActorState.Attacking, 0:
+                actor.cooldown = 0.2
+
+                add_attack(entity, attack_min, attack_max)
+
+    def on_player_direction(self, direction: Vec2):
+        for _, (actor, _) in ecs.get_components(Actor, Player):
+            actor.direction = direction
 
     def on_player_attack(self):
-        for entity, (player, position, velocity, physics_body) in ecs.get_components(
-            Player, Position, Velocity, PhysicsBody
+        for entity, (actor, velocity, physics_body, _) in ecs.get_components(
+            Actor, Velocity, PhysicsBody, Player
         ):
-            attack_size = 20
-            if player.facing == 1:
-                attack_min = Vec2(
-                    physics_body.body.rectangle.max.x,
-                    physics_body.body.rectangle.center.y - attack_size / 2,
-                )
-                attack_max = Vec2(
-                    physics_body.body.rectangle.max.x + attack_size,
-                    physics_body.body.rectangle.center.y + attack_size / 2,
-                )
-            else:
-                attack_min = Vec2(
-                    physics_body.body.rectangle.min.x - attack_size,
-                    physics_body.body.rectangle.center.y - attack_size / 2,
-                )
-                attack_max = Vec2(
-                    physics_body.body.rectangle.min.x,
-                    physics_body.body.rectangle.center.y + attack_size / 2,
-                )
+            self._actor_attack(entity, actor, velocity, physics_body)
 
-            match player.state, player.cooldown:
-                case PlayerState.Idle | PlayerState.Walking, _:
-                    player.state = PlayerState.Attacking
-                    velocity.speed = 0
-                    player.cooldown = 0.2
+    def on_ai_direction(self, target: int, direction: Vec2):
+        actor = ecs.get_component(target, Actor)
+        actor.direction = direction
 
-                    add_attack(entity, attack_min, attack_max)
-
-                case PlayerState.Attacking, 0:
-                    player.cooldown = 0.2
-
-                    add_attack(entity, attack_min, attack_max)
+    def on_ai_attack(self, target: int):
+        if components := ecs.try_components(target, Actor, Velocity, PhysicsBody, AI):
+            actor, velocity, physics_body, _ = components
+            self._actor_attack(target, actor, velocity, physics_body)
 
 
 # endregion
@@ -375,8 +398,34 @@ class PlayerSystem(ecs.SystemProtocol, PlayerStateProtocol):
 # region AI
 
 
-class AI(ecs.SystemProtocol):
-    def process(self, dt: float): ...
+class AI(ecs.SystemProtocol, events.InputProtocol):
+    def __init__(self, pathfinding: Pathfinding):
+        self.pathfinding = pathfinding
+
+    def process(self, dt: float):
+        players = [
+            (player_entity, player_position)
+            for player_entity, (player_position,) in ecs.get_components(Actor, Position)
+        ]
+
+        #
+        for entity, (_, _, position) in ecs.get_components(Enemy, Follow, Position):
+            start = position.position
+            end = players[0][1].position  # TODO: Get closest entity
+            path = self.pathfinding.find_path(start, end)
+            ecs.add_component(entity, Path(end, None, path))
+            ecs.remove_component(entity, Follow)
+
+        for entity, (_, _, _) in ecs.get_components(Enemy, Path, Position):
+            ...
+
+    def on_key_down(self, symbol: int, modifiers: int):
+        if symbol == key.SPACE:
+            for entity, (_,) in ecs.get_components(Enemy):
+                if not ecs.has_component(entity, Follow):
+                    ecs.add_component(entity, Follow())
+
+    def on_key_up(self, key: int, modifiers: int): ...
 
 
 # endregion

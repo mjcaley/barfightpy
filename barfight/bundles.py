@@ -3,6 +3,7 @@ from pyglet.math import Vec2
 
 from . import ecs
 from .components import (
+    Actor,
     Attack,
     Enemy,
     Health,
@@ -32,11 +33,12 @@ def add_player() -> int:
     image.anchor_y = image.height // 2
 
     entity = ecs.create_entity(
-        Player(max_speed=120),
+        Actor(max_speed=120),
         Position(),
         Velocity(),
         Sprite(pyglet.sprite.Sprite(image), Layer.Game),
         Health(100, 100),
+        Player(),
     )
     ecs.add_component(
         entity,
