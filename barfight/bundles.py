@@ -5,6 +5,7 @@ from . import ecs
 from .components import (
     Actor,
     Attack,
+    Destination,
     Enemy,
     Health,
     Layer,
@@ -15,26 +16,18 @@ from .components import (
     Velocity,
     Wall,
 )
+from .constants import *
 from .physics import Body, BodyKind, Rectangle
 
-# fmt: off
-CHARACTER_LAYER = 0b0001
-OBSTACLE_LAYER =  0b0010
-ATTACK_LAYER =    0b0100
-CHARACTER_MASK =  0b0010
-OBSTACLE_MASK =   0b0000
-ATTACK_MASK =     0b0001
-# fmt: on
 
-
-def add_player() -> int:
+def add_player(position: Vec2) -> int:
     image = pyglet.image.load("assets/player.png")
     image.anchor_x = image.width // 2
     image.anchor_y = image.height // 2
 
     entity = ecs.create_entity(
         Actor(max_speed=120),
-        Position(),
+        Position(position),
         Velocity(),
         Sprite(pyglet.sprite.Sprite(image), Layer.Game),
         Health(100, 100),
@@ -44,7 +37,7 @@ def add_player() -> int:
         entity,
         PhysicsBody(
             Body(
-                Rectangle.from_dimensions(Vec2(0, 0), 100, 100),
+                Rectangle.from_dimensions(position, 100, 100),
                 layer=CHARACTER_LAYER,
                 mask=CHARACTER_MASK,
                 data=entity,
@@ -63,13 +56,21 @@ def add_enemy(x: float, y: float) -> int:
     entity = ecs.create_entity(
         Enemy(),
         Position(Vec2(x, y)),
-        Velocity(speed=120),
+        Velocity(),
         Sprite(pyglet.sprite.Sprite(image), Layer.Game),
         Health(100, 100),
+        Actor(max_speed=200),
     )
     ecs.add_component(
         entity,
-        PhysicsBody(Body(Rectangle.from_dimensions(Vec2(x, y), 100, 100), data=entity)),
+        PhysicsBody(
+            Body(
+                Rectangle.from_dimensions(Vec2(x, y), 100, 100),
+                layer=CHARACTER_LAYER,
+                mask=CHARACTER_MASK,
+                data=entity,
+            )
+        ),
     )
 
     return entity
@@ -121,3 +122,7 @@ def add_attack(entity: int, min: Vec2, max: Vec2) -> int:
     )
 
     return entity
+
+
+def add_ai_destination(position: Vec2) -> int:
+    return ecs.create_entity(Position(position), Destination())

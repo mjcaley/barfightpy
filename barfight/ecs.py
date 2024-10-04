@@ -75,6 +75,9 @@ def entity_exists(entity: int) -> bool:
 
 
 def add_handlers(system: Any):
+    if isinstance(system, events.AIStateProtocol):
+        esper.set_handler(events.AI_ATTACK_EVENT, system.on_ai_attack)
+        esper.set_handler(events.AI_DIRECTION_EVENT, system.on_ai_direction)
     if isinstance(system, events.CollisionProtocol):
         esper.set_handler(events.COLLISION_EVENT, system.on_collision)
         esper.set_handler(events.SENSOR_EVENT, system.on_sensor)
@@ -89,6 +92,8 @@ def add_handlers(system: Any):
     if isinstance(system, events.InputProtocol):
         esper.set_handler(events.KEY_DOWN_EVENT, system.on_key_down)
         esper.set_handler(events.KEY_UP_EVENT, system.on_key_up)
+        esper.set_handler(events.MOUSE_DOWN_EVENT, system.on_mouse_down)
+        esper.set_handler(events.MOUSE_UP_EVENT, system.on_mouse_up)
     if isinstance(system, events.PlayerStateProtocol):
         esper.set_handler(events.PLAYER_ATTACK_EVENT, system.on_player_attack)
         esper.set_handler(events.PLAYER_DIRECTION_EVENT, system.on_player_direction)

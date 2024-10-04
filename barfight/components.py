@@ -81,8 +81,11 @@ class Shape:
 @dataclass
 class Path:
     goal: Vec2
-    next_path: Vec2 | None
-    path: list[Cell]
+    next_path: Vec2
+    path: list[Vec2]
 
 
 class Follow: ...
+
+
+class Destination: ...

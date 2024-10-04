@@ -11,6 +11,8 @@ COMPONENT_REMOVED_EVENT = "component_removed"
 DRAW_EVENT = "draw"
 KEY_UP_EVENT = "key_up"
 KEY_DOWN_EVENT = "key_down"
+MOUSE_DOWN_EVENT = "mouse_down"
+MOUSE_UP_EVENT = "mouse_up"
 EXIT_EVENT = "exit"
 COLLISION_EVENT = "collision"
 SENSOR_EVENT = "sensor"
@@ -36,6 +38,8 @@ class ComponentRemovedProtocol(Protocol):
 class InputProtocol(Protocol):
     def on_key_up(self, symbol: int, modifiers: int): ...
     def on_key_down(self, symbol: int, modifiers: int): ...
+    def on_mouse_down(self, x: int, y: int, button: int, modifiers: int): ...
+    def on_mouse_up(self, x: int, y: int, button: int, modifiers: int): ...
 
 
 @runtime_checkable
