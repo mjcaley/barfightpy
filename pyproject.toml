@@ -1,29 +1,26 @@
-[tool.poetry]
+[project]
 name = "barfight"
 version = "0.1.0"
 description = ""
-authors = ["Michael Caley <mjcaley@darkarctic.com>"]
+authors = [{name = "Michael Caley", email = "mjcaley@darkarctic.com"}]
 readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "esper >=3.2",
+    "pyglet >=2.0",
+    "loguru >=0.7"
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-esper = "^3.2"
-pyglet = "^2.0.16"
-loguru = "^0.7.2"
+[tool.uv]
+dev-dependencies = [
+    "pytest >=8.1.1",
+    "pytest-cov >=5.0",
+    "mypy >=1.10",
+    "pre-commit >=3.7.1"
+]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.1.1"
-black = "^24.3.0"
-isort = "^5.13.2"
-pytest-cov = "^5.0.0"
-mypy = "^1.10.0"
-pre-commit = "^3.7.1"
-
-[tool.poetry.scripts]
+[project.scripts]
 barfight = "barfight.cli:main"
-
-[tool.isort]
-profile = "black"
 
 [tool.coverage.run]
 include =["barfight/*"]
@@ -35,5 +32,5 @@ exclude_also = [
 ]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
