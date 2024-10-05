@@ -6,7 +6,8 @@ from typing import Iterator
 
 from pyglet.math import Vec2
 
-from barfight.physics import PhysicsWorld, Rectangle
+from .constants import CHARACTER_LAYER
+from .physics import PhysicsWorld, Rectangle
 
 
 @dataclass(unsafe_hash=True)
@@ -52,7 +53,9 @@ class Grid:
     def update_collisions(self):
         for line in self.grid:
             for cell in line:
-                cell.colliding = self.world.is_colliding(cell.rectangle)
+                cell.colliding = self.world.is_colliding_with(
+                    cell.rectangle, CHARACTER_LAYER
+                )
 
     def coord_from_position(self, position: Vec2) -> tuple[int, int]:
         x = int(position.x // (self.radius * 2))
@@ -91,7 +94,7 @@ class Pathfinding:
             cell.rectangle.center.y - goal.rectangle.center.y
         )
 
-    def find_path(self, start: Vec2, end: Vec2):
+    def find_path(self, start: Vec2, end: Vec2) -> list[Cell] | None:
         start_cell = self.grid.cell_from_position(start)
         goal_cell = self.grid.cell_from_position(end)
         open_set: list[tuple[int, Cell]] = []

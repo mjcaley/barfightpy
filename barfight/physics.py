@@ -407,8 +407,15 @@ class PhysicsWorld:
     def query(self, area: Rectangle) -> list[Body]:
         return self.root.query(area)
 
+    def query_with(self, area: Rectangle, layer: int) -> list[Body]:
+        bodies = self.query(area)
+        return [body for body in bodies if body.mask & layer != 0]
+
     def is_colliding(self, area: Rectangle) -> bool:
         return self.query(area) != []
+
+    def is_colliding_with(self, area: Rectangle, layer: int) -> bool:
+        return self.query_with(area, layer) != []
 
     def nearest(self, point: Point):
         return self.root.nearest(point)

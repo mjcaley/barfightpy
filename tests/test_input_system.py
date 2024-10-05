@@ -4,7 +4,7 @@ from pyglet.window import key
 from pyglet.window.key import KeyStateHandler
 
 from barfight import ecs, events
-from barfight.components import Player
+from barfight.components import Actor
 from barfight.systems import InputSystem
 
 
@@ -21,7 +21,7 @@ def test_input_sets_direction(ecs_world, test_input, expected):
     handler = KeyStateHandler()
     ecs.add_system(InputSystem(handler))
 
-    player = Player(0)
+    player = Actor(0)
     ecs.create_entity(player)
 
     handler.on_key_press(test_input, 0)
