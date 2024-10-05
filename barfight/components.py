@@ -81,7 +81,6 @@ class Shape:
 @dataclass
 class Path:
     goal: Vec2
-    next_path: Vec2
     path: list[Vec2]
 
 

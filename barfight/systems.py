@@ -218,12 +218,6 @@ class InputSystem(ecs.SystemProtocol, InputProtocol):
         if symbol == key.N:
             ecs.dispatch_event(events.PLAYER_ATTACK_EVENT)
 
-    def on_key_up(self, symbol: int, modifiers: int): ...
-
-    def on_mouse_up(self, x: int, y: int, button: int, modifiers: int): ...
-
-    def on_mouse_down(self, x: int, y: int, button: int, modifiers: int): ...
-
 
 # endregion
 
@@ -303,7 +297,6 @@ class ActorSystem(ecs.SystemProtocol, PlayerStateProtocol, AIStateProtocol):
         ):
             match actor.state:
                 case ActorState.Idle:
-                    # breakpoint()
                     self.idle(actor, position, velocity)
                 case ActorState.Walking:
                     self.walking(actor, position, velocity)
@@ -315,7 +308,6 @@ class ActorSystem(ecs.SystemProtocol, PlayerStateProtocol, AIStateProtocol):
             case Vec2(x=0, y=0):
                 ...
             case direction:
-                # breakpoint()
                 actor.state = ActorState.Walking
                 actor.facing = actor.direction.x
                 velocity.direction = direction
@@ -417,83 +409,41 @@ class AISystem(ecs.SystemProtocol, AIStateProtocol, InputProtocol):
         for entity, (_, position, path, actor) in ecs.get_components(
             Enemy, Position, Path, Actor
         ):
-            # breakpoint()
-            # logger.debug("Enemy moving")
-            # close_to_goal = path.goal.distance(position.position) < actor.max_speed * dt
-            if (
-                path.goal.distance(position.position) < actor.max_speed * dt
-            ):  # Close to the goal
-                # logger.debug(f"Enemy close to goal")
-                position.position = path.goal
-                ecs.remove_component(entity, Path)
-                ecs.dispatch_event(events.AI_DIRECTION_EVENT, Vec2(0, 0))
-            # close_to_next_path = (
-            #     path.next_path.distance(position.position) < actor.max_speed * dt
-            # )
-            elif (
-                path.next_path.distance(position.position) < actor.max_speed * dt
-            ):  # Close to next cell
-                # logger.debug("Enemy closer to next cell")
-                position.position = path.next_path
-                path.next_path = path.path.pop(0)
-                continue
+            actor_move_distance = actor.max_speed * dt
+            if path.path:
+                next_path = path.path[0]
+                if next_path.distance(position.position) < actor_move_distance:
+                    path.path.pop(0)
+                else:
+                    direction = (next_path - position.position).normalize()
+                    ecs.dispatch_event(events.AI_DIRECTION_EVENT, entity, direction)
             else:
-                direction = (path.next_path - position.position).normalize()
-                ecs.dispatch_event(events.AI_DIRECTION_EVENT, entity, direction)
-
-        # players = [
-        #     (player_entity, player_position)
-        #     for player_entity, (player_position,) in ecs.get_components(Actor, Position)
-        # ]
-
-        # # Entity has follow component, so needs a pathfinding component added
-        # for entity, (_, _, position) in ecs.get_components(Enemy, Follow, Position):
-        #     start = position.position
-        #     end = players[0][1].position  # TODO: Get closest entity
-        #     path = self.pathfinding.find_path(start, end)
-        #     ecs.add_component(entity, Path(end, path.pop(0), path))
-        #     ecs.remove_component(entity, Follow)
-
-        # # Move actor
-        # for entity, (_, path, position, actor) in ecs.get_components(Enemy, Path, Position, Actor):
-        #     close_to_goal = path.goal.distance(position.position) < actor.max_speed / dt
-        #     if close_to_goal:
-        #         position.position = path.goal
-        #         ecs.remove_component(entity, Path)
-        #         ecs.dispatch_event(events.AI_DIRECTION_EVENT, Vec2(0, 0))
-        #     close_to_next_path = path.next_path.distance(position.position) < actor.max_speed / dt
-        #     if close_to_next_path:
-        #         position.position = path.next_path
-        #         path.next_path = path.path.pop(0)
-        #         continue
-        #     # ecs.dispatch_event(events.AI_DIRECTION_EVENT, path.next_path.)
-
-    def on_key_down(self, symbol: int, modifiers: int): ...
-
-    def on_key_up(self, key: int, modifiers: int): ...
-
-    def on_mouse_up(self, x: int, y: int, button: int, modifiers: int): ...
+                if path.goal.distance(position.position) < actor_move_distance:
+                    position.position = path.goal
+                    ecs.dispatch_event(events.AI_DIRECTION_EVENT, entity, Vec2())
+                    ecs.remove_component(entity, Path)
+                else:
+                    direction = (path.goal - position.position).normalize()
+                    ecs.dispatch_event(events.AI_DIRECTION_EVENT, entity, direction)
 
     def on_mouse_down(self, x: int, y: int, button: int, modifiers: int):
         logger.debug("Mouse event")
         vx, vy, _, _ = self.window.viewport
         destination = Vec2(vx + x, vy + y)
         for entity, (_, _, position) in ecs.get_components(Enemy, Actor, Position):
-            logger.debug("Adding path component")
             if ecs.has_component(entity, Path):
                 continue
             start = position.position
             if path := self.pathfinding.find_path(start, destination):
                 positions = [cell.rectangle.center for cell in path]
                 ecs.add_component(
-                    entity, Path(destination, positions.pop(0), positions)
+                    entity, Path(destination, positions)
                 )
                 logger.debug(f"Path created for enemy {entity} {positions}")
 
     def on_ai_direction(self, target: int, direction: Vec2):
-        logger.debug(f"AI direction event fired {target} {direction}")
-        position = ecs.get_component(target, Position)
-        position.position = direction
+        velocity = ecs.get_component(target, Velocity)
+        velocity.direction = direction
 
 
 # endregion

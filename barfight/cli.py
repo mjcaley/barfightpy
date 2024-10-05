@@ -1,4 +1,5 @@
 import pyglet
+import pyglet.info
 from pyglet.math import Vec2
 from pyglet.window import Window
 from pyglet.window.key import KeyStateHandler
@@ -85,12 +86,12 @@ def main():
     ecs.add_system(attack_system)
     ecs.add_handlers(attack_system)
 
-    # player = add_player(Vec2(200, 200))
-    # wall1 = add_wall(400, 200, 100, 100)
-    # wall2 = add_wall(500, 200, 100, 100)
-    # wall2 = add_wall(600, 200, 100, 100)
-    # wall2 = add_wall(700, 200, 100, 100)
-    # wall2 = add_wall(800, 200, 100, 100)
+    player = add_player(Vec2(200, 200))
+    wall1 = add_wall(400, 200, 100, 100)
+    wall2 = add_wall(500, 200, 100, 100)
+    wall2 = add_wall(600, 200, 100, 100)
+    wall2 = add_wall(700, 200, 100, 100)
+    wall2 = add_wall(800, 200, 100, 100)
     enemy1 = add_enemy(200, 300)
 
     pathfinding = Pathfinding(Grid(world, 5))
@@ -98,4 +99,5 @@ def main():
     ecs.add_system(ai_system)
     ecs.add_handlers(ai_system)
 
+    pyglet.info.dump_gl()
     pyglet.app.run()
