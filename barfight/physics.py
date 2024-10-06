@@ -5,7 +5,6 @@ from functools import partial
 from math import inf
 from typing import Any, Self
 
-from loguru import logger
 from pyglet.math import Vec2
 
 
@@ -110,7 +109,6 @@ class Ray:
             return None
 
     def distance(self, point: Vec2, rect: Rectangle) -> float | None:
-        ray = Ray(point, rect.center - point)
         if intersection := self.intersects(rect):
             return intersection.distance(point)
         else:
@@ -380,7 +378,7 @@ class PhysicsWorld:
                 continue
 
             arbiter = Arbiter(
-                target, body, not (target, body) in self.active_collisions
+                target, body, (target, body) not in self.active_collisions
             )
 
             match body.kind:

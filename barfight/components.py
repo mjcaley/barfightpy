@@ -4,8 +4,6 @@ from enum import Enum, IntEnum, auto
 import pyglet
 from pyglet.math import Vec2
 
-from barfight.pathfinding import Cell
-
 from .physics import Body
 
 
@@ -82,9 +80,3 @@ class Shape:
 class Path:
     goal: Vec2
     path: list[Vec2]
-
-
-class Follow: ...
-
-
-class Destination: ...

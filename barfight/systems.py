@@ -7,14 +7,12 @@ from pyglet.math import Vec2
 from pyglet.window import Window, key, mouse
 
 from . import ecs, events
-from .bundles import add_ai_destination, add_attack
+from .bundles import add_attack
 from .components import (
     Actor,
     ActorState,
     Attack,
-    Destination,
     Enemy,
-    Follow,
     Health,
     Layer,
     Path,
@@ -36,7 +34,6 @@ from .events import (
 )
 from .pathfinding import Pathfinding
 from .physics import Arbiter, Body, PhysicsWorld
-
 
 # region Attack
 
@@ -390,7 +387,9 @@ class ActorSystem(ecs.SystemProtocol, PlayerStateProtocol, AIStateProtocol):
         actor.direction = direction
 
     def on_ai_attack(self, target: int):
-        if components := ecs.try_components(target, Actor, Velocity, PhysicsBody, AI):
+        if components := ecs.try_components(
+            target, Actor, Velocity, PhysicsBody, Enemy
+        ):
             actor, velocity, physics_body, _ = components
             self._actor_attack(target, actor, velocity, physics_body)
 
@@ -436,9 +435,7 @@ class AISystem(ecs.SystemProtocol, AIStateProtocol, InputProtocol):
             start = position.position
             if path := self.pathfinding.find_path(start, destination):
                 positions = [cell.rectangle.center for cell in path]
-                ecs.add_component(
-                    entity, Path(destination, positions)
-                )
+                ecs.add_component(entity, Path(destination, positions))
                 logger.debug(f"Path created for enemy {entity} {positions}")
 
     def on_ai_direction(self, target: int, direction: Vec2):

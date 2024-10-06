@@ -5,7 +5,7 @@ from pyglet.math import Vec2
 from barfight import ecs, events
 from barfight.bundles import add_attack
 from barfight.components import Attack, Health
-from barfight.physics import Arbiter, Body, BodyKind, Rectangle
+from barfight.physics import Arbiter, Body, Rectangle
 from barfight.systems import AttackSystem
 
 
@@ -27,7 +27,6 @@ def test_attack_collision_without_attack_component(ecs_world):
     ecs.add_system(a)
     ecs.set_handler(events.COLLISION_EVENT, a.on_collision)
 
-    player_entity = randint(100, 1000)
     non_attack_entity = ecs.create_entity()
 
     health = Health(10, 10)

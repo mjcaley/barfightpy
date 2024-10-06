@@ -5,7 +5,6 @@ from . import ecs
 from .components import (
     Actor,
     Attack,
-    Destination,
     Enemy,
     Health,
     Layer,
@@ -16,7 +15,14 @@ from .components import (
     Velocity,
     Wall,
 )
-from .constants import *
+from .constants import (
+    ATTACK_LAYER,
+    ATTACK_MASK,
+    CHARACTER_LAYER,
+    CHARACTER_MASK,
+    OBSTACLE_LAYER,
+    OBSTACLE_MASK,
+)
 from .physics import Body, BodyKind, Rectangle
 
 
@@ -122,7 +128,3 @@ def add_attack(entity: int, min: Vec2, max: Vec2) -> int:
     )
 
     return entity
-
-
-def add_ai_destination(position: Vec2) -> int:
-    return ecs.create_entity(Position(position), Destination())

@@ -1,6 +1,6 @@
 from pyglet.math import Vec2
 
-from barfight import ecs, events
+from barfight import ecs
 from barfight.components import Actor, Position, Velocity
 from barfight.systems import MovementSystem
 

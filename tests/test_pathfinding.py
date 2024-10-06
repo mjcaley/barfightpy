@@ -1,7 +1,7 @@
 import pytest
 from pyglet.math import Vec2
 
-from barfight.pathfinding import Cell, Grid, Pathfinding
+from barfight.pathfinding import Grid, Pathfinding
 from barfight.physics import Body, BodyKind, PhysicsWorld, Rectangle
 
 
@@ -33,10 +33,6 @@ def test_coord_from_position(physics_world, test_input, expected):
     result = g.coord_from_position(test_input)
 
     assert expected == result
-
-
-def test_pathfinding_neighbours(physics_world):
-    g = Grid(physics_world, 0.5)
 
 
 def test_pathfinding(physics_world):
