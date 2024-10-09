@@ -125,6 +125,7 @@ class BodyKind(Enum):
 class Body:
     rectangle: Rectangle
     kind: BodyKind = BodyKind.Dynamic
+    velocity: Vec2 = field(default_factory=Vec2)
     layer: int = 0b1
     mask: int = 0b1111111111111111
     data: Any = None
@@ -318,6 +319,57 @@ class QuadTree:
 
         return colliding
 
+    def colliding_with_body(self, body: Body) -> set[Body]:
+        colliding: set[Body] = set()
+
+        if not self.boundary.overlaps(body.rectangle):
+            return colliding
+
+        if self.is_divided:
+            colliding |= (
+                self.bottom_left.colliding_with_body(body)
+                | self.bottom_right.colliding_with_body(body)
+                | self.top_left.colliding_with_body(body)
+                | self.top_right.colliding_with_body(body)
+            )
+
+        for child_body in self.bodies:
+            if body is child_body:
+                continue
+            if body.rectangle.overlaps(child_body.rectangle):
+                colliding.add(child_body)
+
+        return colliding
+
+    def colliding_with_ray(self, ray: Ray) -> set[Body]:
+        colliding: set[Body] = set()
+
+        if not ray.intersects(self.boundary):
+            return colliding
+
+        if self.is_divided:
+            colliding |= (
+                self.bottom_left.colliding_with_ray(ray)
+                | self.bottom_right.colliding_with_ray(ray)
+                | self.top_left.colliding_with_ray(ray)
+                | self.top_right.colliding_with_ray(ray)
+            )
+
+        for child_body in self.bodies:
+            if ray.intersects(child_body.rectangle):
+                colliding.add(child_body)
+
+        return colliding
+
+    def move(self, body: Body):
+        if body.kind != BodyKind.Dynamic:
+            return
+
+        ray = Ray(
+            body.rectangle.center, body.velocity.normalize(), body.layer, body.mask
+        )
+        colliding_bodies = self.colliding_with_ray(ray)  # noqa: F841
+
 
 def closest_body(point: Vec2, body: Body) -> float:
     return body.rectangle.center.distance(point)
@@ -331,13 +383,15 @@ class Arbiter:
 
 
 class PhysicsWorld:
-    def __init__(self, min: Vec2, max: Vec2, max_depth=8):
+    def __init__(self, min: Vec2, max: Vec2, max_depth: int = 8, max_bounces: int = 7):
         self.min = min
         self.max = max
         self.max_depth = max_depth
+        self.max_bounces = max_bounces
         self.root = QuadTree(Rectangle(self.min, self.max), self.max_depth)
         self.active_collisions: set[tuple[Body, Body]] = set()
         self.position_change_callback = None
+        self.velocity_change_callback = None  # TODO: Build the wiring for this
         self.on_collision_callback = None
         self.on_sensor_callback = None
 
@@ -358,6 +412,9 @@ class PhysicsWorld:
     def collisions(self) -> list[tuple[Body, Body]]:
         return self.root.collisions([])
 
+    def colliding_with(self, body: Body) -> set[Body]:
+        return self.root.colliding_with_body(body)
+
     def _call_position_change(self, body: Body):
         if self.position_change_callback:
             self.position_change_callback(body)
@@ -369,6 +426,12 @@ class PhysicsWorld:
     def _call_on_sensor(self, arbiter: Arbiter):
         if self.on_sensor_callback:
             self.on_sensor_callback(arbiter)
+
+    # def collide_and_slide(self, target: Body, depth: int = 0):
+    #     if depth >= self.max_bounces:
+    #         return Vec2(0, 0)
+
+    #     return
 
     def resolve(self, target: Body, collisions: set[Body]):
         for body in sorted(

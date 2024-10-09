@@ -228,7 +228,7 @@ class MovementSystem(ecs.SystemProtocol):
         ):
             change = velocity.direction * velocity.speed * dt
             if change != Vec2(0, 0):
-                position.position += velocity.direction * velocity.speed * dt
+                position.position += change
                 ecs.dispatch_event(events.POSITION_CHANGED_EVENT, entity)
 
 
