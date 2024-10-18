@@ -121,10 +121,10 @@ class DebugSystem(
     def on_component_added(self, entity: int, component: Any):
         if isinstance(component, PhysicsBody):
             shape = pyglet.shapes.Box(
-                component.body.rectangle.min.x,
-                component.body.rectangle.min.y,
-                component.body.rectangle.max.x - component.body.rectangle.min.x,
-                component.body.rectangle.max.y - component.body.rectangle.min.y,
+                component.body.shape.min.x,
+                component.body.shape.min.y,
+                component.body.shape.max.x - component.body.shape.min.x,
+                component.body.shape.max.y - component.body.shape.min.y,
                 color=(50, 25, 255),
             )
             ecs.add_component(entity, Shape(shape, Layer.Debug))
@@ -342,21 +342,21 @@ class ActorSystem(ecs.SystemProtocol, PlayerStateProtocol, AIStateProtocol):
         attack_size = 20
         if actor.facing == 1:
             attack_min = Vec2(
-                physics_body.body.rectangle.max.x,
-                physics_body.body.rectangle.center.y - attack_size / 2,
+                physics_body.body.shape.max.x,
+                physics_body.body.shape.center.y - attack_size / 2,
             )
             attack_max = Vec2(
-                physics_body.body.rectangle.max.x + attack_size,
-                physics_body.body.rectangle.center.y + attack_size / 2,
+                physics_body.body.shape.max.x + attack_size,
+                physics_body.body.shape.center.y + attack_size / 2,
             )
         else:
             attack_min = Vec2(
-                physics_body.body.rectangle.min.x - attack_size,
-                physics_body.body.rectangle.center.y - attack_size / 2,
+                physics_body.body.shape.min.x - attack_size,
+                physics_body.body.shape.center.y - attack_size / 2,
             )
             attack_max = Vec2(
-                physics_body.body.rectangle.min.x,
-                physics_body.body.rectangle.center.y + attack_size / 2,
+                physics_body.body.shape.min.x,
+                physics_body.body.shape.center.y + attack_size / 2,
             )
 
         match actor.state, actor.cooldown:

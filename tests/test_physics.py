@@ -140,7 +140,7 @@ def test_quadtree_nearest():
     p = Point(Vec2(4, 4))
     distance, nearest_body = q.nearest(Point(Vec2(4, 4)))
 
-    assert p.position.distance(body.rectangle.center) == distance
+    assert p.position.distance(body.shape.center) == distance
     assert body is nearest_body
 
 
@@ -162,7 +162,7 @@ def test_quadtree_nearest_in_subdivision(test_input, expected):
     distance, nearest_body = q.nearest(test_input)
 
     assert test_input.position.distance(expected.center) == distance
-    assert expected == nearest_body.rectangle
+    assert expected == nearest_body.shape
 
 
 def test_quadtree_collisions():
