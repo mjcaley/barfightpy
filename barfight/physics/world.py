@@ -1,10 +1,12 @@
 from collections import defaultdict
 from functools import partial
+
 from pyglet.math import Vec2
-from .spatial import QuadTree
-from . import BoundingBox
+
+from .common import BoundingBox
 from .body import Body, BodyKind
-from . import Arbiter
+from .response import Arbiter
+from .spatial import QuadTree
 
 
 # TODO: Get rid of
@@ -22,6 +24,7 @@ class PhysicsWorld:
         self.position_change_callback = None
         self.on_collision_callback = None
         self.on_sensor_callback = None
+        self.bodies: Body | None = []
 
     @property
     def boundary(self) -> BoundingBox:
@@ -71,16 +74,17 @@ class PhysicsWorld:
                         self._call_on_collision(arbiter)
 
     def step(self):
-        new_collisions = self.collisions()
 
-        colliding: dict[Body, set[Body]] = defaultdict(set)
-        for first, second in new_collisions:
-            colliding[first].add(second)
-            colliding[second].add(first)
-        for target, collisions in colliding.items():
-            self.resolve(target, collisions)
+        # new_collisions = self.collisions()
 
-        self.active_collisions = new_collisions
+        # colliding: dict[Body, set[Body]] = defaultdict(set)
+        # for first, second in new_collisions:
+        #     colliding[first].add(second)
+        #     colliding[second].add(first)
+        # for target, collisions in colliding.items():
+        #     self.resolve(target, collisions)
+
+        # self.active_collisions = new_collisions
 
     def query(self, area: BoundingBox) -> list[Body]:
         return self.root.query(area)

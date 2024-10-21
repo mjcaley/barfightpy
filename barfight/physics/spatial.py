@@ -1,17 +1,20 @@
 from math import inf
 from typing import Self
-from .shapes import PointShape
-from . import BoundingBox
-from .body import ALL_BODIES, Body
+
 from pyglet.math import Vec2
+
+from .common import BoundingBox
+from .body import Body
+from .shapes import PointShape
 
 
 class QuadTree:
-    def __init__(self, boundary: BoundingBox, capacity: int, max_depth: int = 8):
+    def __init__(self, bodies: list[Body], boundary: BoundingBox, capacity: int, max_depth: int = 8):
+        self.bodies = bodies
         self.boundary = boundary
         self.capacity = capacity
         self.depth = max_depth
-        self.bodies: list[Body] = []
+        self.children: set[int] = set()
 
         self.is_divided = False
         self.bottom_left: QuadTree | None = None
@@ -19,44 +22,44 @@ class QuadTree:
         self.top_left: QuadTree | None = None
         self.top_right: QuadTree | None = None
 
-    def insert(self, body: Body) -> bool:
-        if not self.boundary.overlaps(body.shape.boundary()):
+    def insert(self, body_index: int) -> bool:
+        if not self.boundary.overlaps(self.bodies[body_index].shape.boundary()):
             return False
 
         if self.depth <= 0 or (
-            len(self.bodies) < self.capacity and not self.is_divided
+            len(self.children) < self.capacity and not self.is_divided
         ):
-            self.bodies.append(body)
+            self.children.add(body_index)
             return True
 
         if not self.is_divided:
             self.subdivide()
 
-        if self.bottom_left.insert(body):
+        if self.bottom_left.insert(body_index):
             return True
-        elif self.bottom_right.insert(body):
+        elif self.bottom_right.insert(body_index):
             return True
-        elif self.top_left.insert(body):
+        elif self.top_left.insert(body_index):
             return True
-        elif self.top_right.insert(body):
+        elif self.top_right.insert(body_index):
             return True
         else:
-            self.bodies.append(body)
+            self.children.add(body_index)
             return True
 
-    def remove(self, body: Body):
-        self.bodies.remove(body)
+    def remove(self, body_index: int):
+        self.children.remove(body_index)
         if self.is_divided:
-            self.bottom_left.remove(body)
-            self.bottom_right.remove(body)
-            self.top_left.remove(body)
-            self.top_right.remove(body)
+            self.bottom_left.remove(body_index)
+            self.bottom_right.remove(body_index)
+            self.top_left.remove(body_index)
+            self.top_right.remove(body_index)
 
             if not all(
-                self.bottom_left.bodies,
-                self.bottom_right.bodies,
-                self.top_left.bodies,
-                self.top_right.bodies,
+                self.bottom_left.children,
+                self.bottom_right.children,
+                self.top_left.children,
+                self.top_right.children,
             ):
                 self.bottom_left = self.bottom_right = self.top_left = (
                     self.top_right
@@ -95,8 +98,8 @@ class QuadTree:
 
         self.is_divided = True
 
-        current = self.bodies
-        self.bodies = []
+        current = self.children
+        self.children = []
         for item in current:
             self.insert(item)
 
@@ -104,7 +107,7 @@ class QuadTree:
         if not self.boundary.overlaps(area):
             return []
 
-        bodies = [body for body in self.bodies if area.overlaps(body.shape.boundary())]
+        bodies = [self.bodies[body_index] for body_index in self.children if area.overlaps(self.bodies[body_index].shape.boundary())]
 
         if self.is_divided:
             bodies += (
@@ -118,7 +121,7 @@ class QuadTree:
 
     def _subdivisions_by_distance(self, point: Vec2) -> list[Self]:
         def node_distance(node: QuadTree) -> float:
-            return point.position.distance(node.boundary.center)
+            return point.position.distance(node.boundary.center)    # TODO: Uneccessary?
 
         return sorted(
             (self.bottom_left, self.bottom_right, self.top_left, self.top_right),
@@ -130,11 +133,8 @@ class QuadTree:
         point: PointShape,
         best_distance: float = inf,
         closest: Body | None = None,
-        mask: int = ALL_BODIES,
     ) -> tuple[float, Body]:
-        for body in self.bodies:
-            if point.layer & body.mask == 0 and body.layer & point.mask == 0:
-                continue
+        for body_index in self.children:
             distance = point.position.distance(body.shape.center)
             if distance < best_distance:
                 best_distance, closest = distance, body
@@ -149,7 +149,7 @@ class QuadTree:
 
     def collisions(self, parent_bodies: list[Body]) -> list[tuple[Body, Body]]:
         colliding = []
-        bodies = self.bodies + parent_bodies
+        bodies = self.children + parent_bodies
 
         for first_body in bodies:
             for second_body in bodies:
