@@ -1,4 +1,4 @@
-from barfight.physics.collision import Rectangle, rect_rect_collision
+from barfight.physics.collision import LineSegment, Rectangle, lineseg_lineseg_collision, rect_rect_collision
 from pyglet.math import Vec2
 
 
@@ -8,4 +8,7 @@ def test_rect_rect_collision():
 
 
 def test_lineseg_lineseg_collision():
-    ...
+    s1 = LineSegment(Vec2(3, 4), Vec2(11, 1))
+    s2 = LineSegment(Vec2(8, 4), Vec2(11, 7))
+
+    assert not lineseg_lineseg_collision(s1, s2)
