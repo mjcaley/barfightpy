@@ -35,7 +35,7 @@ class OrientedRectangle:
 
     @property
     def top_right_vertex(self) -> Vec2:
-        vertex = (self.half_extent + self.center).rotate(self.rotation)
+        vertex = (self.half_extent + self.center).rotate(self.rotation) + self.center
         
         return vertex
     
@@ -43,14 +43,14 @@ class OrientedRectangle:
     def bottom_right_vertex(self) -> Vec2:
         vertex = Vec2(self.half_extent.x, self.half_extent.y)
         vertex.x *= -1
-        vertex = vertex.rotate(self.rotation)
+        vertex = vertex.rotate(self.rotation) + self.center
 
         return vertex
     
     @property
     def bottom_left_vertex(self) -> Vec2:
         vertex = Vec2(self.half_extent.x, self.half_extent.y) * -1
-        vertex = vertex.rotate(self.rotation)
+        vertex = vertex.rotate(self.rotation) + self.center
 
         return vertex
     
@@ -58,7 +58,7 @@ class OrientedRectangle:
     def top_left_vertex(self) -> Vec2:
         vertex = Vec2(self.half_extent.x, self.half_extent.y)
         vertex.y *= -1
-        vertex = vertex.rotate(self.rotation)
+        vertex = vertex.rotate(self.rotation) + self.center
 
         return vertex
     
