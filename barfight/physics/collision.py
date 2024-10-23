@@ -160,9 +160,9 @@ def lineseg_lineseg_collision(a: LineSegment, b: LineSegment) -> bool:
         return True
 
 
-def min_max_vertex(axis: Vec2, vertices: Generator[Vec2, None, None]) -> tuple[Vec2, Vec2]:
-    this_min = next(vertices).dot(axis)
-    this_max = this_min
+def min_max_vertex(axis: Vec2, vertices: list[Vec2]) -> tuple[Vec2, Vec2]:
+    this_min = inf
+    this_max = -inf
     for vertex in vertices:
         distance = vertex.dot(axis)
         if distance < this_min:
@@ -174,9 +174,11 @@ def min_max_vertex(axis: Vec2, vertices: Generator[Vec2, None, None]) -> tuple[V
 
 
 def oriented_rect_oriented_rect_collision(a: OrientedRectangle, b: OrientedRectangle) -> bool:
+    a_vertices = [_ for _ in a.vertices()]
+    b_vertices = [_ for _ in b.vertices()]
     for axis in chain(a.axes(), b.axes()):
-        a_min, a_max = min_max_vertex(axis, a.vertices())
-        b_min, b_max = min_max_vertex(axis, b.vertices())
+        a_min, a_max = min_max_vertex(axis, a_vertices)
+        b_min, b_max = min_max_vertex(axis, b_vertices)
         if a_max < b_min or b_max < a_min:
             return False
         
