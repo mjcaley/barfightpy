@@ -64,7 +64,7 @@ class RayShape:
 @PointShape.overlaps.register
 def _(self, other: PointShape) -> bool:
     return self.position == other.position
-    
+
 
 @PointShape.overlaps.register
 def _(self, other: AABBShape) -> bool:
@@ -84,6 +84,7 @@ def _(self, other: AABBShape) -> bool:
         or self.min.y >= other.max.y
         or self.max.y <= other.min.y
     )
+
 
 @AABBShape.overlaps.register
 def _(self, other: PointShape) -> bool:
@@ -126,7 +127,6 @@ def _(self, other: AABBShape) -> bool:
 @RayShape.overlaps.register
 def _(self, other: PointShape) -> bool:
     return point_ray_overlaps(other, self)
-
 
 
 def point_aabb_overlaps(point: PointShape, aabb: AABBShape) -> bool:

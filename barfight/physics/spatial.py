@@ -9,7 +9,13 @@ from .shapes import PointShape
 
 
 class QuadTree:
-    def __init__(self, bodies: list[Body], boundary: BoundingBox, capacity: int, max_depth: int = 8):
+    def __init__(
+        self,
+        bodies: list[Body],
+        boundary: BoundingBox,
+        capacity: int,
+        max_depth: int = 8,
+    ):
         self.bodies = bodies
         self.boundary = boundary
         self.capacity = capacity
@@ -107,7 +113,11 @@ class QuadTree:
         if not self.boundary.overlaps(area):
             return []
 
-        bodies = [self.bodies[body_index] for body_index in self.children if area.overlaps(self.bodies[body_index].shape.boundary())]
+        bodies = [
+            self.bodies[body_index]
+            for body_index in self.children
+            if area.overlaps(self.bodies[body_index].shape.boundary())
+        ]
 
         if self.is_divided:
             bodies += (
@@ -121,7 +131,7 @@ class QuadTree:
 
     def _subdivisions_by_distance(self, point: Vec2) -> list[Self]:
         def node_distance(node: QuadTree) -> float:
-            return point.position.distance(node.boundary.center)    # TODO: Uneccessary?
+            return point.position.distance(node.boundary.center)  # TODO: Uneccessary?
 
         return sorted(
             (self.bottom_left, self.bottom_right, self.top_left, self.top_right),
