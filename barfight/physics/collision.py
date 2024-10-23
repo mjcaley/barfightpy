@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
-from typing import Generator
+from itertools import chain, pairwise
+from math import cos, inf, radians, sin
+from typing import Generator, Iterable
 from pyglet.math import Vec2
 
 
@@ -68,8 +70,9 @@ class OrientedRectangle:
         yield self.top_right_vertex
         yield self.bottom_right_vertex
 
-    def edges(self) -> Generator[Vec2, None, None]:
-        ...
+    def axes(self) -> Generator[Vec2, None, None]:
+        yield Vec2(cos(radians(self.rotation)), sin(radians(self.rotation)))
+        yield Vec2(cos(radians(self.rotation + 90)), sin(radians(self.rotation + 90)))
 
 
 def overlapping(min_a: float, max_a: float, min_b: float, max_b: float) -> bool:
@@ -157,12 +160,24 @@ def lineseg_lineseg_collision(a: LineSegment, b: LineSegment) -> bool:
         return True
 
 
-def range_hull(a: tuple[float, float], b: tuple[float, float]) -> tuple[float, float]:
-    minimum = a[0] if a[0] < b[0] else b[0]
-    maximum = a[1] if a[1] > b[1] else b[1]
+def min_max_vertex(axis: Vec2, vertices: Generator[Vec2, None, None]) -> tuple[Vec2, Vec2]:
+    this_min = next(vertices).dot(axis)
+    this_max = this_min
+    for vertex in vertices:
+        distance = vertex.dot(axis)
+        if distance < this_min:
+            this_min = distance
+        if distance > this_max:
+            this_max = distance
 
-    return minimum, maximum
+    return this_min, this_max
 
 
-def oriented_rect_edge(r: OrientedRectangle, nr: int) -> LineSegment:
-    ...
+def oriented_rect_oriented_rect_collision(a: OrientedRectangle, b: OrientedRectangle) -> bool:
+    for axis in chain(a.axes(), b.axes()):
+        a_min, a_max = min_max_vertex(axis, a.vertices())
+        b_min, b_max = min_max_vertex(axis, b.vertices())
+        if a_max < b_min or b_max < a_min:
+            return False
+        
+    return True
