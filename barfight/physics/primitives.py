@@ -194,7 +194,7 @@ def point_point_collision(a: Vec2, b: Vec2) -> bool:
 
 
 def line_line_collision(a: Line, b: Line) -> bool:
-    if is_parallel_line(a, b):
+    if is_parallel_line(a.direction, b.direction):
         return equivalent_lines(a, b)
     else:
         return True
