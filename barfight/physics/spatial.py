@@ -3,8 +3,8 @@ from typing import Self
 
 from pyglet.math import Vec2
 
-from .common import BoundingBox
 from .body import Body
+from .common import BoundingBox
 from .shapes import PointShape
 
 

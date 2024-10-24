@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from itertools import chain
 from math import cos, inf, radians, sin
 from typing import Generator
+
 from pyglet.math import Vec2
 
 
@@ -27,6 +28,22 @@ class Circle:
 class Rectangle:
     origin: Vec2 = field(default_factory=Vec2)
     size: Vec2 = field(default_factory=Vec2)
+
+    @property
+    def bottom_left_vertex(self) -> Vec2:
+        return self.origin
+
+    @property
+    def bottom_right_vertex(self) -> Vec2:
+        return Vec2(self.origin.x, self.origin.y + self.size.y)
+
+    @property
+    def top_left_vertex(self) -> Vec2:
+        return Vec2(self.origin.x, self.origin.y + self.size.y)
+
+    @property
+    def top_right_vertex(self) -> Vec2:
+        return self.origin + self.size
 
 
 @dataclass
@@ -249,3 +266,39 @@ def circle_rectangle_collision(circle: Circle, rectangle: Rectangle) -> bool:
     clamped = clamp_rectangle(circle.center, rectangle)
     return circle_point_collision(circle, clamped)
 
+
+def circle_oriented_rectangle_collision(
+    circle: Circle, rectangle: OrientedRectangle
+) -> bool:
+    local_rect = Rectangle(Vec2(0, 0), rectangle.half_extent * 2)
+
+    distance = circle.center - rectangle.center
+    distance.rotate(-rectangle.rotation)
+    local_circle = Circle(distance + rectangle.half_extent, circle.radius)
+
+    return circle_rectangle_collision(local_circle, local_rect)
+
+
+def rectangle_point_collision(rectangle: Rectangle, point: Vec2) -> bool:
+    left = rectangle.origin.x
+    right = left + rectangle.size.x
+    bottom = rectangle.origin.y
+    top = bottom + rectangle.size.y
+
+    return left <= point.x and bottom <= point.y and point.x <= right and point.y <= top
+
+
+def rectangle_line_collision(rectangle: Rectangle, line: Line) -> bool:
+    n = rotate90(line.direction)
+
+    corner1 = rectangle.bottom_left_vertex - line.base
+    corner2 = rectangle.top_right_vertex - line.base
+    corner3 = rectangle.bottom_right_vertex - line.base
+    corner4 = rectangle.top_left_vertex - line.base
+
+    dp1 = n.dot(corner1)
+    dp2 = n.dot(corner2)
+    dp3 = n.dot(corner3)
+    dp4 = n.dot(corner4)
+
+    return dp1 * dp2 <= 0 or dp2 * dp3 <= 0 or dp3 * dp4 <= 0

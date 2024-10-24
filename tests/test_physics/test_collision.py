@@ -1,12 +1,15 @@
-from barfight.physics.collision import (
+from pyglet.math import Vec2
+
+from barfight.physics.primitives import (
+    Line,
     LineSegment,
     OrientedRectangle,
     Rectangle,
     lineseg_lineseg_collision,
     oriented_rect_oriented_rect_collision,
     rect_rect_collision,
+    rectangle_line_collision,
 )
-from pyglet.math import Vec2
 
 
 def test_rect_rect_collision():
@@ -32,3 +35,7 @@ def test_oriented_rect_collision():
 
     assert oriented_rect_oriented_rect_collision(o1, o2)
     assert not oriented_rect_oriented_rect_collision(o1, o3)
+
+
+def test_rectangle_line_collision():
+    assert rectangle_line_collision(Rectangle(Vec2(3, 2), Vec2(6, 4)), Line(Vec2(6, 8), Vec2(2, -3)))
