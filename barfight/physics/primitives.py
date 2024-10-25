@@ -237,7 +237,7 @@ def circle_point_collision(circle: Circle, point: Vec2) -> bool:
 
 
 def circle_line_collision(circle: Circle, line: Line) -> bool:
-    lc = circle.center.distance(line.base)
+    lc = circle.center - line.base
     projected = project_vector(lc, line.direction)
     nearest = line.base + projected
 
@@ -250,8 +250,8 @@ def circle_lineseg_collision(circle: Circle, line: LineSegment) -> bool:
     ):
         return True
 
-    line_distance = line.point1.distance(line.point2)
-    circle_distance = circle.center.distance(line.point1)
+    line_distance = line.point2 - line.point1
+    circle_distance = circle.center - line.point1
     projected = project_vector(circle_distance, line_distance)
     nearest = line.point1 + projected
 
@@ -302,3 +302,11 @@ def rectangle_line_collision(rectangle: Rectangle, line: Line) -> bool:
     dp4 = n.dot(corner4)
 
     return dp1 * dp2 <= 0 or dp2 * dp3 <= 0 or dp3 * dp4 <= 0
+
+
+def rectangle_lineseg_collision(rectangle: Rectangle, segment: LineSegment) -> bool:
+    line = Line(segment.point1, segment.point2 - segment.point1)
+    if not rectangle_line_collision(rectangle, line):
+        return False
+    
+    #TODO: finish this

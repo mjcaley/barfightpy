@@ -7,13 +7,18 @@ from barfight.physics.primitives import (
     OrientedRectangle,
     Rectangle,
     circle_circle_collision,
+    circle_line_collision,
+    circle_lineseg_collision,
+    circle_oriented_rectangle_collision,
     circle_point_collision,
+    circle_rectangle_collision,
     line_line_collision,
     lineseg_lineseg_collision,
     oriented_rect_oriented_rect_collision,
     point_point_collision,
     rect_rect_collision,
     rectangle_line_collision,
+    rectangle_point_collision,
 )
 
 
@@ -83,6 +88,43 @@ def test_circle_point_collision():
 
     assert circle_point_collision(c, p1)
     assert not circle_point_collision(c, p2)
+
+
+def test_circle_line_collision():
+    c = Circle(Vec2(6, 3), 2)
+    l = Line(Vec2(4, 7), Vec2(5, -1))
+
+    assert not circle_line_collision(c, l)
+
+
+def test_circle_lineseg_collision():
+    c = Circle(Vec2(4, 4), 3)
+    l = LineSegment(Vec2(8, 6), Vec2(13, 6))
+
+    assert not circle_lineseg_collision(c, l)
+
+
+def test_circle_rectangle_collision():
+    r = Rectangle(Vec2(3, 2), Vec2(6, 4))
+    c1 = Circle(Vec2(5, 4), 1)
+    c2 = Circle(Vec2(7, 8), 1)
+
+    assert circle_rectangle_collision(c1, r)
+    assert not circle_rectangle_collision(c2, r)
+
+
+def test_circle_oriented_rectangle_collision():
+    r = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), 30)
+    c = Circle(Vec2(5, 7), 2)
+
+    assert circle_oriented_rectangle_collision(c, r)
+
+
+def test_rectangle_point_collision():
+    r = Rectangle(Vec2(3, 2), Vec2(6, 4))
+    p = Vec2(4, 5)
+
+    assert rectangle_point_collision(r, p)
 
 
 def test_rectangle_line_collision():
