@@ -18,6 +18,7 @@ from barfight.physics.primitives import (
     point_point_collision,
     rect_rect_collision,
     rectangle_line_collision,
+    rectangle_lineseg_collision,
     rectangle_point_collision,
 )
 
@@ -129,3 +130,10 @@ def test_rectangle_point_collision():
 
 def test_rectangle_line_collision():
     assert rectangle_line_collision(Rectangle(Vec2(3, 2), Vec2(6, 4)), Line(Vec2(6, 8), Vec2(2, -3)))
+
+
+def test_rectangle_line_segment_collision():
+    r = Rectangle(Vec2(3, 2), Vec2(6, 4))
+    s = LineSegment(Vec2(6, 8), Vec2(10, 2))
+
+    assert rectangle_lineseg_collision(r, s)

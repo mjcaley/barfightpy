@@ -309,4 +309,11 @@ def rectangle_lineseg_collision(rectangle: Rectangle, segment: LineSegment) -> b
     if not rectangle_line_collision(rectangle, line):
         return False
     
-    #TODO: finish this
+    rect_min_x, rect_max_x = rectangle.origin.x, rectangle.origin.x + rectangle.size.x
+    seg_min_x, seg_max_x = min(segment.point1.x, segment.point2.x), max(segment.point1.x, segment.point2.x)
+    if not overlapping(rect_min_x, rect_max_x, seg_min_x, seg_max_x):
+        return False
+
+    rect_min_y, rect_max_y = rectangle.origin.y, rectangle.origin.y + rectangle.size.y
+    seg_min_y, seg_max_y = min(segment.point1.y, segment.point2.y), max(segment.point1.y, segment.point2.y)
+    return overlapping(rect_min_y, rect_max_y, seg_min_y, seg_max_y)
