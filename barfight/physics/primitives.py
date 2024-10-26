@@ -45,6 +45,12 @@ class Rectangle:
     def top_right_vertex(self) -> Vec2:
         return self.origin + self.size
 
+    def vertices(self) -> Generator[Vec2, None, None]:
+        yield self.bottom_left_vertex
+        yield self.top_left_vertex
+        yield self.top_right_vertex
+        yield self.bottom_right_vertex
+
 
 @dataclass
 class OrientedRectangle:
@@ -90,6 +96,20 @@ class OrientedRectangle:
     def axes(self) -> Generator[Vec2, None, None]:
         yield Vec2(cos(radians(self.rotation)), sin(radians(self.rotation)))
         yield Vec2(cos(radians(self.rotation + 90)), sin(radians(self.rotation + 90)))
+
+    @property
+    def bounding_box(self) -> Rectangle:
+        min_x = inf
+        max_x = -inf
+        min_y = inf
+        max_y = -inf
+        for vertex in self.vertices():
+            min_x = min(min_x, vertex.x)
+            max_x = max(max_x, vertex.x)
+            min_y = min(min_y, vertex.y)
+            max_y = max(max_y, vertex.y)
+
+        return Rectangle(Vec2(min_x, min_y), Vec2(max_x - min_x, max_y - min_y))
 
 
 # region Utility
@@ -317,3 +337,31 @@ def rectangle_lineseg_collision(rectangle: Rectangle, segment: LineSegment) -> b
     rect_min_y, rect_max_y = rectangle.origin.y, rectangle.origin.y + rectangle.size.y
     seg_min_y, seg_max_y = min(segment.point1.y, segment.point2.y), max(segment.point1.y, segment.point2.y)
     return overlapping(rect_min_y, rect_max_y, seg_min_y, seg_max_y)
+
+
+def separating_axis_for_rectangle(axis: LineSegment, rect: Rectangle) -> bool:
+    n = axis.point1 - axis.point2
+
+    rect_vertices = rect.vertices()
+    rect_edge_a = LineSegment(next(rect_vertices), next(rect_vertices))
+    rect_edge_b = LineSegment(next(rect_vertices), next(rect_vertices))
+    a_min, a_max = project_segment(rect_edge_a, n)
+    b_min, b_max = project_segment(rect_edge_b, n)
+    a_min, a_max = min(a_min, a_max), max(a_min, a_max)
+    b_min, b_max = min(b_min, b_max), max(b_min, b_max)
+    
+    p_min, p_max = min(a_min, b_min), max(a_max, b_max)
+    axis_min, axis_max = project_segment(axis, n)
+
+    return not overlapping(axis_min, axis_max, p_min, p_max)
+
+
+def rectangle_oriented_rectangle_collision(rectangle: Rectangle, oriented_rectangle: OrientedRectangle):
+    if not rect_rect_collision(rectangle, oriented_rectangle.bounding_box):
+        return False
+    
+    for axis in oriented_rectangle.axes():
+        if separating_axis_for_rectangle(axis, rectangle):
+            return False
+        
+    return True
