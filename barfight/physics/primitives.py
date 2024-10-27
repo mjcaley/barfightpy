@@ -51,6 +51,10 @@ class Rectangle:
         yield self.top_right_vertex
         yield self.bottom_right_vertex
 
+    def axes(self) -> Generator[Vec2, None, None]:
+        yield Vec2(1, 0)
+        yield Vec2(0, 1)
+
 
 @dataclass
 class OrientedRectangle:
@@ -360,8 +364,53 @@ def rectangle_oriented_rectangle_collision(rectangle: Rectangle, oriented_rectan
     if not rect_rect_collision(rectangle, oriented_rectangle.bounding_box):
         return False
     
-    for axis in oriented_rectangle.axes():
-        if separating_axis_for_rectangle(axis, rectangle):
+    rect_vertices = [_ for _ in rectangle.vertices()]
+    orect_vertices = [_ for _ in oriented_rectangle.vertices()]
+    for axis in chain(oriented_rectangle.axes(), rectangle.axes()):
+        a_min, a_max = min_max_vertex(axis, rect_vertices)
+        b_min, b_max = min_max_vertex(axis, orect_vertices)
+        if a_max < b_min or b_max < a_min:
             return False
-        
+
     return True
+
+
+def line_point_collision(line: Line, point: Vec2) -> bool:
+    if point_point_collision(line.base, point):
+        return True
+    
+    point_line = point - line.base
+    return is_parallel_line(point_line, line.direction)
+
+
+def line_segment_point_collision(line_segment: LineSegment, point: Vec2) -> bool:
+    d = line_segment.point2 - line_segment.point1
+    lp = point - line_segment.point1
+    pr = project_vector(lp, d)
+
+    return lp == pr and pr.mag <= d.mag and 0 <= pr.dot(d)
+
+
+def oriented_rectangle_point_collision(oriented_rect: OrientedRectangle, point: Vec2) -> bool:
+    lr = Rectangle(Vec2(0, 0), oriented_rect.half_extent * 2)
+    lp = (point - oriented_rect.center).rotate(-oriented_rect.rotation) + oriented_rect.half_extent
+
+    return rectangle_point_collision(lr, lp)
+
+
+def line_line_segment_collision(line: Line, line_segment: LineSegment) -> bool:
+    return not on_one_side(line, line_segment)
+
+
+def line_oriented_rectangle_collision(line: Line, oriented_rectangle: OrientedRectangle) -> bool:
+    lr = Rectangle(Vec2(0, 0), oriented_rectangle.half_extent * 2)
+    ll = Line((line.base - oriented_rectangle.center).rotate(-oriented_rectangle.rotation) + oriented_rectangle.half_extent, line.direction.rotate(-oriented_rectangle.rotation))
+
+    return rectangle_line_collision(lr, ll)
+
+
+def line_segment_oriented_rectangle_collision(line_segment: LineSegment, oriented_rectangle: OrientedRectangle) -> bool:
+    lr = Rectangle(Vec2(0, 0), oriented_rectangle.half_extent * 2)
+    ls = LineSegment((line_segment.point1 - oriented_rectangle.center).rotate(-oriented_rectangle.rotation) + oriented_rectangle.half_extent, (line_segment.point2 - oriented_rectangle.center).rotate(-oriented_rectangle.rotation) + oriented_rectangle.half_extent)
+
+    return rectangle_lineseg_collision(lr, ls)

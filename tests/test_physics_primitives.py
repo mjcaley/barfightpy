@@ -13,8 +13,14 @@ from barfight.physics.primitives import (
     circle_point_collision,
     circle_rectangle_collision,
     line_line_collision,
+    line_line_segment_collision,
+    line_oriented_rectangle_collision,
+    line_point_collision,
+    line_segment_oriented_rectangle_collision,
+    line_segment_point_collision,
     lineseg_lineseg_collision,
     oriented_rect_oriented_rect_collision,
+    oriented_rectangle_point_collision,
     point_point_collision,
     rect_rect_collision,
     rectangle_line_collision,
@@ -150,3 +156,51 @@ def test_rectangle_oriented_rectangle_collision():
     o2 = OrientedRectangle(Vec2(1, 5), Vec2(4, 2), 25)
 
     assert rectangle_oriented_rectangle_collision(r2, o2)
+
+    r3 = Rectangle(Vec2(-5, -5), Vec2(5, 5))
+    o3 = OrientedRectangle(Vec2(0, -20), Vec2(5, 5), 45)
+
+    assert not rectangle_oriented_rectangle_collision(r3, o3)
+
+
+def test_line_point_collision():
+    p = Vec2(5, 3)
+    l = Line(Vec2(3, 7), Vec2(7, -2))
+
+    assert not line_point_collision(l, p)
+
+
+def test_line_segment_point_collision():
+    p = Vec2(1, 4)
+    s = LineSegment(Vec2(6, 6), Vec2(13, 4))
+
+    assert not line_segment_point_collision(s, p)
+
+
+def test_oriented_rectangle_point_collision():
+    o = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), 30)
+    p1 = Vec2(6, 5)
+    p2 = Vec2(10, 6)
+
+    assert oriented_rectangle_point_collision(o, p1)
+    assert not oriented_rectangle_point_collision(o, p2)
+
+
+def test_line_line_segment_collision():
+    s = LineSegment(Vec2(8, 4), Vec2(11, 7))
+    l = Line(Vec2(3, 4), Vec2(4, -2))
+
+    assert not line_line_segment_collision(l, s)
+
+
+def test_line_oriented_rectangle_collision():
+    l = Line(Vec2(7, 3), Vec2(2, -1))
+    o = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), 30)
+
+    assert line_oriented_rectangle_collision(l, o)
+
+def test_line_segment_oriented_rectangle_collision():
+    s = LineSegment(Vec2(1, 8), Vec2(7, 5))
+    o = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), 30)
+
+    assert line_segment_oriented_rectangle_collision(s, o)
