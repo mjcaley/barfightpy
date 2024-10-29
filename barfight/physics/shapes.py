@@ -27,7 +27,7 @@ class LineSegmentShape(Shape):
     @property
     def primitive(self) -> LineSegment:
         return self._primitive
-    
+
     def boundary(self) -> Rectangle:
         min_x = min(self._primitive.point1.x, self._primitive.point2.y)
         max_x = max(self._primitive.point1.x, self._primitive.point2.y)
@@ -52,7 +52,9 @@ class RectangleShape(Shape):
 
 
 class OrientedRectangleShape(Shape):
-    def __init__(self, center: Vec2 = None, half_extent: Vec2 = None, rotation: float = 0):
+    def __init__(
+        self, center: Vec2 = None, half_extent: Vec2 = None, rotation: float = 0
+    ):
         center = center or Vec2()
         half_extent = half_extent or Vec2()
         self._primitive = OrientedRectangle(center, half_extent, rotation)
@@ -74,7 +76,7 @@ class OrientedRectangleShape(Shape):
             max_y = max(max_y, vertex.y)
 
         return Rectangle(Vec2(min_x, min_y), Vec2(max_x - min_x, max_y - min_y))
-    
+
 
 class CircleShape(Shape):
     def __init__(self, center: Vec2 = None, radius: float = 0):
@@ -84,8 +86,10 @@ class CircleShape(Shape):
     @property
     def primitive(self) -> Circle:
         return self._primitive
-    
+
     def boundary(self) -> Rectangle:
         return Rectangle(
-            self._primitive.center - Vec2(self._primitive.radius, self._primitive.radius),
-            self._primitive + Vec2(self._primitive.radius, self._primitive.radius))
+            self._primitive.center
+            - Vec2(self._primitive.radius, self._primitive.radius),
+            self._primitive + Vec2(self._primitive.radius, self._primitive.radius),
+        )

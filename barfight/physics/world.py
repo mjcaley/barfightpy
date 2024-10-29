@@ -55,6 +55,19 @@ class PhysicsWorld:
         if self.on_sensor_callback:
             self.on_sensor_callback(arbiter)
 
+    def step(self, dt: float):
+        self.broad_phase()
+        # new_collisions = self.collisions()
+
+        # colliding: dict[Body, set[Body]] = defaultdict(set)
+        # for first, second in new_collisions:
+        #     colliding[first].add(second)
+        #     colliding[second].add(first)
+        # for target, collisions in colliding.items():
+        #     self.resolve(target, collisions)
+
+        # self.active_collisions = new_collisions
+
     def resolve(self, target: Body, collisions: set[Body]):
         for body in sorted(collisions, key=partial(closest_body, target.shape.center)):
             if target.layer & body.mask == 0 and body.layer and target.mask == 0:
@@ -72,19 +85,6 @@ class PhysicsWorld:
                         target.resolve_with(body)
                         self._call_position_change(target)
                         self._call_on_collision(arbiter)
-
-    def step(self):
-
-        # new_collisions = self.collisions()
-
-        # colliding: dict[Body, set[Body]] = defaultdict(set)
-        # for first, second in new_collisions:
-        #     colliding[first].add(second)
-        #     colliding[second].add(first)
-        # for target, collisions in colliding.items():
-        #     self.resolve(target, collisions)
-
-        # self.active_collisions = new_collisions
 
     def query(self, area: BoundingBox) -> list[Body]:
         return self.root.query(area)

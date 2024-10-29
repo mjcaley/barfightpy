@@ -6,7 +6,7 @@ from typing import Generator
 
 from pyglet.math import Vec2
 
-#region Shapes
+# region Shapes
 
 
 @dataclass
@@ -138,9 +138,10 @@ class OrientedRectangle:
 
         return Rectangle(Vec2(min_x, min_y), Vec2(max_x - min_x, max_y - min_y))
 
-#endregion
 
-#region Utility
+# endregion
+
+# region Utility
 
 
 def overlapping(min_a: float, max_a: float, min_b: float, max_b: float) -> bool:
@@ -214,7 +215,7 @@ def clamp_rectangle(point: Vec2, rectangle: Rectangle) -> Vec2:
 
 # endregion
 
-#region Collision functions
+# region Collision functions
 
 
 def rect_rect_collision(a: Rectangle, b: Rectangle) -> bool:
@@ -470,7 +471,9 @@ def line_segment_oriented_rectangle_collision(
 
     return rectangle_lineseg_collision(lr, ls)
 
-#region Register class methods
+
+# region Register class methods
+
 
 @Line.collision.register
 def _(self, line: Line) -> bool:
@@ -597,4 +600,4 @@ def _(self, oriented_rectangle: OrientedRectangle) -> bool:
     return oriented_rect_oriented_rect_collision(self, oriented_rectangle)
 
 
-#endregion
+# endregion

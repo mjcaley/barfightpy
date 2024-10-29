@@ -3,6 +3,8 @@ from typing import Self
 
 from pyglet.math import Vec2
 
+from .raycast import Ray
+
 from .body import Body
 from .primitives import Rectangle
 
@@ -12,7 +14,7 @@ class QuadTree:
         self,
         bodies: list[Body],
         boundary: Rectangle,
-        capacity: int,
+        capacity: int = 20,
         max_depth: int = 8,
     ):
         self.bodies = bodies
@@ -27,16 +29,32 @@ class QuadTree:
         self.top_left: QuadTree | None = None
         self.top_right: QuadTree | None = None
 
+    @property
+    def divisions(self) -> list[Self]:
+        return [q for q in (self.bottom_left, self.bottom_right, self.top_left, self.top_right) if q is not None]
+
     def insert(self, body_index: int) -> bool:
-        if not self.boundary.collision(self.bodies[body_index].shape.boundary()):
+        # If the body boundary is larger than the quadtree boundary, return False
+        quadtree_rect = self.boundary
+        body_rect = self.bodies[body_index].shape.boundary()
+        if not (
+            body_rect.origin.x >= quadtree_rect.origin.x and
+            (body_rect.origin + body_rect.size).x <= (quadtree_rect.origin + quadtree_rect.size).x and
+            body_rect.origin.y >= quadtree_rect.origin.y and
+            (body_rect.origin + body_rect.size).y <= (quadtree_rect.origin + quadtree_rect.size).y
+        ):
             return False
 
+        # If we're at the bottom of the depth
+        # AND
+        # If we haven't reached capacity AND we're not divided
         if self.depth <= 0 or (
             len(self.children) < self.capacity and not self.is_divided
         ):
             self.children.add(body_index)
             return True
 
+        # At capacity, subdivide and try to insert into child quadtrees
         if not self.is_divided:
             self.subdivide()
 
@@ -71,32 +89,36 @@ class QuadTree:
                 ) = None
                 self.is_divided = False
 
-    def subdivide(self):    #TODO: Using min/max instead of center/size
-        left_x = self.boundary.min.x
-        middle_x = self.boundary.min.x + (self.boundary.max.x - self.boundary.min.x) / 2
-        right_x = self.boundary.max.x
-
-        bottom_y = self.boundary.min.y
-        middle_y = self.boundary.min.y + (self.boundary.max.y - self.boundary.min.y) / 2
-        top_y = self.boundary.max.y
-
-        self.bottom_left = QuadTree(
-            Rectangle(Vec2(left_x, bottom_y), Vec2(middle_x, middle_y)),
+    def subdivide(self):
+        self.bottom_left = QuadTree(self.bodies,
+            Rectangle(
+                self.boundary.origin, self.boundary.origin + self.boundary.size / 2
+            ),
             self.capacity,
             self.depth - 1,
         )
-        self.bottom_right = QuadTree(
-            Rectangle(Vec2(middle_x, bottom_y), Vec2(right_x, middle_y)),
+        self.bottom_right = QuadTree(self.bodies,
+            Rectangle(
+                self.boundary.origin + Vec2(self.boundary.size.x / 2),
+                self.boundary.origin + Vec2(self.boundary.size.x, self.boundary.size.y / 2),
+            ),
             self.capacity,
             self.depth - 1,
         )
-        self.top_left = QuadTree(
-            Rectangle(Vec2(left_x, middle_y), Vec2(middle_x, top_y)),
+        self.top_left = QuadTree(self.bodies,
+            Rectangle(
+                self.boundary.origin + Vec2(0, self.boundary.size.y / 2),
+                self.boundary.origin
+                + Vec2(self.boundary.size.x / 2, self.boundary.size.y),
+            ),
             self.capacity,
             self.depth - 1,
         )
-        self.top_right = QuadTree(
-            Rectangle(Vec2(middle_x, middle_y), Vec2(right_x, top_y)),
+        self.top_right = QuadTree(self.bodies,
+            Rectangle(
+                self.boundary.origin + self.boundary.size / 2,
+                self.boundary.origin + self.boundary.size,
+            ),
             self.capacity,
             self.depth - 1,
         )
@@ -104,18 +126,18 @@ class QuadTree:
         self.is_divided = True
 
         current = self.children
-        self.children = []
+        self.children = set()
         for item in current:
             self.insert(item)
 
     def query(self, area: Rectangle) -> list[Body]:
-        if not self.boundary.overlaps(area):
+        if not self.boundary.collision(area):
             return []
 
         bodies = [
             self.bodies[body_index]
             for body_index in self.children
-            if area.overlaps(self.bodies[body_index].shape.boundary())
+            if area.collision(self.bodies[body_index].shape.boundary())
         ]
 
         if self.is_divided:
@@ -128,28 +150,20 @@ class QuadTree:
 
         return bodies
 
-    def _subdivisions_by_distance(self, point: Vec2) -> list[Self]:
-        def node_distance(node: QuadTree) -> float:
-            return point.position.distance(node.boundary.center)  # TODO: Uneccessary?
-
-        return sorted(
-            (self.bottom_left, self.bottom_right, self.top_left, self.top_right),
-            key=node_distance,
-        )
-
-    def nearest(
-        self,
-        point: PointShape,
-        best_distance: float = inf,
-        closest: Body | None = None,
-    ) -> tuple[float, Body]:
+    def nearest(self, point: Vec2, best_distance: float = inf, closest: Body | None = None) -> tuple[float, Body]:
         for body_index in self.children:
-            distance = point.position.distance(body.shape.center)
+            body = self.bodies[body_index]
+            center_of_body = body.shape.boundary().origin + body.shape.boundary().size / 2
+
+            ray = Ray(point, center_of_body - point)
+            intersection = ray.intersects(body.shape.primitive)
+            distance = point.distance(intersection)
+            
             if distance < best_distance:
                 best_distance, closest = distance, body
 
         if self.is_divided:
-            for node in self._subdivisions_by_distance(point):
+            for node in self.divisions:
                 child_distance, child_body = node.nearest(point)
                 if child_distance < best_distance:
                     best_distance, closest = child_distance, child_body
