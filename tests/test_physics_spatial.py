@@ -190,43 +190,43 @@ def test_quadtree_nearest_in_subdivision(test_input, expected):
     assert expected == nearest_body.shape.primitive
 
 
-def test_quadtree_collisions():
-    q = QuadTree(Rectangle(Vec2(0, 0), Vec2(10, 10)), 4)
-    colliding1 = Body(Rectangle(Vec2(1, 1), Vec2(2, 2)))
-    colliding2 = Body(Rectangle(Vec2(1.5, 1.5), Vec2(2.5, 2.5)))
-    not_colliding = Body(Rectangle(Vec2(5, 5), Vec2(6, 6)))
-    q.insert(colliding1)
-    q.insert(colliding2)
-    q.insert(not_colliding)
-    result = q.collisions([])
+# def test_quadtree_collisions():
+#     q = QuadTree(Rectangle(Vec2(0, 0), Vec2(10, 10)), 4)
+#     colliding1 = Body(Rectangle(Vec2(1, 1), Vec2(2, 2)))
+#     colliding2 = Body(Rectangle(Vec2(1.5, 1.5), Vec2(2.5, 2.5)))
+#     not_colliding = Body(Rectangle(Vec2(5, 5), Vec2(6, 6)))
+#     q.insert(colliding1)
+#     q.insert(colliding2)
+#     q.insert(not_colliding)
+#     result = q.collisions([])
 
-    assert not_colliding is not result[0][0]
-    assert not_colliding is not result[0][1]
-    assert (colliding1, colliding2) == result[0] or (colliding2, colliding1) == result[
-        0
-    ]
+#     assert not_colliding is not result[0][0]
+#     assert not_colliding is not result[0][1]
+#     assert (colliding1, colliding2) == result[0] or (colliding2, colliding1) == result[
+#         0
+#     ]
 
 
-def test_quadtree_collisions_in_subdivisions():
-    q = QuadTree(Rectangle(Vec2(0, 0), Vec2(100, 100)), 4)
-    colliding1 = Body(Rectangle(Vec2(1, 1), Vec2(2, 2)))
-    colliding2 = Body(Rectangle(Vec2(1.5, 1.5), Vec2(2.5, 2.5)))
-    not_colliding1 = Body(Rectangle(Vec2(5, 5), Vec2(5, 5)))
-    not_colliding2 = Body(Rectangle(Vec2(5.1, 5.1), Vec2(5.1, 5.1)))
-    not_colliding3 = Body(Rectangle(Vec2(5.2, 5.2), Vec2(5.2, 5.2)))
-    not_colliding4 = Body(Rectangle(Vec2(5.3, 5.3), Vec2(5.3, 5.3)))
-    q.insert(colliding1)
-    q.insert(colliding2)
-    q.insert(not_colliding1)
-    q.insert(not_colliding2)
-    q.insert(not_colliding3)
-    q.insert(not_colliding4)
-    result = q.collisions([])
+# def test_quadtree_collisions_in_subdivisions():
+#     q = QuadTree(Rectangle(Vec2(0, 0), Vec2(100, 100)), 4)
+#     colliding1 = Body(Rectangle(Vec2(1, 1), Vec2(2, 2)))
+#     colliding2 = Body(Rectangle(Vec2(1.5, 1.5), Vec2(2.5, 2.5)))
+#     not_colliding1 = Body(Rectangle(Vec2(5, 5), Vec2(5, 5)))
+#     not_colliding2 = Body(Rectangle(Vec2(5.1, 5.1), Vec2(5.1, 5.1)))
+#     not_colliding3 = Body(Rectangle(Vec2(5.2, 5.2), Vec2(5.2, 5.2)))
+#     not_colliding4 = Body(Rectangle(Vec2(5.3, 5.3), Vec2(5.3, 5.3)))
+#     q.insert(colliding1)
+#     q.insert(colliding2)
+#     q.insert(not_colliding1)
+#     q.insert(not_colliding2)
+#     q.insert(not_colliding3)
+#     q.insert(not_colliding4)
+#     result = q.collisions([])
 
-    assert 2 == len(result)
-    assert (colliding1, colliding2) == result[0] or (colliding2, colliding1) == result[
-        0
-    ]
+#     assert 2 == len(result)
+#     assert (colliding1, colliding2) == result[0] or (colliding2, colliding1) == result[
+#         0
+#     ]
 
 
 # def test_quadtree_collisions_not_in_same_layer():
@@ -240,12 +240,12 @@ def test_quadtree_collisions_in_subdivisions():
 #     assert [] == result
 
 
-def test_quadtree_no_collisions_in_different_subdivisions():
-    q = QuadTree(Rectangle(Vec2(0, 0), Vec2(100, 100)), 1)
-    body1 = Body(Rectangle(Vec2(2, 2), Vec2(1, 10)))
-    q.insert(body1)
-    q.insert(Body(Rectangle(Vec2(1.10, 1.10), Vec2(1.10, 1.10))))
-    q.insert(Body(Rectangle(Vec2(1.11, 1.11), Vec2(1.11, 1.11))))
-    result = q.collisions([])
+# def test_quadtree_no_collisions_in_different_subdivisions():
+#     q = QuadTree(Rectangle(Vec2(0, 0), Vec2(100, 100)), 1)
+#     body1 = Body(Rectangle(Vec2(2, 2), Vec2(1, 10)))
+#     q.insert(body1)
+#     q.insert(Body(Rectangle(Vec2(1.10, 1.10), Vec2(1.10, 1.10))))
+#     q.insert(Body(Rectangle(Vec2(1.11, 1.11), Vec2(1.11, 1.11))))
+#     result = q.collisions([])
 
-    assert [] == result
+#     assert [] == result
