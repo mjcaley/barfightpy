@@ -24,7 +24,7 @@ class PhysicsWorld:
         self.position_change_callback = None
         self.on_collision_callback = None
         self.on_sensor_callback = None
-        self.bodies: Body | None = []
+        self.bodies: list[Body | None] = []
 
     @property
     def boundary(self) -> BoundingBox:
