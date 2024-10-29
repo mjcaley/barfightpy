@@ -6,8 +6,8 @@ from typing import Generator
 
 from pyglet.math import Vec2
 
-
 #region Shapes
+
 
 @dataclass
 class Line:

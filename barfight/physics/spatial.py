@@ -4,15 +4,14 @@ from typing import Self
 from pyglet.math import Vec2
 
 from .body import Body
-from .common import BoundingBox
-from .shapes import PointShape
+from .primitives import Rectangle
 
 
 class QuadTree:
     def __init__(
         self,
         bodies: list[Body],
-        boundary: BoundingBox,
+        boundary: Rectangle,
         capacity: int,
         max_depth: int = 8,
     ):
@@ -29,7 +28,7 @@ class QuadTree:
         self.top_right: QuadTree | None = None
 
     def insert(self, body_index: int) -> bool:
-        if not self.boundary.overlaps(self.bodies[body_index].shape.boundary()):
+        if not self.boundary.collision(self.bodies[body_index].shape.boundary()):
             return False
 
         if self.depth <= 0 or (
@@ -72,7 +71,7 @@ class QuadTree:
                 ) = None
                 self.is_divided = False
 
-    def subdivide(self):
+    def subdivide(self):    #TODO: Using min/max instead of center/size
         left_x = self.boundary.min.x
         middle_x = self.boundary.min.x + (self.boundary.max.x - self.boundary.min.x) / 2
         right_x = self.boundary.max.x
@@ -82,22 +81,22 @@ class QuadTree:
         top_y = self.boundary.max.y
 
         self.bottom_left = QuadTree(
-            BoundingBox(Vec2(left_x, bottom_y), Vec2(middle_x, middle_y)),
+            Rectangle(Vec2(left_x, bottom_y), Vec2(middle_x, middle_y)),
             self.capacity,
             self.depth - 1,
         )
         self.bottom_right = QuadTree(
-            BoundingBox(Vec2(middle_x, bottom_y), Vec2(right_x, middle_y)),
+            Rectangle(Vec2(middle_x, bottom_y), Vec2(right_x, middle_y)),
             self.capacity,
             self.depth - 1,
         )
         self.top_left = QuadTree(
-            BoundingBox(Vec2(left_x, middle_y), Vec2(middle_x, top_y)),
+            Rectangle(Vec2(left_x, middle_y), Vec2(middle_x, top_y)),
             self.capacity,
             self.depth - 1,
         )
         self.top_right = QuadTree(
-            BoundingBox(Vec2(middle_x, middle_y), Vec2(right_x, top_y)),
+            Rectangle(Vec2(middle_x, middle_y), Vec2(right_x, top_y)),
             self.capacity,
             self.depth - 1,
         )
@@ -109,7 +108,7 @@ class QuadTree:
         for item in current:
             self.insert(item)
 
-    def query(self, area: BoundingBox) -> list[Body]:
+    def query(self, area: Rectangle) -> list[Body]:
         if not self.boundary.overlaps(area):
             return []
 

@@ -1,151 +1,91 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from functools import singledispatchmethod
 from math import inf
 from typing import Protocol
 
 from pyglet.math import Vec2
 
-from .common import BoundingBox
+from .primitives import Circle, LineSegment, OrientedRectangle, Rectangle
 
 
 class Shape(Protocol):
-    def boundary(self) -> BoundingBox: ...
+    @property
+    def primitive(self) -> Circle | LineSegment | OrientedRectangle | Rectangle: ...
+
+    def boundary(self) -> Rectangle: ...
+
+    def collision(self, shape: Shape) -> bool:
+        return self.primitive.collision(shape.primitive)
 
 
-@dataclass
-class PointShape(Shape):
-    position: Vec2 = field(default_factory=Vec2)
+class LineSegmentShape(Shape):
+    def __init__(self, point1: Vec2 = None, point2: Vec2 = None):
+        point1 = point1 or Vec2()
+        point2 = point2 or Vec2()
+        self._primitive = LineSegment(point1, point2)
 
-    def boundary(self) -> BoundingBox:
-        return BoundingBox(self.position, self.position)
+    @property
+    def primitive(self) -> LineSegment:
+        return self._primitive
+    
+    def boundary(self) -> Rectangle:
+        min_x = min(self._primitive.point1.x, self._primitive.point2.y)
+        max_x = max(self._primitive.point1.x, self._primitive.point2.y)
+        min_y = min(self._primitive.point1.x, self._primitive.point2.y)
+        max_y = min(self._primitive.point1.x, self._primitive.point2.y)
 
-    @singledispatchmethod
-    def overlaps(self, other: PointShape) -> bool:
-        raise NotImplementedError
-
-
-@dataclass
-class AABBShape:
-    min: Vec2 = field(default_factory=Vec2)
-    max: Vec2 = field(default_factory=Vec2)
-
-    def boundary(self) -> BoundingBox:
-        return BoundingBox(self.min, self.max)
-
-    @singledispatchmethod
-    def overlaps(self, other: AABBShape) -> bool:
-        raise NotImplementedError
+        return Rectangle(Vec2(min_x, min_y), Vec2(max_x - min_x, max_y - min_y))
 
 
-@dataclass
-class RayShape:
-    position: Vec2 = field(default_factory=Vec2)
-    direction: Vec2 = field(default_factory=Vec2)
+class RectangleShape(Shape):
+    def __init__(self, origin: Vec2 = None, size: Vec2 = None):
+        origin = origin or Vec2()
+        size = size or Vec2()
+        self._primitive = Rectangle(origin, size)
 
-    def boundary(self) -> BoundingBox:
-        minimum = Vec2(
-            min(self.position.x, self.direction.y),
-            min(self.position.y, self.direction.y),
-        )
-        maximum = Vec2(
-            max(self.position.x, self.direction.y),
-            max(self.position.y, self.direction.y),
-        )
+    @property
+    def primitive(self) -> Rectangle:
+        return self._primitive
 
-        return BoundingBox(minimum, maximum)
-
-    @singledispatchmethod
-    def overlaps(self, other) -> bool:
-        raise NotImplementedError("Type not defined for argument")
+    def boundary(self) -> Rectangle:
+        return self._primitive
 
 
-@PointShape.overlaps.register
-def _(self, other: PointShape) -> bool:
-    return self.position == other.position
+class OrientedRectangleShape(Shape):
+    def __init__(self, center: Vec2 = None, half_extent: Vec2 = None, rotation: float = 0):
+        center = center or Vec2()
+        half_extent = half_extent or Vec2()
+        self._primitive = OrientedRectangle(center, half_extent, rotation)
 
+    @property
+    def primitive(self) -> OrientedRectangle:
+        return self._primitive
 
-@PointShape.overlaps.register
-def _(self, other: AABBShape) -> bool:
-    return point_aabb_overlaps(self, other)
+    def boundary(self) -> Rectangle:
+        min_x = inf
+        max_x = -inf
+        min_y = inf
+        max_y = -inf
 
+        for vertex in self._primitive.vertices():
+            min_x = min(min_x, vertex.x)
+            max_x = max(max_x, vertex.x)
+            min_y = min(min_y, vertex.y)
+            max_y = max(max_y, vertex.y)
 
-@PointShape.overlaps.register
-def _(self, other: RayShape) -> bool:
-    return point_ray_overlaps(self, other)
+        return Rectangle(Vec2(min_x, min_y), Vec2(max_x - min_x, max_y - min_y))
+    
 
+class CircleShape(Shape):
+    def __init__(self, center: Vec2 = None, radius: float = 0):
+        center = center or Vec2()
+        self._primitive = Circle(center, radius)
 
-@AABBShape.overlaps.register
-def _(self, other: AABBShape) -> bool:
-    return not (
-        self.min.x >= other.max.x
-        or self.max.x <= other.min.x
-        or self.min.y >= other.max.y
-        or self.max.y <= other.min.y
-    )
-
-
-@AABBShape.overlaps.register
-def _(self, other: PointShape) -> bool:
-    return point_aabb_overlaps(other, self)
-
-
-@AABBShape.overlaps.register
-def _(self, other: RayShape) -> bool: ...
-
-
-@RayShape.overlaps.register
-def _(self, other: AABBShape) -> bool:
-    tmin = -inf
-    tmax = inf
-
-    if self.direction.x != 0:
-        tx1 = (other.min.x - self.position.x) / self.direction.x
-        tx2 = (other.max.x - self.position.x) / self.direction.x
-        tmin = max(tmin, min(tx1, tx2))
-        tmax = min(tmax, max(tx1, tx2))
-    else:
-        if self.position.x < other.min.x or self.position.x > other.max.x:
-            return False
-
-    if self.direction.y != 0:
-        ty1 = (other.min.y - self.position.y) / self.direction.y
-        ty2 = (other.max.y - self.position.y) / self.direction.y
-        tmin = max(tmin, min(ty1, ty2))
-        tmax = min(tmax, max(ty1, ty2))
-    else:
-        if self.position.y < other.min.y or self.position.y > other.max.y:
-            return False
-
-    if tmax >= tmin >= 0:
-        return True
-    else:
-        return False
-
-
-@RayShape.overlaps.register
-def _(self, other: PointShape) -> bool:
-    return point_ray_overlaps(other, self)
-
-
-def point_aabb_overlaps(point: PointShape, aabb: AABBShape) -> bool:
-    return (
-        aabb.min.x <= point.position.x
-        and aabb.max.x <= point.position.x
-        and aabb.min.y <= point.position.y
-        and aabb.max.y <= point.position.y
-    )
-
-
-def point_ray_overlaps(point: PointShape, ray: RayShape) -> bool:
-    if ray.direction.x == Vec2(0, 0):
-        return False
-
-    t_x = (point.position.x - ray.position.x) / ray.direction.x
-    t_y = (point.position.y - ray.position.y) / ray.direction.y
-
-    if t_x == t_y and t_x >= 0:
-        return True
-
-    return False
+    @property
+    def primitive(self) -> Circle:
+        return self._primitive
+    
+    def boundary(self) -> Rectangle:
+        return Rectangle(
+            self._primitive.center - Vec2(self._primitive.radius, self._primitive.radius),
+            self._primitive + Vec2(self._primitive.radius, self._primitive.radius))
