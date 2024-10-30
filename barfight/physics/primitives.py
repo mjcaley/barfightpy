@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from functools import singledispatchmethod
-from itertools import chain
+from itertools import chain, islice, pairwise
 from math import cos, inf, radians, sin
 from typing import Generator, Self
 
@@ -73,7 +73,7 @@ class Rectangle:
 
     @property
     def top_left_vertex(self) -> Vec2:
-        return Vec2(self.origin.x, self.origin.y + self.size.y)
+        return Vec2(self.origin.x + self.size.x, self.origin.y)
 
     @property
     def top_right_vertex(self) -> Vec2:
@@ -84,6 +84,10 @@ class Rectangle:
         yield self.top_left_vertex
         yield self.top_right_vertex
         yield self.bottom_right_vertex
+
+    def edges(self) -> Generator[LineSegment, None, None]:
+        for v1, v2 in pairwise(chain(self.vertices(), islice(self.vertices(), 1))):
+            yield LineSegment(v1, v2)
 
     def axes(self) -> Generator[Vec2, None, None]:
         yield Vec2(1, 0)
@@ -134,6 +138,10 @@ class OrientedRectangle:
         yield self.top_left_vertex
         yield self.top_right_vertex
         yield self.bottom_right_vertex
+
+    def edges(self) -> Generator[LineSegment, None, None]:
+        for v1, v2 in pairwise(chain(self.vertices(), islice(self.vertices(), 1))):
+            yield LineSegment(v1, v2)
 
     def axes(self) -> Generator[Vec2, None, None]:
         yield Vec2(cos(radians(self.rotation)), sin(radians(self.rotation)))
