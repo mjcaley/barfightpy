@@ -12,7 +12,7 @@ from .primitives import Rectangle
 class QuadTree:
     def __init__(
         self,
-        bodies: list[Body],
+        bodies: list[Body | None],
         boundary: Rectangle,
         capacity: int = 20,
         max_depth: int = 8,

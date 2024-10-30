@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from functools import singledispatchmethod
 from itertools import chain
 from math import cos, inf, radians, sin
-from typing import Generator
+from typing import Generator, Self
 
 from pyglet.math import Vec2
 
@@ -17,6 +17,10 @@ class Line:
     @singledispatchmethod
     def collision(self, any) -> bool:
         raise NotImplementedError
+    
+    @property
+    def center(self) -> Vec2:
+        return self.base
 
 
 @dataclass
@@ -27,6 +31,13 @@ class LineSegment:
     @singledispatchmethod
     def collision(self, any) -> bool:
         raise NotImplementedError
+    
+    def edges(self) -> Generator[Self, None, None]:
+        yield self
+
+    @property
+    def center(self) -> Vec2:
+        return (self.point1 + self.point2) / 2
 
 
 @dataclass
@@ -47,6 +58,10 @@ class Rectangle:
     @singledispatchmethod
     def collision(self, any) -> bool:
         raise NotImplementedError
+    
+    @property
+    def center(self) -> Vec2:
+        return self.origin + (self.size / 2)
 
     @property
     def bottom_left_vertex(self) -> Vec2:
@@ -470,6 +485,18 @@ def line_segment_oriented_rectangle_collision(
     )
 
     return rectangle_lineseg_collision(lr, ls)
+
+
+# region Penetration functions
+
+def circle_circle_penetration(c1: Circle, c2: Circle) -> Vec2 | None:
+    distance = c1.center - c2.center
+    if distance < c1.radius + c2.radius:
+        return (c2.center - c1.center).limit(distance)
+    else:
+        return None
+
+# endregion
 
 
 # region Register class methods

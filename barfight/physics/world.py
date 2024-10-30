@@ -3,42 +3,44 @@ from functools import partial
 
 from pyglet.math import Vec2
 
-from .common import BoundingBox
+from .primitives import Rectangle
+
 from .body import Body, BodyKind
 from .response import Arbiter
 from .spatial import QuadTree
 
 
-# TODO: Get rid of
-def closest_body(point: Vec2, body: Body) -> float:
-    return body.shape.center.distance(point)
-
 
 class PhysicsWorld:
-    def __init__(self, min: Vec2, max: Vec2, max_depth=8):
-        self.min = min
-        self.max = max
+    def __init__(self, origin: Vec2, size: Vec2, max_depth=8):
+        self.origin = origin
+        self.size = size
         self.max_depth = max_depth
-        self.root = QuadTree(BoundingBox(self.min, self.max), self.max_depth)
+        self.bodies: list[Body | None] = []
+        self.root = QuadTree(self.bodies, Rectangle(self.origin, self.size), self.max_depth)
         self.active_collisions: set[tuple[Body, Body]] = set()
         self.position_change_callback = None
         self.on_collision_callback = None
         self.on_sensor_callback = None
-        self.bodies: list[Body | None] = []
 
     @property
-    def boundary(self) -> BoundingBox:
+    def boundary(self) -> Rectangle:
         return self.root.boundary
 
-    def insert(self, body: Body):
-        if not self.root.insert(body):
+    def add(self, body: Body):
+        self.bodies.append(body)
+        index = len(self.bodies)
+        if not self.root.insert(index):
             raise ValueError("Not within the boundary")
 
     def remove(self, body: Body):
-        self.root.remove(body)
+        self.root.remove(self.bodies.index(body))
 
     def clear(self):
-        self.root = QuadTree(BoundingBox(self.min, self.max), self.max_depth)
+        self.bodies = []
+        self.active_collisions = set()
+        self.new_collisions = set()
+        self.root = QuadTree(self.bodies, Rectangle(self.origin, self.size), self.max_depth)
 
     def collisions(self) -> list[tuple[Body, Body]]:
         return self.root.collisions([])
@@ -55,18 +57,36 @@ class PhysicsWorld:
         if self.on_sensor_callback:
             self.on_sensor_callback(arbiter)
 
+    def broad_phase(self) -> set[tuple[Body, Body]]:
+        new_collisions = set()
+        for body in self.bodies:
+            if body is None or body.kind != BodyKind.Dynamic:
+                continue
+            collisions = self.query(body.shape.boundary())
+            for colliding_body in collisions:
+                new_collisions.add((body, colliding_body))
+
+        return new_collisions
+    
+    def discrete_phase(self, broad_collisions: set[tuple[Body, Body]]):
+        discrete_collisions = set()
+
+        for first_body, second_body in broad_collisions:
+            if not first_body.shape.collision(second_body.shape):
+                continue
+            discrete_collisions.add((first_body, second_body))
+
     def step(self, dt: float):
-        self.broad_phase()
-        # new_collisions = self.collisions()
+        broad_collisions = self.broad_phase()
+        discrete_collisions = self.discrete_phase(broad_collisions)
+        resolved_collisions = self.resolve(discrete_collisions)
 
-        # colliding: dict[Body, set[Body]] = defaultdict(set)
-        # for first, second in new_collisions:
-        #     colliding[first].add(second)
-        #     colliding[second].add(first)
-        # for target, collisions in colliding.items():
-        #     self.resolve(target, collisions)
-
-        # self.active_collisions = new_collisions
+        
+        ended_collisions = broad_collisions - self.active_collisions
+        #TODO Send collision ended events
+        self.active_collisions = self.new_collisions
+        
+        
 
     def resolve(self, target: Body, collisions: set[Body]):
         for body in sorted(collisions, key=partial(closest_body, target.shape.center)):
