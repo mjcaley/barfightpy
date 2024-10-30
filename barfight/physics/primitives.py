@@ -18,6 +18,10 @@ class Line:
     def collision(self, any) -> bool:
         raise NotImplementedError
     
+    @singledispatchmethod
+    def penetration(self, any) -> Vec2 | None:
+        raise NotImplementedError
+    
     @property
     def center(self) -> Vec2:
         return self.base
@@ -30,6 +34,10 @@ class LineSegment:
 
     @singledispatchmethod
     def collision(self, any) -> bool:
+        raise NotImplementedError
+    
+    @singledispatchmethod
+    def penetration(self, any) -> Vec2 | None:
         raise NotImplementedError
     
     def edges(self) -> Generator[Self, None, None]:
@@ -48,6 +56,10 @@ class Circle:
     @singledispatchmethod
     def collision(self, any) -> bool:
         raise NotImplementedError
+    
+    @singledispatchmethod
+    def penetration(self, any) -> Vec2 | None:
+        raise NotImplementedError
 
 
 @dataclass
@@ -57,6 +69,10 @@ class Rectangle:
 
     @singledispatchmethod
     def collision(self, any) -> bool:
+        raise NotImplementedError
+    
+    @singledispatchmethod
+    def penetration(self, any) -> Vec2 | None:
         raise NotImplementedError
     
     @property
@@ -102,6 +118,10 @@ class OrientedRectangle:
 
     @singledispatchmethod
     def collision(self, any) -> bool:
+        raise NotImplementedError
+    
+    @singledispatchmethod
+    def penetration(self, any) -> Vec2 | None:
         raise NotImplementedError
 
     @property
@@ -498,11 +518,51 @@ def line_segment_oriented_rectangle_collision(
 # region Penetration functions
 
 def circle_circle_penetration(c1: Circle, c2: Circle) -> Vec2 | None:
-    distance = c1.center - c2.center
-    if distance < c1.radius + c2.radius:
-        return (c2.center - c1.center).limit(distance)
+    distance = c1.center.distance(c2.center)
+    radii = c1.radius + c2.radius
+    if distance < radii:
+        return (c2.center - c1.center).limit(radii - distance)
     else:
         return None
+    
+
+def rectangle_rectangle_penetration(r1: Rectangle, r2: Rectangle) -> Vec2 | None:
+    r1_left = r1.origin.x
+    r1_right = r1_left + r1.size.x
+    r2_left = r2.origin.x
+    r2_right = r2_left + r2.size.x
+
+    r1_bottom = r1.origin.y
+    r1_top = r1_bottom + r1.size.y
+    r2_bottom = r2.origin.y
+    r2_top = r2_bottom + r2.size.y
+
+    if not overlapping(r1_left, r1_right, r2_left, r2_right) and not overlapping(
+        r1_bottom, r1_top, r2_bottom, r2_top
+    ):
+        return None
+
+    x_overlap = min(r1_left, r1_right) - max(r1_left, r1_right)
+    y_overlap = min(r1_bottom, r2_bottom) - max(r1_top, r2_top)
+
+    if x_overlap < y_overlap:
+        if r1.origin.x < r2.origin.x:
+            return Vec2(-x_overlap, 0)
+        else:
+            return Vec2(x_overlap, 0)
+    if r1.origin.y < r2.origin.y:
+        return Vec2(0, -y_overlap)
+    else:
+        return Vec2(0, y_overlap)
+    
+
+def oriented_rectangle_oriented_rectangle_penetration(o1: OrientedRectangle, o2: OrientedRectangle) -> Vec2 | None:
+    min_overlap = -inf
+    min_axis = None
+
+    for axis in chain(o1.axes(), o2.axes()):
+        ...
+
 
 # endregion
 
@@ -585,6 +645,11 @@ def _(self, oriented_rectangle: OrientedRectangle) -> bool:
     return circle_oriented_rectangle_collision(self, oriented_rectangle)
 
 
+@Circle.penetration.register
+def _(self, circle: Circle) -> Vec2 | None:
+    return circle_circle_penetration(self, circle)
+
+
 @Rectangle.collision.register
 def _(self, line: Line) -> bool:
     return rectangle_line_collision(self, line)
@@ -608,6 +673,11 @@ def _(self, rectangle: Rectangle) -> bool:
 @Rectangle.collision.register
 def _(self, oriented_rectangle: OrientedRectangle) -> bool:
     return rectangle_oriented_rectangle_collision(self, oriented_rectangle)
+
+
+@Rectangle.penetration.register
+def _(self, rectangle: Rectangle) -> Vec2 | None:
+    return rectangle_rectangle_penetration(self, rectangle)
 
 
 @OrientedRectangle.collision.register
