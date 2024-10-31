@@ -7,7 +7,7 @@ from typing import Generator, Self, Iterator
 from pyglet.math import Vec2
 
 
-@dataclass
+@dataclass(frozen=True)
 class Collision:
     penetration: Vec2
     depth: float
@@ -769,8 +769,18 @@ def _(self, oriented_rectangle: OrientedRectangle) -> bool:
 
 
 @Circle.penetration.register
-def _(self, circle: Circle) -> Vec2 | None:
+def _(self, circle: Circle) -> Collision | None:
     return circle_circle_penetration(self, circle)
+
+
+@Circle.penetration.register
+def _(self, rectangle: Rectangle) -> Collision | None:
+    return circle_rectangle_penetration(self, rectangle)
+
+
+@Circle.penetration.register
+def _(self, oriented_rectangle: OrientedRectangle) -> Collision | None:
+    return circle_oriented_rectangle_penetration(self, oriented_rectangle)
 
 
 @Rectangle.collision.register
@@ -803,6 +813,16 @@ def _(self, rectangle: Rectangle) -> Vec2 | None:
     return rectangle_rectangle_penetration(self, rectangle)
 
 
+@Rectangle.penetration.register
+def _(self, circle: Circle) -> Collision | None:
+    return circle_rectangle_penetration(circle, self)
+
+
+@Rectangle.penetration.register
+def _(self, oriented_rectangle: OrientedRectangle) -> Collision | None:
+    return rectangle_oriented_rectangle_penetration(self, oriented_rectangle)
+
+
 @OrientedRectangle.collision.register
 def _(self, line: Line) -> bool:
     return line_oriented_rectangle_collision(line, self)
@@ -826,6 +846,21 @@ def _(self, rectangle: Rectangle) -> bool:
 @OrientedRectangle.collision.register
 def _(self, oriented_rectangle: OrientedRectangle) -> bool:
     return oriented_rect_oriented_rect_collision(self, oriented_rectangle)
+
+
+@OrientedRectangle.penetration.register
+def _(self, oriented_rectangle: OrientedRectangle) -> Collision | None:
+    return oriented_rectangle_oriented_rectangle_penetration(self, oriented_rectangle)
+
+
+@OrientedRectangle.penetration.register
+def _(self, rectangle: Rectangle) -> Vec2 | None:
+    return rectangle_oriented_rectangle_penetration(rectangle, self)
+
+
+@OrientedRectangle.penetration.register
+def _(self, circle: Circle) -> Collision | None:
+    return circle_rectangle_penetration(circle, self)
 
 
 # endregion
