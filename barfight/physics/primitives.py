@@ -2,9 +2,15 @@ from dataclasses import dataclass, field
 from functools import singledispatchmethod
 from itertools import chain, islice, pairwise
 from math import cos, inf, radians, sin
-from typing import Generator, Self
+from typing import Generator, Self, Iterator
 
 from pyglet.math import Vec2
+
+
+@dataclass
+class Collision:
+    penetration: Vec2
+    depth: float
 
 # region Shapes
 
@@ -230,6 +236,18 @@ def project_segment(segment: LineSegment, onto: Vec2) -> tuple[float, float]:
     maximum = onto.dot(segment.point2)
 
     return min(minimum, maximum), max(minimum, maximum)
+
+
+def project_vertices(vertices: Iterator[Vec2], axis: Vec2) -> tuple[float, float]:
+    min_proj = inf
+    max_proj = -inf
+
+    for vertex in vertices:
+        projection = vertex.dot(axis)
+        min_proj = min(min_proj, projection)
+        max_proj = max(max_proj, projection)
+
+    return min_proj, max_proj
 
 
 def min_max_vertex(axis: Vec2, vertices: list[Vec2]) -> tuple[Vec2, Vec2]:
@@ -520,10 +538,14 @@ def line_segment_oriented_rectangle_collision(
 def circle_circle_penetration(c1: Circle, c2: Circle) -> Vec2 | None:
     distance = c1.center.distance(c2.center)
     radii = c1.radius + c2.radius
-    if distance < radii:
-        return (c2.center - c1.center).limit(radii - distance)
-    else:
+
+    if distance >= radii:
         return None
+
+    penetration_depth = radii - distance
+    penetration_vector = (c2.center - c1.center).from_magnitude(penetration_depth)
+ 
+    return Collision(penetration_vector, penetration_depth)
     
 
 def rectangle_rectangle_penetration(r1: Rectangle, r2: Rectangle) -> Vec2 | None:
@@ -546,22 +568,123 @@ def rectangle_rectangle_penetration(r1: Rectangle, r2: Rectangle) -> Vec2 | None
     y_overlap = min(r1_bottom, r2_bottom) - max(r1_top, r2_top)
 
     if x_overlap < y_overlap:
-        if r1.origin.x < r2.origin.x:
-            return Vec2(-x_overlap, 0)
-        else:
-            return Vec2(x_overlap, 0)
-    if r1.origin.y < r2.origin.y:
-        return Vec2(0, -y_overlap)
+        penetration_vector = Vec2(-x_overlap, 0) if r1.origin.x < r2.origin.x else Vec2(x_overlap, 0)
+        penetration_depth = abs(x_overlap)
     else:
-        return Vec2(0, y_overlap)
+        penetration_vector = Vec2(0, -y_overlap) if r1.origin.y < r2.origin.y else Vec2(0, y_overlap)
+        penetration_depth = abs(y_overlap)
+
+    return Collision(penetration_vector, penetration_depth)
     
 
-def oriented_rectangle_oriented_rectangle_penetration(o1: OrientedRectangle, o2: OrientedRectangle) -> Vec2 | None:
-    min_overlap = -inf
-    min_axis = None
+def overlap_on_axis(o1: OrientedRectangle, o2: OrientedRectangle, axis: Vec2) -> float | None:
+    proj1_min, proj1_max = project_vertices(o1.vertices(), axis)
+    proj2_min, proj2_max = project_vertices(o2.vertices(), axis)
+    overlap = min(proj1_max, proj2_max) - max(proj1_min, proj2_min)
+
+    return overlap if overlap > 0 else None
+
+
+def oriented_rectangle_oriented_rectangle_penetration(o1: OrientedRectangle, o2: OrientedRectangle) -> Collision | None:
+    min_penetration = inf
+    penetration_axis = Vec2()
 
     for axis in chain(o1.axes(), o2.axes()):
-        ...
+        axis = axis.normalize()
+        if overlap := overlap_on_axis(o1, o2, axis):
+            if overlap < min_penetration:
+                min_penetration = overlap
+                penetration_axis = axis
+        else:
+            return None
+        
+    penetration_vector = penetration_axis.from_magnitude(min_penetration)
+
+    return Collision(penetration_vector, min_penetration)
+
+
+def circle_rectangle_penetration(c: Circle, r: Rectangle) -> Collision | None:
+    closest_x = max(r.origin.x, min(c.center.x, r.origin.x + r.size.x))
+    closest_y = max(r.origin.y, min(c.center.y, r.origin.y + r.size.y))
+    closest_point = Vec2(closest_x, closest_y)
+
+    center_to_closest = closest_point - c.center
+    distance = center_to_closest.mag
+
+    if distance >= c.radius:
+        return None
+    
+    penetration_depth = c.radius - distance
+    penetration_vector = center_to_closest.from_magnitude(penetration_depth)
+
+    return Collision(penetration=penetration_vector, depth=penetration_depth)
+
+
+def circle_oriented_rectangle_penetration(c: Circle, o: OrientedRectangle) -> Collision | None:
+    to_local = c.center - o.center
+    cos_r, sin_r = cos(-o.rotation), sin(-o.rotation)
+    local_center = Vec2(
+        to_local.x * cos_r - to_local.y * sin_r,
+        to_local.x * sin_r + to_local.y * cos_r
+    )
+
+    closest_x = max(-o.half_extent.x, min(local_center.x, o.half_extent.x))
+    closest_y = max(-o.half_extent.y, min(local_center.y, o.half_extent.y))
+    closest_point = Vec2(closest_x, closest_y)
+
+    penetration_vector_local = local_center - closest_point
+    penetration_distance = penetration_vector_local.mag
+
+    if penetration_distance >= c.radius:
+        return None
+
+    penetration_depth = c.radius - penetration_distance
+    penetration_vector_world = Vec2(
+        penetration_vector_local.x * cos_r + penetration_vector_local.y * sin_r,
+        -penetration_vector_local.x * sin_r + penetration_vector_local.y * cos_r
+    ).from_magnitude(penetration_depth)
+
+    return Collision(penetration=penetration_vector_world, depth=penetration_depth)
+
+
+def rectangle_oriented_rectangle_penetration(r: Rectangle, o: OrientedRectangle) -> Collision | None:
+    # Rectangle vertices in world space
+    rect_vertices = [
+        r.origin,
+        Vec2(r.origin.x + r.size.x, r.origin.y),
+        Vec2(r.origin.x + r.size.x, r.origin.y + r.size.y),
+        Vec2(r.origin.x, r.origin.y + r.size.y)
+    ]
+
+    # Track the minimum penetration axis and depth
+    min_penetration_depth = inf
+    min_penetration_axis = Vec2()
+
+    # SAT - Project both shapes onto each axis
+    for axis in chain(r.axes(), o.axes()):
+        # Project both shapes onto the axis
+        rect_proj = [vertex.dot(axis) for vertex in r.vertices()]
+        ortho_proj = [vertex.dot(axis) for vertex in o.vertices()]
+
+        # Find min and max projections
+        rect_min, rect_max = min(rect_proj), max(rect_proj)
+        ortho_min, ortho_max = min(ortho_proj), max(ortho_proj)
+
+        # Check for overlap
+        overlap = min(rect_max, ortho_max) - max(rect_min, ortho_min)
+        if overlap <= 0:
+            return None  # No collision
+
+        # Track the smallest penetration depth
+        if overlap < min_penetration_depth:
+            min_penetration_depth = overlap
+            min_penetration_axis = axis if rect_min < ortho_min else -axis
+
+    # Calculate the penetration vector
+    penetration_vector = min_penetration_axis.from_magnitude(min_penetration_depth)
+    
+    # Return the Collision object with penetration vector and depth
+    return Collision(penetration=penetration_vector, depth=min_penetration_depth)
 
 
 # endregion
