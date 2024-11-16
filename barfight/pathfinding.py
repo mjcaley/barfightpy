@@ -6,8 +6,8 @@ from typing import Iterator
 
 from pyglet.math import Vec2
 
-from .constants import CHARACTER_LAYER
-from .physics import PhysicsWorld, Rectangle
+from .physics.primitives import Rectangle
+from .physics.world import PhysicsWorld
 
 
 @dataclass(unsafe_hash=True)
@@ -27,12 +27,8 @@ class Grid:
         return self.grid[key]
 
     def create_grid(self) -> list[list[Cell]]:
-        num_x_cells = int(
-            (self.world.boundary.max.x - self.world.boundary.min.x) // (self.radius * 2)
-        )
-        num_y_cells = int(
-            (self.world.boundary.max.y - self.world.boundary.min.y) // (self.radius * 2)
-        )
+        num_x_cells = int(self.world.boundary.size.x // (self.radius * 2))
+        num_y_cells = int(self.world.boundary.size.y // (self.radius * 2))
         grid = []
         for x in range(num_x_cells):
             line = []
@@ -53,9 +49,7 @@ class Grid:
     def update_collisions(self):
         for line in self.grid:
             for cell in line:
-                cell.colliding = self.world.is_colliding_with(
-                    cell.rectangle, CHARACTER_LAYER
-                )
+                cell.colliding = self.world.is_colliding(cell.rectangle)
 
     def coord_from_position(self, position: Vec2) -> tuple[int, int]:
         x = int(position.x // (self.radius * 2))

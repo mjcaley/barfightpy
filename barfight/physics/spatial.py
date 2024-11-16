@@ -1,12 +1,12 @@
 from math import inf
 from typing import Self
 
+from loguru import logger
 from pyglet.math import Vec2
 
-from .raycast import Ray
-
-from .body import Body
+from .body import Body, BodyKind
 from .primitives import Rectangle
+from .raycast import Ray
 
 
 class QuadTree:
@@ -31,18 +31,31 @@ class QuadTree:
 
     @property
     def divisions(self) -> list[Self]:
-        return [q for q in (self.bottom_left, self.bottom_right, self.top_left, self.top_right) if q is not None]
+        return [
+            q
+            for q in (
+                self.bottom_left,
+                self.bottom_right,
+                self.top_left,
+                self.top_right,
+            )
+            if q is not None
+        ]
 
     def insert(self, body_index: int) -> bool:
         # If the body boundary is larger than the quadtree boundary, return False
         quadtree_rect = self.boundary
         body_rect = self.bodies[body_index].shape.boundary()
         if not (
-            body_rect.origin.x >= quadtree_rect.origin.x and
-            (body_rect.origin + body_rect.size).x <= (quadtree_rect.origin + quadtree_rect.size).x and
-            body_rect.origin.y >= quadtree_rect.origin.y and
-            (body_rect.origin + body_rect.size).y <= (quadtree_rect.origin + quadtree_rect.size).y
+            body_rect.origin.x >= quadtree_rect.origin.x
+            and (body_rect.origin + body_rect.size).x
+            <= (quadtree_rect.origin + quadtree_rect.size).x
+            and body_rect.origin.y >= quadtree_rect.origin.y
+            and (body_rect.origin + body_rect.size).y
+            <= (quadtree_rect.origin + quadtree_rect.size).y
         ):
+            breakpoint()
+            logger.debug("Can't add, not in boundary, failed")
             return False
 
         # If we're at the bottom of the depth
@@ -51,6 +64,7 @@ class QuadTree:
         if self.depth <= 0 or (
             len(self.children) < self.capacity and not self.is_divided
         ):
+            logger.debug("Bottom of depth, adding")
             self.children.add(body_index)
             return True
 
@@ -67,6 +81,7 @@ class QuadTree:
         elif self.top_right.insert(body_index):
             return True
         else:
+            logger.debug("Adding into myself, added")
             self.children.add(body_index)
             return True
 
@@ -90,22 +105,26 @@ class QuadTree:
                 self.is_divided = False
 
     def subdivide(self):
-        self.bottom_left = QuadTree(self.bodies,
+        self.bottom_left = QuadTree(
+            self.bodies,
             Rectangle(
                 self.boundary.origin, self.boundary.origin + self.boundary.size / 2
             ),
             self.capacity,
             self.depth - 1,
         )
-        self.bottom_right = QuadTree(self.bodies,
+        self.bottom_right = QuadTree(
+            self.bodies,
             Rectangle(
                 self.boundary.origin + Vec2(self.boundary.size.x / 2),
-                self.boundary.origin + Vec2(self.boundary.size.x, self.boundary.size.y / 2),
+                self.boundary.origin
+                + Vec2(self.boundary.size.x, self.boundary.size.y / 2),
             ),
             self.capacity,
             self.depth - 1,
         )
-        self.top_left = QuadTree(self.bodies,
+        self.top_left = QuadTree(
+            self.bodies,
             Rectangle(
                 self.boundary.origin + Vec2(0, self.boundary.size.y / 2),
                 self.boundary.origin
@@ -114,7 +133,8 @@ class QuadTree:
             self.capacity,
             self.depth - 1,
         )
-        self.top_right = QuadTree(self.bodies,
+        self.top_right = QuadTree(
+            self.bodies,
             Rectangle(
                 self.boundary.origin + self.boundary.size / 2,
                 self.boundary.origin + self.boundary.size,
@@ -150,15 +170,19 @@ class QuadTree:
 
         return bodies
 
-    def nearest(self, point: Vec2, best_distance: float = inf, closest: Body | None = None) -> tuple[float, Body]:
+    def nearest(
+        self, point: Vec2, best_distance: float = inf, closest: Body | None = None
+    ) -> tuple[float, Body]:
         for body_index in self.children:
             body = self.bodies[body_index]
-            center_of_body = body.shape.boundary().origin + body.shape.boundary().size / 2
+            center_of_body = (
+                body.shape.boundary().origin + body.shape.boundary().size / 2
+            )
 
             ray = Ray(point, center_of_body - point)
             intersection = ray.intersects(body.shape.primitive)
             distance = point.distance(intersection)
-            
+
             if distance < best_distance:
                 best_distance, closest = distance, body
 
@@ -169,6 +193,48 @@ class QuadTree:
                     best_distance, closest = child_distance, child_body
 
         return best_distance, closest
+
+    def raycast(self, ray: Ray, kind: BodyKind) -> tuple[float, Body] | None:
+        if not ray.intersects(self.boundary):
+            return None
+
+        closest_body = None
+        closest_distance = inf
+        for body_index in self.children:
+            body = self.bodies[body_index]
+            if body is None or body.kind != kind:
+                continue
+            if intersection := ray.intersects(body.shape.primitive):
+                distance = ray.origin.distance(intersection)
+                if distance < closest_distance:
+                    closest_distance = distance
+                    closest_body = body
+
+        if self.is_divided:
+            if bottom_left_result := self.bottom_left.raycast(ray, kind):
+                if bottom_left_result[0] < closest_distance:
+                    closest_distance = bottom_left_result[0]
+                    closest_body = bottom_left_result[1]
+
+            if bottom_left_result := self.bottom_right.raycast(ray, kind):
+                if bottom_left_result[0] < closest_distance:
+                    closest_distance = bottom_left_result[0]
+                    closest_body = bottom_left_result[1]
+
+            if top_left_result := self.top_left.raycast(ray, kind):
+                if top_left_result[0] < closest_distance:
+                    closest_distance = top_left_result[0]
+                    closest_body = top_left_result[1]
+
+            if top_right_result := self.top_right.raycast(ray, kind):
+                if top_right_result[0] < closest_distance:
+                    closest_distance = top_right_result[0]
+                    closest_body = top_right_result[1]
+
+        if closest_body is None:
+            return None
+        else:
+            return closest_distance, closest_body
 
     def collisions(self, parent_bodies: list[Body]) -> list[tuple[Body, Body]]:
         colliding = []

@@ -22,7 +22,7 @@ class Shape(Protocol):
 
     def collision(self, shape: Shape) -> bool:
         return self.primitive.collision(shape.primitive)
-    
+
     def penetration(self, shape: Shape) -> Collision | None:
         return self.primitive.penetration(shape.primitive)
 
@@ -62,14 +62,14 @@ class RectangleShape:
 
     @position.setter
     def position(self, value: Vec2):
-        self._primitive.origin = value
+        self._primitive.center = value
 
     def boundary(self) -> Rectangle:
         return self._primitive
 
     def collision(self, shape: Shape) -> bool:
         return self.primitive.collision(shape.primitive)
-    
+
     def penetration(self, shape: Shape) -> Collision | None:
         return self.primitive.penetration(shape.primitive)
 
@@ -110,7 +110,7 @@ class OrientedRectangleShape:
 
     def collision(self, shape: Shape) -> bool:
         return self.primitive.collision(shape.primitive)
-    
+
     def penetration(self, shape: Shape) -> Collision | None:
         return self.primitive.penetration(shape.primitive)
 
@@ -141,6 +141,6 @@ class CircleShape:
 
     def collision(self, shape: Shape) -> bool:
         return self.primitive.collision(shape.primitive)
-    
+
     def penetration(self, shape: Shape) -> Collision | None:
         return self.primitive.penetration(shape.primitive)

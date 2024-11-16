@@ -9,7 +9,7 @@ from barfight.pathfinding import Grid, Pathfinding
 
 from . import ecs, events
 from .bundles import add_enemy, add_player, add_wall
-from .physics import PhysicsWorld
+from .physics.world import PhysicsWorld
 from .systems import (
     AISystem,
     ActorSystem,
@@ -25,7 +25,7 @@ from .systems import (
 
 def main():
     window = Window(800, 600, "Bar Fight")
-    world = PhysicsWorld(Vec2(-200, -200), Vec2(1000, 800))
+    world = PhysicsWorld(Vec2(-200, -200), Vec2(2000, 1500))
 
     debug_system = DebugSystem()
     ecs.add_system(debug_system, 100)
@@ -92,7 +92,7 @@ def main():
     add_wall(600, 200, 100, 100)
     add_wall(700, 200, 100, 100)
     add_wall(800, 200, 100, 100)
-    add_enemy(200, 300)
+    add_enemy(Vec2(200, 300))
 
     pathfinding = Pathfinding(Grid(world, 5))
     ai_system = AISystem(pathfinding, window)

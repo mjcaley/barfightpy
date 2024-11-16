@@ -15,15 +15,8 @@ from .components import (
     Velocity,
     Wall,
 )
-from .constants import (
-    ATTACK_LAYER,
-    ATTACK_MASK,
-    CHARACTER_LAYER,
-    CHARACTER_MASK,
-    OBSTACLE_LAYER,
-    OBSTACLE_MASK,
-)
-from .physics import Body, BodyKind, Rectangle
+from .physics.body import Body, BodyKind
+from .physics.shapes import RectangleShape
 
 
 def add_player(position: Vec2) -> int:
@@ -39,45 +32,28 @@ def add_player(position: Vec2) -> int:
         Health(100, 100),
         Player(),
     )
-    ecs.add_component(
-        entity,
-        PhysicsBody(
-            Body(
-                Rectangle.from_dimensions(position, 100, 100),
-                layer=CHARACTER_LAYER,
-                mask=CHARACTER_MASK,
-                data=entity,
-            )
-        ),
-    )
+    shape = RectangleShape(position - Vec2(100, 100) / 2, Vec2(100, 100))
+    # breakpoint()
+    ecs.add_component(entity, PhysicsBody(Body(shape, data=entity)))
 
     return entity
 
 
-def add_enemy(x: float, y: float) -> int:
+def add_enemy(position: Vec2) -> int:
     image = pyglet.image.load("assets/player.png")
     image.anchor_x = image.width // 2
     image.anchor_y = image.height // 2
 
     entity = ecs.create_entity(
         Enemy(),
-        Position(Vec2(x, y)),
+        Position(position),
         Velocity(),
         Sprite(pyglet.sprite.Sprite(image), Layer.Game),
         Health(100, 100),
         Actor(max_speed=200),
     )
-    ecs.add_component(
-        entity,
-        PhysicsBody(
-            Body(
-                Rectangle.from_dimensions(Vec2(x, y), 100, 100),
-                layer=CHARACTER_LAYER,
-                mask=CHARACTER_MASK,
-                data=entity,
-            )
-        ),
-    )
+    shape = RectangleShape(position - Vec2(100, 100) / 2, Vec2(100, 100))
+    ecs.add_component(entity, PhysicsBody(Body(shape, data=entity)))
 
     return entity
 
@@ -92,14 +68,15 @@ def add_wall(x: float, y: float, width: float, height: float) -> int:
         Position(Vec2(x, y)),
         Sprite(pyglet.sprite.Sprite(image), Layer.Game),
     )
+    # breakpoint()
     ecs.add_component(
         entity,
         PhysicsBody(
             Body(
-                Rectangle.from_dimensions(Vec2(x, y), width, height),
+                RectangleShape(
+                    Vec2(x, y) - Vec2(width, height) / 2, Vec2(width, height)
+                ),
                 kind=BodyKind.Static,
-                layer=OBSTACLE_LAYER,
-                mask=OBSTACLE_MASK,
                 data=entity,
             )
         ),
@@ -108,11 +85,11 @@ def add_wall(x: float, y: float, width: float, height: float) -> int:
     return entity
 
 
-def add_attack(entity: int, min: Vec2, max: Vec2) -> int:
-    rect = Rectangle(min, max)
+def add_attack(entity: int, origin: Vec2, size: Vec2) -> int:
+    rect = RectangleShape(origin, size)
     entity = ecs.create_entity(
         Attack(entity),
-        Position(rect.center),
+        Position(rect.position),
     )
     ecs.add_component(
         entity,
@@ -120,8 +97,6 @@ def add_attack(entity: int, min: Vec2, max: Vec2) -> int:
             Body(
                 rect,
                 kind=BodyKind.Sensor,
-                layer=ATTACK_LAYER,
-                mask=ATTACK_MASK,
                 data=entity,
             )
         ),

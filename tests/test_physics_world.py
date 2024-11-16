@@ -1,7 +1,9 @@
-from barfight.physics.body import Body, BodyKind
-from barfight.physics.shapes import RectangleShape
-from barfight.physics.world import PhysicsWorld, BroadCollision
 from pyglet.math import Vec2
+
+from barfight.physics.body import Body, BodyKind
+from barfight.physics.raycast import Ray
+from barfight.physics.shapes import RectangleShape
+from barfight.physics.world import BroadCollision, PhysicsWorld
 
 
 def test_body_added():
@@ -80,4 +82,17 @@ def test_step():
     w.add(b2)
     w.step(0)
 
-    assert Vec2(-5, -5) == b1.shape.position
+    assert Vec2(5, 0) == b1.shape.position
+
+
+def test_raycast():
+    w = PhysicsWorld(Vec2(), Vec2(100, 100))
+    b1 = Body(RectangleShape(Vec2(0, 0), Vec2(10, 10)), BodyKind.Dynamic, data=1)
+    b2 = Body(RectangleShape(Vec2(0, 0), Vec2(10, 10)), BodyKind.Static, data=2)
+    w.add(b1)
+    w.add(b2)
+    hit = w.raycast(Ray(Vec2(-1, -1), Vec2(1, 1)), BodyKind.Static)
+
+    assert hit is not None
+    assert Vec2(-1, -1).distance(Vec2(0, 0)) == hit[0]
+    assert b2 is hit[1]

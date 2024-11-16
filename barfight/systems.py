@@ -121,10 +121,10 @@ class DebugSystem(
     def on_component_added(self, entity: int, component: Any):
         if isinstance(component, PhysicsBody):
             shape = pyglet.shapes.Box(
-                component.body.shape.min.x,
-                component.body.shape.min.y,
-                component.body.shape.max.x - component.body.shape.min.x,
-                component.body.shape.max.y - component.body.shape.min.y,
+                component.body.shape.boundary().origin.x,
+                component.body.shape.boundary().origin.y,
+                component.body.shape.boundary().size.x,
+                component.body.shape.boundary().size.y,
                 color=(50, 25, 255),
             )
             ecs.add_component(entity, Shape(shape, Layer.Debug))
@@ -151,8 +151,8 @@ class DrawSystem(ecs.SystemProtocol, DrawProtocol, ComponentAddedProtocol):
         for _, (position, sprite) in ecs.get_components(Position, Sprite):
             sprite.sprite.update(x=position.position.x, y=position.position.y)
         for _, (physics_body, shape) in ecs.get_components(PhysicsBody, Shape):
-            shape.shape.x = physics_body.body.rectangle.min.x
-            shape.shape.y = physics_body.body.rectangle.min.y
+            shape.shape.x = physics_body.body.shape.primitive.origin.x
+            shape.shape.y = physics_body.body.shape.primitive.origin.y
         self.batch.draw()
 
     def on_component_added(self, entity: int, component: ecs.Any):
@@ -223,13 +223,20 @@ class InputSystem(ecs.SystemProtocol, InputProtocol):
 
 class MovementSystem(ecs.SystemProtocol):
     def process(self, dt: float):
-        for entity, (_, position, velocity) in ecs.get_components(
-            Actor, Position, Velocity
+        for entity, (_, position, velocity, physics_body) in ecs.get_components(
+            Actor, Position, Velocity, PhysicsBody
         ):
             change = velocity.direction * velocity.speed * dt
             if change != Vec2(0, 0):
+                # breakpoint()
                 position.position += velocity.direction * velocity.speed * dt
+                physics_body.body.position += change
                 ecs.dispatch_event(events.POSITION_CHANGED_EVENT, entity)
+                logger.debug(
+                    "Player position {}; physics {}",
+                    position.position,
+                    physics_body.body.position,
+                )
 
 
 # endregion
@@ -250,29 +257,31 @@ class PhysicsSystem(
         self.world.on_sensor_callback = self.on_physics_sensor
 
     def process(self, dt: float):
-        self.world.step()
+        self.world.step(dt)
 
     def on_component_added(self, entity: int, component: Any):
         if isinstance(component, PhysicsBody):
-            self.world.insert(component.body)
+            self.world.add(component.body)
 
     def on_component_removed(self, entity: int, component: Any):
         if isinstance(component, PhysicsBody):
             self.world.remove(component.body)
 
-    def on_position_changed(self, entity: int):
-        position, physics_body = ecs.try_components(entity, Position, PhysicsBody)
-        if position and physics_body:
-            physics_body.body.rectangle.center = position.position
-            self.world.remove(physics_body.body)
-            self.world.insert(physics_body.body)
+    # def on_position_changed(self, entity: int):
+    #     position, physics_body = ecs.try_components(entity, Position, PhysicsBody)
+    #     if position and physics_body:
+    #         physics_body.body.shape.center = position.position
+    #         self.world.remove(physics_body.body)
+    #         self.world.add(physics_body.body)
 
     def on_physics_position_change(self, body: Body):
         position = ecs.get_component(body.data, Position)
         physics_body = ecs.get_component(body.data, PhysicsBody)
-        position.position = physics_body.body.rectangle.center
+        # breakpoint()
+        position.position = physics_body.body.position
 
     def on_physics_collision(self, arbiter: Arbiter):
+        # breakpoint()
         logger.debug(
             f"{arbiter.first_body.data} collides with {arbiter.second_body.data} first time: {arbiter.is_first_collision}"
         )
@@ -339,25 +348,35 @@ class ActorSystem(ecs.SystemProtocol, PlayerStateProtocol, AIStateProtocol):
     def _actor_attack(
         self, entity: int, actor: Actor, velocity: Velocity, physics_body: PhysicsBody
     ):
-        attack_size = 20
+        attack_box_size = 20
+        attack_size = Vec2(attack_box_size, attack_box_size)
         if actor.facing == 1:
-            attack_min = Vec2(
-                physics_body.body.shape.max.x,
-                physics_body.body.shape.center.y - attack_size / 2,
+            attack_origin = Vec2(
+                physics_body.body.shape.boundary().origin.x
+                + physics_body.body.shape.boundary().size.x,
+                physics_body.body.shape.boundary().center.y + (attack_box_size / 2),
             )
-            attack_max = Vec2(
-                physics_body.body.shape.max.x + attack_size,
-                physics_body.body.shape.center.y + attack_size / 2,
-            )
+            # attack_min = Vec2(
+            #     physics_body.body.shape.max.x,
+            #     physics_body.body.shape.center.y - attack_size / 2,
+            # )
+            # attack_max = Vec2(
+            #     physics_body.body.shape.max.x + attack_size,
+            #     physics_body.body.shape.center.y + attack_size / 2,
+            # )
         else:
-            attack_min = Vec2(
-                physics_body.body.shape.min.x - attack_size,
-                physics_body.body.shape.center.y - attack_size / 2,
+            attack_origin = Vec2(
+                physics_body.body.shape.boundary().origin.x - attack_box_size,
+                physics_body.body.shape.boundary().center.y + (attack_box_size / 2),
             )
-            attack_max = Vec2(
-                physics_body.body.shape.min.x,
-                physics_body.body.shape.center.y + attack_size / 2,
-            )
+            # attack_min = Vec2(
+            #     physics_body.body.shape.min.x - attack_size,
+            #     physics_body.body.shape.center.y - attack_size / 2,
+            # )
+            # attack_max = Vec2(
+            #     physics_body.body.shape.min.x,
+            #     physics_body.body.shape.center.y + attack_size / 2,
+            # )
 
         match actor.state, actor.cooldown:
             case ActorState.Idle | ActorState.Walking, _:
@@ -365,12 +384,12 @@ class ActorSystem(ecs.SystemProtocol, PlayerStateProtocol, AIStateProtocol):
                 velocity.speed = 0
                 actor.cooldown = 0.2
 
-                add_attack(entity, attack_min, attack_max)
+                add_attack(entity, attack_origin, attack_size)
 
             case ActorState.Attacking, 0:
                 actor.cooldown = 0.2
 
-                add_attack(entity, attack_min, attack_max)
+                add_attack(entity, attack_origin, attack_size)
 
     def on_player_direction(self, direction: Vec2):
         for _, (actor, _) in ecs.get_components(Actor, Player):

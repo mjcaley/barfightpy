@@ -22,3 +22,11 @@ class Body:
 
     def __hash__(self):
         return hash(id(self))
+
+    @property
+    def position(self) -> Vec2:
+        return self.shape.position
+
+    @position.setter
+    def position(self, p: Vec2):
+        self.shape.position = p
