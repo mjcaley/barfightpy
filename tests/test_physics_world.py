@@ -94,5 +94,5 @@ def test_raycast():
     hit = w.raycast(Ray(Vec2(-1, -1), Vec2(1, 1)), BodyKind.Static)
 
     assert hit is not None
-    assert Vec2(-1, -1).distance(Vec2(0, 0)) == hit[0]
-    assert b2 is hit[1]
+    assert Vec2(0, 0) == hit.point
+    assert b2 is hit.body

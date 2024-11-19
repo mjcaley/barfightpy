@@ -26,6 +26,13 @@ class DiscreteCollision:
 
     def __hash__(self):
         return hash((self.first, self.second))
+    
+
+@dataclass(frozen=True)
+class RaycastHit:
+    point: Vec2
+    normal: Vec2
+    body: Body
 
 
 class PhysicsWorld:
@@ -161,25 +168,9 @@ class PhysicsWorld:
             ray = Ray(body.shape.boundary().center, body.velocity * dt)
             # self.raycast
 
-    def raycast(self, ray: Ray, kind: BodyKind) -> tuple[float, Body] | None:
-        return self.root.raycast(ray, kind)
-
-        # for body in sorted(collisions, key=partial(closest_body, target.shape.center)):
-        #     if target.layer & body.mask == 0 and body.layer and target.mask == 0:
-        #         continue
-
-        #     arbiter = Arbiter(
-        #         target, body, (target, body) not in self.active_collisions
-        #     )
-
-        #     match body.kind:
-        #         case BodyKind.Sensor:
-        #             self._call_on_sensor(arbiter)
-        #         case BodyKind.Static:
-        #             if target.shape.overlaps(body.shape):
-        #                 target.resolve_with(body)
-        #                 self._call_position_change(target)
-        #                 self._call_on_collision(arbiter)
+    def raycast(self, ray: Ray, kind: BodyKind) -> RaycastHit | None:
+        if hit := self.root.raycast(ray, kind):
+            return RaycastHit(hit[0].point, hit[0].normal, hit[1])
 
     def query(self, area: Rectangle) -> list[Body]:
         return self.root.query(area)

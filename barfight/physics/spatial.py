@@ -6,7 +6,7 @@ from pyglet.math import Vec2
 
 from .body import Body, BodyKind
 from .primitives import Rectangle
-from .raycast import Ray
+from .raycast import Ray, RayIntersection
 
 
 class QuadTree:
@@ -181,7 +181,7 @@ class QuadTree:
 
             ray = Ray(point, center_of_body - point)
             if intersection := ray.intersects(body.shape.primitive):
-                distance = point.distance(intersection.hit)
+                distance = point.distance(intersection.point)
 
                 if distance < best_distance:
                     best_distance, closest = distance, body
@@ -194,10 +194,11 @@ class QuadTree:
 
         return best_distance, closest
 
-    def raycast(self, ray: Ray, kind: BodyKind) -> tuple[float, Body] | None:
+    def raycast(self, ray: Ray, kind: BodyKind) -> tuple[RayIntersection, Body] | None:
         if not ray.intersects(self.boundary):
             return None
 
+        closest_hit = None
         closest_body = None
         closest_distance = inf
         for body_index in self.children:
@@ -205,8 +206,9 @@ class QuadTree:
             if body is None or body.kind != kind:
                 continue
             if intersection := ray.intersects(body.shape.primitive):
-                distance = ray.origin.distance(intersection)
+                distance = ray.origin.distance(intersection.point)
                 if distance < closest_distance:
+                    closest_hit = intersection
                     closest_distance = distance
                     closest_body = body
 
@@ -234,7 +236,7 @@ class QuadTree:
         if closest_body is None:
             return None
         else:
-            return closest_distance, closest_body
+            return closest_hit, closest_body
 
     def collisions(self, parent_bodies: list[Body]) -> list[tuple[Body, Body]]:
         colliding = []
