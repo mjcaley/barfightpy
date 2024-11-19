@@ -6,6 +6,10 @@ from pyglet.graphics import Batch, Group
 from pyglet.math import Vec2
 from pyglet.window import Window, key, mouse
 
+from .physics.body import BodyKind
+
+from .physics.raycast import Ray
+
 from . import ecs, events
 from .bundles import add_attack
 from .components import (
@@ -222,6 +226,28 @@ class InputSystem(ecs.SystemProtocol, InputProtocol):
 
 
 class MovementSystem(ecs.SystemProtocol):
+    def __init__(self, world: PhysicsWorld):
+        self.world = world
+
+    def collide_and_slide(self, origin: Vec2, velocity: Vec2, depth: int = 8) -> Vec2:
+        from .physics.primitives import project_vector
+
+        if depth <= 0:
+            return Vec2()
+        
+        ray = Ray(origin, velocity)
+        if hit := self.world.raycast(ray, BodyKind.Static):
+            distance = ray.origin.distance(hit.point)
+            snap_to_surface = velocity * distance
+            leftover = velocity - snap_to_surface
+            magnitude = leftover.mag
+            leftover = project_vector(leftover, hit.normal).normalize()
+            leftover *= magnitude
+
+            return snap_to_surface * self.collide_and_slide(leftover, origin + snap_to_surface, depth - 1)
+        
+        return velocity
+
     def process(self, dt: float):
         for entity, (_, position, velocity, physics_body) in ecs.get_components(
             Actor, Position, Velocity, PhysicsBody
