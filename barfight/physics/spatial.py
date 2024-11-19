@@ -180,11 +180,11 @@ class QuadTree:
             )
 
             ray = Ray(point, center_of_body - point)
-            intersection = ray.intersects(body.shape.primitive)
-            distance = point.distance(intersection)
+            if intersection := ray.intersects(body.shape.primitive):
+                distance = point.distance(intersection.hit)
 
-            if distance < best_distance:
-                best_distance, closest = distance, body
+                if distance < best_distance:
+                    best_distance, closest = distance, body
 
         if self.is_divided:
             for node in self.divisions:

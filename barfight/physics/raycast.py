@@ -6,6 +6,12 @@ from pyglet.math import Vec2
 from .primitives import Circle, Line, LineSegment, OrientedRectangle, Rectangle
 
 
+@dataclass
+class RaycastHit:
+    hit: Vec2
+    normal: Vec2
+
+
 class Ray:
     def __init__(self, origin: Vec2 = None, direction: Vec2 = None):
         self.origin = origin or Vec2()
@@ -20,11 +26,11 @@ class Ray:
         self._direction = value.normalize()
 
     @singledispatchmethod
-    def intersects(self, _) -> Vec2 | None:
+    def intersects(self, _) -> RaycastHit | None:
         raise NotImplementedError
 
     @intersects.register
-    def _(self, line: Line) -> Vec2 | None:
+    def _(self, line: Line) -> RaycastHit | None:
         # Calculate the determinant
         det = self.direction.x * line.direction.y - self.direction.y * line.direction.x
 
@@ -39,12 +45,14 @@ class Ray:
 
         # Check if intersection point is in front of ray origin
         if t >= 0:
-            return self.origin + self.direction * t
+            hit = self.origin + self.direction * t
+            normal = Vec2(-line.direction.y, line.direction.x).normalize()
+            return RaycastHit(hit, normal)
 
         return None
 
     @intersects.register
-    def _(self, line_segment: LineSegment) -> Vec2 | None:
+    def _(self, line_segment: LineSegment) -> RaycastHit | None:
         direction = line_segment.point2 - line_segment.point1
 
         # Calculate the determinant
@@ -65,12 +73,14 @@ class Ray:
 
         # Check if intersection is within the line segment and in front of ray origin
         if 0 <= u <= 1 and t >= 0:
-            return self.origin + self.direction * t
+            hit = self.origin + self.direction * t
+            normal = Vec2(-direction.y, direction.x).normalize()
+            return RaycastHit(hit, normal)
 
         return None
 
     @intersects.register
-    def _(self, circle: Circle) -> Vec2 | None:
+    def _(self, circle: Circle) -> RaycastHit | None:
         f = self.origin - circle.center
         a = self.direction.dot(self.direction)
         b = 2 * f.dot(self.direction)
@@ -84,10 +94,13 @@ class Ray:
         if t < 0:
             return None  # Intersection behind ray origin
 
-        return self.origin + self.direction * t
+        hit = self.origin + self.direction * t
+        normal = (hit - circle.center).normalize()
+
+        return RaycastHit(hit, normal)
 
     @intersects.register
-    def _(self, rectangle: Rectangle) -> Vec2 | None:
+    def _(self, rectangle: Rectangle) -> RaycastHit | None:
         t_near = Vec2(
             (rectangle.origin.x - self.origin.x) / self.direction.x,
             (rectangle.origin.y - self.origin.y) / self.direction.y,
@@ -113,10 +126,17 @@ class Ray:
         if t_hit < 0:
             return None
 
-        return self.origin + self.direction * t_hit
+        hit = self.origin + self.direction * t_hit
+        if t_near.x > t_near.y:
+            normal = Vec2(-1 if self.direction.x > 0 else 1, 0)
+        else:
+            normal = Vec2(0, -1 if self.direction.y > 0 else 1)
+
+        return RaycastHit(hit, normal)
+
 
     @intersects.register
-    def _(self, rectangle: OrientedRectangle) -> Vec2 | None:
+    def _(self, rectangle: OrientedRectangle) -> RaycastHit | None:
         # Transform ray to rectangle's local space
         local_origin = self.origin - rectangle.center
         local_origin = Vec2(
@@ -148,5 +168,13 @@ class Ray:
             - local_hit.y * sin(rectangle.rotation),
             local_hit.x * sin(rectangle.rotation)
             + local_hit.y * cos(rectangle.rotation),
+        ) + rectangle.center
+
+        world_normal = Vec2(
+            local_hit.normal.x * cos(rectangle.rotation)
+            - local_hit.normal.y * sin(rectangle.rotation),
+            local_hit.normal.x * sin(rectangle.rotation)
+            + local_hit.normal.y * cos(rectangle.rotation),
         )
-        return world_hit + rectangle.center
+
+        return RaycastHit(world_hit, world_normal)
