@@ -6,6 +6,8 @@ from pyglet.graphics import Batch, Group
 from pyglet.math import Vec2
 from pyglet.window import Window, key, mouse
 
+from .physics.primitives import Rectangle
+
 from .physics.shapes import RectangleShape
 
 from .physics.body import BodyKind
@@ -156,14 +158,14 @@ class DrawSystem(ecs.SystemProtocol, DrawProtocol, ComponentAddedProtocol):
     def draw_debug_shape(self, physics_body: PhysicsBody, shape: Shape):
         match shape:
             case RectangleShape():
-
+                shape.shape.x = physics_body.body.shape.primitive.origin.x
+                shape.shape.y = physics_body.body.shape.primitive.origin.y
 
     def on_draw(self, window: Window):
         for _, (position, sprite) in ecs.get_components(Position, Sprite):
             sprite.sprite.update(x=position.position.x, y=position.position.y)
         for _, (physics_body, shape) in ecs.get_components(PhysicsBody, Shape):
-            shape.shape.x = physics_body.body.shape.primitive.origin.x
-            shape.shape.y = physics_body.body.shape.primitive.origin.y
+            self.draw_debug_shape(physics_body, shape)
         self.batch.draw()
 
     def on_component_added(self, entity: int, component: ecs.Any):
@@ -257,8 +259,16 @@ class MovementSystem(ecs.SystemProtocol):
     
     @staticmethod
     def body_edge(direction: Vec2, physics_body: PhysicsBody) -> Vec2:
-        ray = Ray(physics_body.body.position, direction)
-        # TODO: Detect edge points
+        primitive = physics_body.body.shape.primitive
+        match primitive:
+            case Rectangle():
+                x = primitive.center.x + (primitive.size.x * direction.x)
+                y = primitive.center.y + (primitive.size.y * direction.y)
+
+                return Vec2(x, y)
+            case _:
+                # TODO: Implement other shapes
+                raise ValueError("Can't handle any other shapes yet")
 
     def process(self, dt: float):
         for entity, (_, position, velocity, physics_body) in ecs.get_components(
@@ -270,7 +280,7 @@ class MovementSystem(ecs.SystemProtocol):
                 # edge of physics body
                 
 
-                cs_change = self.collide_and_slide(position.position, change)
+                cs_change = self.collide_and_slide(self.body_edge(velocity.direction, physics_body), change)
                 logger.debug("Collide and slide change {}; Original change change {}", cs_change, change)
                 position.position += velocity.direction * velocity.speed * dt
                 physics_body.body.position += change
