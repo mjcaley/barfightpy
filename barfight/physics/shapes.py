@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from math import inf
-from typing import Protocol
+from typing import Protocol, Self
 
 from pyglet.math import Vec2
 
@@ -20,11 +18,11 @@ class Shape(Protocol):
 
     def boundary(self) -> Rectangle: ...
 
-    def collision(self, shape: Shape) -> bool:
-        return self.primitive.collision(shape.primitive)
+    def collision(self, shape: Self) -> bool:
+        ...
 
-    def penetration(self, shape: Shape) -> Collision | None:
-        return self.primitive.penetration(shape.primitive)
+    def penetration(self, shape: Self) -> Collision | None:
+        ...
 
 
 # class LineSegmentShape(Shape):
@@ -51,6 +49,9 @@ class RectangleShape:
         origin = origin or Vec2()
         size = size or Vec2()
         self._primitive = Rectangle(origin, size)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(primitive: {self.primitive})"
 
     @property
     def primitive(self) -> Rectangle:
@@ -81,6 +82,9 @@ class OrientedRectangleShape:
         center = center or Vec2()
         half_extent = half_extent or Vec2()
         self._primitive = OrientedRectangle(center, half_extent, rotation)
+        
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(primitive: {self.primitive})"
 
     @property
     def primitive(self) -> OrientedRectangle:
@@ -119,6 +123,9 @@ class CircleShape:
     def __init__(self, center: Vec2 = None, radius: float = 0):
         center = center or Vec2()
         self._primitive = Circle(center, radius)
+        
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(primitive: {self.primitive})"
 
     @property
     def primitive(self) -> Circle:
