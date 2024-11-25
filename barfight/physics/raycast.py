@@ -49,7 +49,8 @@ class Ray:
         if t >= 0:
             hit = self.origin + self.direction * t
             normal = Vec2(-line.direction.y, line.direction.x).normalize()
-            return RayIntersection(hit, normal)
+            distance = self.origin.distance(hit)
+            return RayIntersection(hit, normal, distance)
 
         return None
 
@@ -77,7 +78,9 @@ class Ray:
         if 0 <= u <= 1 and t >= 0:
             hit = self.origin + self.direction * t
             normal = Vec2(-direction.y, direction.x).normalize()
-            return RayIntersection(hit, normal)
+            distance = self.origin.distance(hit)
+            
+            return RayIntersection(hit, normal, distance)
 
         return None
 
@@ -98,8 +101,9 @@ class Ray:
 
         hit = self.origin + self.direction * t
         normal = (hit - circle.center).normalize()
+        distance = self.origin.distance(hit)
 
-        return RayIntersection(hit, normal)
+        return RayIntersection(hit, normal, distance)
 
     @intersects.register
     def _(self, rectangle: Rectangle) -> RayIntersection | None:
@@ -129,12 +133,13 @@ class Ray:
             return None
 
         hit = self.origin + self.direction * t_hit
+        distance = self.origin.distance(hit)
         if t_near.x > t_near.y:
             normal = Vec2(-1 if self.direction.x > 0 else 1, 0)
         else:
             normal = Vec2(0, -1 if self.direction.y > 0 else 1)
 
-        return RayIntersection(hit, normal)
+        return RayIntersection(hit, normal, distance)
 
 
     @intersects.register
@@ -179,4 +184,6 @@ class Ray:
             + local_hit.normal.y * cos(rectangle.rotation),
         )
 
-        return RayIntersection(world_hit, world_normal)
+        world_distance = self.origin.distance(world_hit)
+
+        return RayIntersection(world_hit, world_normal, world_distance)
