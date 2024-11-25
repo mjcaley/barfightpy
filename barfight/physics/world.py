@@ -138,7 +138,6 @@ class PhysicsWorld:
                 case BodyKind.Dynamic, BodyKind.Static:
                     if not collision.first.shape.collision(collision.second.shape):
                         # Collision already resolved
-                        logger.debug("Skipping collision resolution")
                         continue
                     collision.first.shape.position -= collision.penetration
                     arbiter = Arbiter(

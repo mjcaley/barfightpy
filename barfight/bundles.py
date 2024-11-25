@@ -16,7 +16,7 @@ from .components import (
     Wall,
 )
 from .physics.body import Body, BodyKind
-from .physics.shapes import RectangleShape
+from .physics.shapes import OrientedRectangleShape, RectangleShape
 
 
 def add_player(position: Vec2) -> int:
@@ -83,6 +83,25 @@ def add_wall(x: float, y: float, width: float, height: float) -> int:
     )
 
     return entity
+
+
+def add_rotated_wall(x: float, y: float, rotation: float) -> int:
+    entity = ecs.create_entity(
+        Wall(),
+        Position(Vec2(x, y)),
+    )
+    ecs.add_component(
+        entity,
+        PhysicsBody(
+            Body(
+                OrientedRectangleShape(
+                    Vec2(x, y),
+                    Vec2(50, 50),
+                    rotation,
+                )
+            )
+        )
+    )
 
 
 def add_attack(entity: int, origin: Vec2, size: Vec2) -> int:

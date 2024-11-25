@@ -6,6 +6,8 @@ from pyglet.graphics import Batch, Group
 from pyglet.math import Vec2
 from pyglet.window import Window, key, mouse
 
+from .physics.shapes import RectangleShape
+
 from .physics.body import BodyKind
 
 from .physics.raycast import Ray
@@ -151,6 +153,11 @@ class DrawSystem(ecs.SystemProtocol, DrawProtocol, ComponentAddedProtocol):
 
     def process(self, *_): ...
 
+    def draw_debug_shape(self, physics_body: PhysicsBody, shape: Shape):
+        match shape:
+            case RectangleShape():
+
+
     def on_draw(self, window: Window):
         for _, (position, sprite) in ecs.get_components(Position, Sprite):
             sprite.sprite.update(x=position.position.x, y=position.position.y)
@@ -244,9 +251,14 @@ class MovementSystem(ecs.SystemProtocol):
             leftover = project_vector(leftover, hit.normal).normalize()
             leftover *= magnitude
 
-            return snap_to_surface * self.collide_and_slide(leftover, origin + snap_to_surface, depth - 1)
+            return snap_to_surface + self.collide_and_slide(leftover, origin + snap_to_surface, depth - 1)
         
         return velocity
+    
+    @staticmethod
+    def body_edge(direction: Vec2, physics_body: PhysicsBody) -> Vec2:
+        ray = Ray(physics_body.body.position, direction)
+        # TODO: Detect edge points
 
     def process(self, dt: float):
         for entity, (_, position, velocity, physics_body) in ecs.get_components(
@@ -255,6 +267,11 @@ class MovementSystem(ecs.SystemProtocol):
             change = velocity.direction * velocity.speed * dt
             if change != Vec2(0, 0):
                 # breakpoint()
+                # edge of physics body
+                
+
+                cs_change = self.collide_and_slide(position.position, change)
+                logger.debug("Collide and slide change {}; Original change change {}", cs_change, change)
                 position.position += velocity.direction * velocity.speed * dt
                 physics_body.body.position += change
                 ecs.dispatch_event(events.POSITION_CHANGED_EVENT, entity)

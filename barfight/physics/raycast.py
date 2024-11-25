@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from functools import singledispatchmethod
-from math import cos, isnan, sin, sqrt
+from math import cos, inf, isnan, sin, sqrt
 from pyglet.math import Vec2
 
 from .primitives import Circle, Line, LineSegment, OrientedRectangle, Rectangle
@@ -10,6 +10,7 @@ from .primitives import Circle, Line, LineSegment, OrientedRectangle, Rectangle
 class RayIntersection:
     point: Vec2
     normal: Vec2
+    distance: float
 
 
 class Ray:
@@ -103,12 +104,12 @@ class Ray:
     @intersects.register
     def _(self, rectangle: Rectangle) -> RayIntersection | None:
         t_near = Vec2(
-            (rectangle.origin.x - self.origin.x) / self.direction.x,
-            (rectangle.origin.y - self.origin.y) / self.direction.y,
+            (rectangle.origin.x - self.origin.x) / self.direction.x if self.direction.x != 0 else -inf,
+            (rectangle.origin.y - self.origin.y) / self.direction.y if self.direction.y != 0 else -inf,
         )
         t_far = Vec2(
-            (rectangle.origin.x + rectangle.size.x - self.origin.x) / self.direction.x,
-            (rectangle.origin.y + rectangle.size.y - self.origin.y) / self.direction.y,
+            (rectangle.origin.x + rectangle.size.x - self.origin.x) / self.direction.x if self.direction.x != 0 else inf,
+            (rectangle.origin.y + rectangle.size.y - self.origin.y) / self.direction.y if self.direction.y != 0 else inf,
         )
 
         if isnan(t_far.y) or isnan(t_far.x):
