@@ -8,7 +8,7 @@ from pyglet.window import Window, key, mouse
 
 from .physics.primitives import Rectangle
 
-from .physics.shapes import RectangleShape
+from .physics.shapes import OrientedRectangleShape, RectangleShape
 
 from .physics.body import BodyKind
 
@@ -98,7 +98,7 @@ class DebugSystem(
         )
         rvelocity = ecs.try_component(arbiter.second_body.data, Velocity)
         logger.debug(
-            "Collision detected - {lentity} [Position {lposition}] [Velocity {lvelocity}] [Collider {lcollider}] : {rentity} [Position {rposition}] [Velocity {rvelocity}] [Collider {rcollider}]",
+            "Collision detected\n{lentity}\n\t[Position {lposition}]\n\t[Velocity {lvelocity}]\n\t[Collider {lcollider}]\n{rentity}\n\t[Position {rposition}]\n\t[Velocity {rvelocity}]\n\t[Collider {rcollider}]",
             lentity=arbiter.first_body.data,
             lposition=lposition,
             lvelocity=lvelocity,
@@ -160,6 +160,10 @@ class DrawSystem(ecs.SystemProtocol, DrawProtocol, ComponentAddedProtocol):
             case RectangleShape():
                 shape.shape.x = physics_body.body.shape.primitive.origin.x
                 shape.shape.y = physics_body.body.shape.primitive.origin.y
+            case OrientedRectangleShape():
+                shape.shape.x = physics_body.body.shape.primitive.origin.x
+                shape.shape.y = physics_body.body.shape.primitive.origin.y
+                shape.shape.rotation = physics_body.body.shape.primitive.rotation
 
     def on_draw(self, window: Window):
         for _, (position, sprite) in ecs.get_components(Position, Sprite):
