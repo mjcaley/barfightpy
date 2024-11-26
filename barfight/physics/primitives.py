@@ -199,7 +199,7 @@ class OrientedRectangle:
 
 
 def overlapping(min_a: float, max_a: float, min_b: float, max_b: float) -> bool:
-    return min_b <= max_a and min_a <= max_b
+    return min_b < max_a and min_a < max_b
 
 
 def rotate90(v: Vec2) -> Vec2:
