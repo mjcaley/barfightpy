@@ -98,7 +98,9 @@ def add_rotated_wall(x: float, y: float, rotation: float) -> int:
                     Vec2(x, y),
                     Vec2(50, 50),
                     rotation,
-                )
+                ),
+                BodyKind.Static,
+                data=entity,
             )
         )
     )
