@@ -119,6 +119,7 @@ class PhysicsWorld:
         return discrete_collisions
 
     def step(self, dt: float):
+        logger.debug("Step start")
         broad_collisions = self.broad_phase()
         discrete_collisions = self.discrete_phase(broad_collisions)
         resolved_collisions = self.resolve(discrete_collisions)
@@ -127,6 +128,7 @@ class PhysicsWorld:
         # self.active_collisions = self.new_collisions
 
         self.move(dt)
+        logger.debug("Step end")
 
     def resolve(
         self, collisions: set[DiscreteCollision]
@@ -137,14 +139,14 @@ class PhysicsWorld:
             match collision.first.kind, collision.second.kind:
                 case BodyKind.Dynamic, BodyKind.Static:
                     if not collision.first.shape.collision(collision.second.shape):
-                        # Collision already resolved
+                        logger.debug("Collision already resolved, skipping")
                         continue
                     collision.first.shape.position -= collision.penetration
                     arbiter = Arbiter(
                         collision.first, collision.second, False
                     )  # TODO: Hard-coding first collision
                     logger.debug(
-                        "Collision resolved",
+                        "Collision resolved {body1} {body2} {penetration}",
                         body1=collision.first,
                         body2=collision.second,
                         penetration=collision.penetration,
@@ -152,7 +154,6 @@ class PhysicsWorld:
                     resolved_collisions.add(
                         (collision.first, collision.second, arbiter)
                     )
-                    # breakpoint()
                     self._call_position_change(collision.first)
                     self._call_on_collision(arbiter)
                 case BodyKind.Dynamic, BodyKind.Sensor:
