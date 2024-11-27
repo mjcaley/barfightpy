@@ -1,3 +1,4 @@
+from math import degrees
 from typing import Any
 
 import pyglet
@@ -5,14 +6,6 @@ from loguru import logger
 from pyglet.graphics import Batch, Group
 from pyglet.math import Vec2
 from pyglet.window import Window, key, mouse
-
-from .physics.primitives import Rectangle
-
-from .physics.shapes import OrientedRectangleShape, RectangleShape
-
-from .physics.body import BodyKind
-
-from .physics.raycast import Ray
 
 from . import ecs, events
 from .bundles import add_attack
@@ -42,6 +35,10 @@ from .events import (
 )
 from .pathfinding import Pathfinding
 from .physics import Arbiter, Body, PhysicsWorld
+from .physics.body import BodyKind
+from .physics.primitives import Rectangle
+from .physics.raycast import Ray
+from .physics.shapes import OrientedRectangleShape, RectangleShape
 
 # region Attack
 
@@ -128,13 +125,25 @@ class DebugSystem(
 
     def on_component_added(self, entity: int, component: Any):
         if isinstance(component, PhysicsBody):
-            shape = pyglet.shapes.Box(
-                component.body.shape.boundary().origin.x,
-                component.body.shape.boundary().origin.y,
-                component.body.shape.boundary().size.x,
-                component.body.shape.boundary().size.y,
-                color=(50, 25, 255),
-            )
+            match component.body.shape:
+                case RectangleShape():
+                    shape = pyglet.shapes.Box(
+                        component.body.shape.primitive.origin.x,
+                        component.body.shape.primitive.origin.y,
+                        component.body.shape.primitive.size.x,
+                        component.body.shape.primitive.size.y,
+                        color=(50, 25, 255),
+                    )
+                case OrientedRectangleShape():
+                    shape = pyglet.shapes.Box(
+                        component.body.shape.primitive.center.x,
+                        component.body.shape.primitive.center.y,
+                        component.body.shape.primitive.half_extent.x * 2,
+                        component.body.shape.primitive.half_extent.y * 2,
+                        color=(50, 25, 255),
+                    )
+                    shape.anchor_position = component.body.shape.primitive.half_extent
+                    shape.rotation = degrees(component.body.shape.primitive.rotation)
             ecs.add_component(entity, Shape(shape, Layer.Debug))
 
     def on_component_removed(self, entity: int, component: Any):
@@ -156,14 +165,14 @@ class DrawSystem(ecs.SystemProtocol, DrawProtocol, ComponentAddedProtocol):
     def process(self, *_): ...
 
     def draw_debug_shape(self, physics_body: PhysicsBody, shape: Shape):
-        match shape:
+        match physics_body.body.shape:
             case RectangleShape():
                 shape.shape.x = physics_body.body.shape.primitive.origin.x
                 shape.shape.y = physics_body.body.shape.primitive.origin.y
             case OrientedRectangleShape():
-                shape.shape.x = physics_body.body.shape.primitive.origin.x
-                shape.shape.y = physics_body.body.shape.primitive.origin.y
-                shape.shape.rotation = physics_body.body.shape.primitive.rotation
+                shape.shape.x = physics_body.body.shape.primitive.center.x
+                shape.shape.y = physics_body.body.shape.primitive.center.y
+                shape.shape.rotation = degrees(physics_body.body.shape.primitive.rotation)
 
     def on_draw(self, window: Window):
         for _, (position, sprite) in ecs.get_components(Position, Sprite):
