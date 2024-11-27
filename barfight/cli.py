@@ -1,3 +1,4 @@
+from math import radians
 import pyglet
 import pyglet.info
 from pyglet.math import Vec2
@@ -96,7 +97,7 @@ def main():
     add_wall(600, 200, 100, 100)
     add_wall(700, 200, 100, 100)
     add_wall(800, 200, 100, 100)
-    add_rotated_wall(400, 350, 45)
+    add_rotated_wall(400, 350, radians(45))
     add_enemy(Vec2(200, 300))
 
     pathfinding = Pathfinding(Grid(world, 5))

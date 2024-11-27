@@ -96,7 +96,7 @@ def add_rotated_wall(x: float, y: float, rotation: float) -> int:
             Body(
                 OrientedRectangleShape(
                     Vec2(x, y),
-                    Vec2(50, 50),
+                    Vec2(25, 25),
                     rotation,
                 ),
                 BodyKind.Static,
@@ -104,6 +104,8 @@ def add_rotated_wall(x: float, y: float, rotation: float) -> int:
             )
         )
     )
+
+    return entity
 
 
 def add_attack(entity: int, origin: Vec2, size: Vec2) -> int:

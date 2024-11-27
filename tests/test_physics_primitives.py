@@ -1,3 +1,4 @@
+from math import radians
 from pyglet.math import Vec2
 
 from barfight.physics.primitives import (
@@ -81,9 +82,9 @@ def test_lineseg_lineseg_collision():
 
 
 def test_oriented_rect_collision():
-    o1 = OrientedRectangle(Vec2(0, 0), Vec2(1, 2), 0)
-    o2 = OrientedRectangle(Vec2(1, 2), Vec2(1, 2), 45)
-    o3 = OrientedRectangle(Vec2(5, 5), Vec2(1, 2), 0)
+    o1 = OrientedRectangle(Vec2(0, 0), Vec2(1, 2), radians(0))
+    o2 = OrientedRectangle(Vec2(1, 2), Vec2(1, 2), radians(45))
+    o3 = OrientedRectangle(Vec2(5, 5), Vec2(1, 2), radians(0))
 
     assert oriented_rect_oriented_rect_collision(o1, o2)
     assert not oriented_rect_oriented_rect_collision(o1, o3)
@@ -122,7 +123,7 @@ def test_circle_rectangle_collision():
 
 
 def test_circle_oriented_rectangle_collision():
-    r = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), 30)
+    r = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), radians(30))
     c = Circle(Vec2(5, 7), 2)
 
     assert circle_oriented_rectangle_collision(c, r)
@@ -150,17 +151,17 @@ def test_rectangle_line_segment_collision():
 
 def test_rectangle_oriented_rectangle_collision():
     r = Rectangle(Vec2(1, 5), Vec2(3, 3))
-    o = OrientedRectangle(Vec2(10, 4), Vec2(4, 2), 25)
+    o = OrientedRectangle(Vec2(10, 4), Vec2(4, 2), radians(25))
 
     assert not rectangle_oriented_rectangle_collision(r, o)
 
     r2 = Rectangle(Vec2(1, 5), Vec2(3, 3))
-    o2 = OrientedRectangle(Vec2(1, 5), Vec2(4, 2), 25)
+    o2 = OrientedRectangle(Vec2(1, 5), Vec2(4, 2), radians(25))
 
     assert rectangle_oriented_rectangle_collision(r2, o2)
 
     r3 = Rectangle(Vec2(-5, -5), Vec2(5, 5))
-    o3 = OrientedRectangle(Vec2(0, -20), Vec2(5, 5), 45)
+    o3 = OrientedRectangle(Vec2(0, -20), Vec2(5, 5), radians(45))
 
     assert not rectangle_oriented_rectangle_collision(r3, o3)
 
@@ -180,7 +181,7 @@ def test_line_segment_point_collision():
 
 
 def test_oriented_rectangle_point_collision():
-    o = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), 30)
+    o = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), radians(30))
     p1 = Vec2(6, 5)
     p2 = Vec2(10, 6)
 
@@ -197,13 +198,13 @@ def test_line_line_segment_collision():
 
 def test_line_oriented_rectangle_collision():
     l = Line(Vec2(7, 3), Vec2(2, -1))
-    o = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), 30)
+    o = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), radians(30))
 
     assert line_oriented_rectangle_collision(l, o)
 
 
 def test_line_segment_oriented_rectangle_collision():
     s = LineSegment(Vec2(1, 8), Vec2(7, 5))
-    o = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), 30)
+    o = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), radians(30))
 
     assert line_segment_oriented_rectangle_collision(s, o)

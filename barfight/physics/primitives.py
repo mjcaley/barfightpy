@@ -137,7 +137,7 @@ class OrientedRectangle:
 
     @property
     def top_right_vertex(self) -> Vec2:
-        vertex = self.half_extent.rotate(radians(self.rotation)) + self.center
+        vertex = self.half_extent.rotate(self.rotation) + self.center
 
         return vertex
 
@@ -145,14 +145,14 @@ class OrientedRectangle:
     def bottom_right_vertex(self) -> Vec2:
         vertex = Vec2(self.half_extent.x, self.half_extent.y)
         vertex.x *= -1
-        vertex = vertex.rotate(radians(self.rotation)) + self.center
+        vertex = vertex.rotate(self.rotation) + self.center
 
         return vertex
 
     @property
     def bottom_left_vertex(self) -> Vec2:
         vertex = Vec2(self.half_extent.x, self.half_extent.y) * -1
-        vertex = vertex.rotate(radians(self.rotation)) + self.center
+        vertex = vertex.rotate(self.rotation) + self.center
 
         return vertex
 
@@ -160,7 +160,7 @@ class OrientedRectangle:
     def top_left_vertex(self) -> Vec2:
         vertex = Vec2(self.half_extent.x, self.half_extent.y)
         vertex.y *= -1
-        vertex = vertex.rotate(radians(self.rotation)) + self.center
+        vertex = vertex.rotate(self.rotation) + self.center
 
         return vertex
 
@@ -175,8 +175,8 @@ class OrientedRectangle:
             yield LineSegment(v1, v2)
 
     def axes(self) -> Generator[Vec2, None, None]:
-        yield Vec2(cos(radians(self.rotation)), sin(radians(self.rotation)))
-        yield Vec2(cos(radians(self.rotation + 90)), sin(radians(self.rotation + 90)))
+        yield Vec2(cos(self.rotation), sin(self.rotation))
+        yield Vec2(cos(self.rotation + radians(90)), sin(self.rotation + radians(90)))
 
     @property
     def bounding_box(self) -> Rectangle:
@@ -390,7 +390,7 @@ def circle_oriented_rectangle_collision(
     local_rect = Rectangle(Vec2(0, 0), rectangle.half_extent * 2)
 
     distance = circle.center - rectangle.center
-    distance.rotate(radians(-rectangle.rotation))
+    distance.rotate(-rectangle.rotation)
     local_circle = Circle(distance + rectangle.half_extent, circle.radius)
 
     return circle_rectangle_collision(local_circle, local_rect)
@@ -496,9 +496,7 @@ def oriented_rectangle_point_collision(
     oriented_rect: OrientedRectangle, point: Vec2
 ) -> bool:
     lr = Rectangle(Vec2(0, 0), oriented_rect.half_extent * 2)
-    lp = (point - oriented_rect.center).rotate(
-        radians(-oriented_rect.rotation)
-    ) + oriented_rect.half_extent
+    lp = (point - oriented_rect.center).rotate(-oriented_rect.rotation) + oriented_rect.half_extent
 
     return rectangle_point_collision(lr, lp)
 
@@ -512,9 +510,8 @@ def line_oriented_rectangle_collision(
 ) -> bool:
     lr = Rectangle(Vec2(0, 0), oriented_rectangle.half_extent * 2)
     ll = Line(
-        (line.base - oriented_rectangle.center).rotate(radians(-oriented_rectangle.rotation))
-        + oriented_rectangle.half_extent,
-        line.direction.rotate(radians(-oriented_rectangle.rotation)),
+        (line.base - oriented_rectangle.center).rotate(-oriented_rectangle.rotation) + oriented_rectangle.half_extent,
+        line.direction.rotate(-oriented_rectangle.rotation),
     )
 
     return rectangle_line_collision(lr, ll)
@@ -526,11 +523,11 @@ def line_segment_oriented_rectangle_collision(
     lr = Rectangle(Vec2(0, 0), oriented_rectangle.half_extent * 2)
     ls = LineSegment(
         (line_segment.point1 - oriented_rectangle.center).rotate(
-            radians(-oriented_rectangle.rotation)
+            -oriented_rectangle.rotation
         )
         + oriented_rectangle.half_extent,
         (line_segment.point2 - oriented_rectangle.center).rotate(
-            radians(-oriented_rectangle.rotation)
+            -oriented_rectangle.rotation
         )
         + oriented_rectangle.half_extent,
     )
