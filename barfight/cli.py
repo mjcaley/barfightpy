@@ -9,7 +9,7 @@ from pyglet.window.mouse import MouseStateHandler
 from barfight.pathfinding import Grid, Pathfinding
 
 from . import ecs, events
-from .bundles import add_enemy, add_player, add_rotated_wall, add_wall
+from .bundles import add_enemy, add_player, add_rotated_wall, add_sensor, add_wall
 from .physics.world import PhysicsWorld
 from .systems import (
     AISystem,
@@ -99,6 +99,7 @@ def main():
     add_wall(800, 200, 100, 100)
     add_rotated_wall(400, 350, radians(45))
     add_enemy(Vec2(200, 300))
+    add_sensor(Vec2(200, 100), Vec2(25, 25))
 
     pathfinding = Pathfinding(Grid(world, 5))
     ai_system = AISystem(pathfinding, window)

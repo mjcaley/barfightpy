@@ -68,7 +68,6 @@ def add_wall(x: float, y: float, width: float, height: float) -> int:
         Position(Vec2(x, y)),
         Sprite(pyglet.sprite.Sprite(image), Layer.Game),
     )
-    # breakpoint()
     ecs.add_component(
         entity,
         PhysicsBody(
@@ -108,10 +107,10 @@ def add_rotated_wall(x: float, y: float, rotation: float) -> int:
     return entity
 
 
-def add_attack(entity: int, origin: Vec2, size: Vec2) -> int:
+def add_attack(attack_entity: int, origin: Vec2, size: Vec2) -> int:
     rect = RectangleShape(origin, size)
     entity = ecs.create_entity(
-        Attack(entity),
+        Attack(attack_entity),
         Position(rect.position),
     )
     ecs.add_component(
@@ -124,5 +123,13 @@ def add_attack(entity: int, origin: Vec2, size: Vec2) -> int:
             )
         ),
     )
+
+    return entity
+
+
+def add_sensor(origin: Vec2, size: Vec2) -> int:
+    rect = RectangleShape(origin, size)
+    entity = ecs.create_entity(Position(rect.position))
+    ecs.add_component(entity, PhysicsBody(Body(rect, kind=BodyKind.Sensor, data=entity)))
 
     return entity

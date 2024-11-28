@@ -56,7 +56,7 @@ class AttackSystem(ecs.SystemProtocol, CollisionProtocol):
     def on_sensor(self, arbiter: Arbiter):
         health = ecs.try_component(arbiter.first_body.data, Health)
         attack = ecs.try_component(arbiter.second_body.data, Attack)
-        if not health and not attack:
+        if health is None or attack is None:
             return
 
         if attack.entity == arbiter.first_body.data:
@@ -347,13 +347,15 @@ class PhysicsSystem(
         position.position = physics_body.body.position
 
     def on_physics_collision(self, arbiter: Arbiter):
-        # breakpoint()
         logger.debug(
-            f"{arbiter.first_body.data} collides with {arbiter.second_body.data} first time: {arbiter.is_first_collision}"
+            f"Physics event - collision callback - {arbiter.first_body.data} collides with {arbiter.second_body.data} first time: {arbiter.is_first_collision}"
         )
         ecs.dispatch_event(events.COLLISION_EVENT, arbiter)
 
     def on_physics_sensor(self, arbiter: Arbiter):
+        logger.debug(
+            f"Physics event - sensor callback - {arbiter.first_body.data} collides with {arbiter.second_body.data} first time: {arbiter.is_first_collision}"
+        )
         ecs.dispatch_event(events.SENSOR_EVENT, arbiter)
 
 

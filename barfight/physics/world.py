@@ -57,7 +57,6 @@ class PhysicsWorld:
             index = len(self.bodies) - 1
 
         if not self.root.insert(index):
-            breakpoint()
             raise ValueError("Not within the boundary")
 
     def remove(self, body: Body):
@@ -115,9 +114,7 @@ class PhysicsWorld:
         broad_collisions = self.broad_phase()
         discrete_collisions, collision_resolutions = self.discrete_phase(broad_collisions)
         resolved_collisions = self.resolve(discrete_collisions, collision_resolutions)
-        ended_collisions = resolved_collisions - self.active_collisions
-        # TODO Send collision ended events
-        # self.active_collisions = self.new_collisions
+        self.active_collisions -= resolved_collisions
 
         self.move(dt)
 
@@ -146,7 +143,12 @@ class PhysicsWorld:
                     self._call_position_change(collision.first)
                     self._call_on_collision(arbiter)
                 case BodyKind.Dynamic, BodyKind.Sensor:
-                    ...
+                    if not collision.first.shape.collision(collision.second.shape):
+                        resolved_collisions.add(CollisionPair(collision.first, collision.second))
+                        continue
+
+                    arbiter = Arbiter(collision.first, collision.second, collision not in self.active_collisions)
+                    self._call_on_sensor(arbiter)
 
         return resolved_collisions
 

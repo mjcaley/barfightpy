@@ -54,7 +54,6 @@ class QuadTree:
             and (body_rect.origin + body_rect.size).y
             <= (quadtree_rect.origin + quadtree_rect.size).y
         ):
-            breakpoint()
             logger.debug("Can't add, not in boundary, failed")
             return False
 
@@ -86,7 +85,8 @@ class QuadTree:
             return True
 
     def remove(self, body_index: int):
-        self.children.remove(body_index)
+        if body_index in self.children:
+            self.children.remove(body_index)
         if self.is_divided:
             self.bottom_left.remove(body_index)
             self.bottom_right.remove(body_index)
@@ -94,10 +94,10 @@ class QuadTree:
             self.top_right.remove(body_index)
 
             if not all(
-                self.bottom_left.children,
+                [self.bottom_left.children,
                 self.bottom_right.children,
                 self.top_left.children,
-                self.top_right.children,
+                self.top_right.children,]
             ):
                 self.bottom_left = self.bottom_right = self.top_left = (
                     self.top_right
