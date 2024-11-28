@@ -12,21 +12,16 @@ from .spatial import QuadTree
 
 
 @dataclass(frozen=True)
-class BroadCollision:
+class CollisionPair:
     first: Body
     second: Body
 
 
-@dataclass(frozen=True)
-class DiscreteCollision:
-    first: Body
-    second: Body
+@dataclass
+class Resolution:
     penetration: Vec2
     depth: float
 
-    def __hash__(self):
-        return hash((self.first, self.second))
-    
 
 @dataclass(frozen=True)
 class RaycastHit:
@@ -44,7 +39,7 @@ class PhysicsWorld:
         self.root = QuadTree(
             self.bodies, Rectangle(self.origin, self.size), self.max_depth
         )
-        self.active_collisions: set[tuple[Body, Body]] = set()
+        self.active_collisions: set[CollisionPair] = set()
         self.position_change_callback = None
         self.on_collision_callback = None
         self.on_sensor_callback = None
@@ -90,7 +85,7 @@ class PhysicsWorld:
         if self.on_sensor_callback:
             self.on_sensor_callback(arbiter)
 
-    def broad_phase(self) -> set[BroadCollision]:
+    def broad_phase(self) -> set[CollisionPair]:
         new_collisions = set()
         for body in self.bodies:
             if body is None:
@@ -99,60 +94,54 @@ class PhysicsWorld:
             for colliding_body in collisions:
                 if colliding_body is body:
                     continue
-                new_collisions.add(BroadCollision(body, colliding_body))
+                new_collisions.add(CollisionPair(body, colliding_body))
 
         return new_collisions
 
-    def discrete_phase(
-        self, broad_collisions: set[BroadCollision]
-    ) -> set[DiscreteCollision]:
+    def discrete_phase(self, broad_collisions: set[CollisionPair]) -> tuple[set[CollisionPair], dict[CollisionPair, Resolution]]:
         discrete_collisions = set()
+        collision_resolution = {}
 
         for bc in broad_collisions:
             if collision := bc.first.shape.penetration(bc.second.shape):
-                discrete_collisions.add(
-                    DiscreteCollision(
-                        bc.first, bc.second, collision.penetration, collision.depth
-                    )
-                )
+                pair = CollisionPair(bc.first, bc.second)
+                resolution = Resolution(collision.penetration, collision.depth)
+                discrete_collisions.add(pair)
+                collision_resolution[pair] = resolution
 
-        return discrete_collisions
+        return discrete_collisions, collision_resolution
 
     def step(self, dt: float):
-        logger.debug("Step start")
         broad_collisions = self.broad_phase()
-        discrete_collisions = self.discrete_phase(broad_collisions)
-        resolved_collisions = self.resolve(discrete_collisions)
-        # ended_collisions = broad_collisions - self.active_collisions
+        discrete_collisions, collision_resolutions = self.discrete_phase(broad_collisions)
+        resolved_collisions = self.resolve(discrete_collisions, collision_resolutions)
+        ended_collisions = resolved_collisions - self.active_collisions
         # TODO Send collision ended events
         # self.active_collisions = self.new_collisions
 
         self.move(dt)
-        logger.debug("Step end")
 
     def resolve(
-        self, collisions: set[DiscreteCollision]
-    ) -> set[tuple[Body, Body, bool]]:
+        self, collisions: set[CollisionPair], resolutions: dict[CollisionPair, Resolution]
+    ) -> set[CollisionPair]:
         resolved_collisions = set()
 
         for collision in collisions:
             match collision.first.kind, collision.second.kind:
                 case BodyKind.Dynamic, BodyKind.Static:
                     if not collision.first.shape.collision(collision.second.shape):
-                        logger.debug("Collision already resolved, skipping")
+                        resolved_collisions.add(CollisionPair(collision.first, collision.second))
                         continue
-                    collision.first.shape.position -= collision.penetration
-                    arbiter = Arbiter(
-                        collision.first, collision.second, False
-                    )  # TODO: Hard-coding first collision
+                    
+                    collision.first.shape.position -= resolutions[collision].penetration
+                    resolved_collisions.add(CollisionPair(collision.first, collision.second))
+                    arbiter = Arbiter(collision.first, collision.second, collision not in self.active_collisions)
+                    
                     logger.debug(
                         "Collision resolved {body1} {body2} {penetration}",
                         body1=collision.first,
                         body2=collision.second,
-                        penetration=collision.penetration,
-                    )
-                    resolved_collisions.add(
-                        (collision.first, collision.second, arbiter)
+                        penetration=resolutions[collision].penetration,
                     )
                     self._call_position_change(collision.first)
                     self._call_on_collision(arbiter)
