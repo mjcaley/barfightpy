@@ -113,15 +113,16 @@ class PhysicsWorld:
     def step(self, dt: float):
         broad_collisions = self.broad_phase()
         discrete_collisions, collision_resolutions = self.discrete_phase(broad_collisions)
-        resolved_collisions = self.resolve(discrete_collisions, collision_resolutions)
-        self.active_collisions -= resolved_collisions
+        resolved_collisions, still_colliding = self.resolve(discrete_collisions, collision_resolutions)
+        self.active_collisions = self.active_collisions - resolved_collisions | still_colliding
 
         self.move(dt)
 
     def resolve(
         self, collisions: set[CollisionPair], resolutions: dict[CollisionPair, Resolution]
-    ) -> set[CollisionPair]:
+    ) -> tuple[set[CollisionPair], set[CollisionPair]]:
         resolved_collisions = set()
+        still_colliding = set()
 
         for collision in collisions:
             match collision.first.kind, collision.second.kind:
@@ -148,9 +149,10 @@ class PhysicsWorld:
                         continue
 
                     arbiter = Arbiter(collision.first, collision.second, collision not in self.active_collisions)
+                    still_colliding.add(collision)
                     self._call_on_sensor(arbiter)
 
-        return resolved_collisions
+        return resolved_collisions, still_colliding
 
     def move(self, dt: float):
         for body in self.bodies:
