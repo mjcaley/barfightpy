@@ -4,13 +4,13 @@ from pyglet.math import Vec2
 from barfight.pathfinding import Grid, Pathfinding
 from barfight.physics import PhysicsWorld
 from barfight.physics.body import Body, BodyKind
-from barfight.physics.primitives import Rectangle
+from barfight.physics.shapes import RectangleShape
 
 
 @pytest.fixture
 def physics_world():
     p = PhysicsWorld(Vec2(), Vec2(3, 3))
-    p.insert(Body(Rectangle(Vec2(1, 0), Vec2(2, 2)), BodyKind.Static))
+    p.add(Body(RectangleShape(Vec2(1, 0), Vec2(2, 2)), BodyKind.Static))
     yield p
 
 

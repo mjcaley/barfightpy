@@ -10,10 +10,13 @@ from .physics.primitives import Rectangle
 from .physics.world import PhysicsWorld
 
 
-@dataclass(unsafe_hash=True)
+@dataclass
 class Cell:
     rectangle: Rectangle
     colliding: bool = False
+
+    def __hash__(self):
+        return hash(id(self))
 
 
 class Grid:
