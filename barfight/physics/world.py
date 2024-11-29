@@ -116,8 +116,6 @@ class PhysicsWorld:
         resolved_collisions, still_colliding = self.resolve(discrete_collisions, collision_resolutions)
         self.active_collisions = self.active_collisions - resolved_collisions | still_colliding
 
-        self.move(dt)
-
     def resolve(
         self, collisions: set[CollisionPair], resolutions: dict[CollisionPair, Resolution]
     ) -> tuple[set[CollisionPair], set[CollisionPair]]:
@@ -153,13 +151,6 @@ class PhysicsWorld:
                     self._call_on_sensor(arbiter)
 
         return resolved_collisions, still_colliding
-
-    def move(self, dt: float):
-        for body in self.bodies:
-            if body is None or body.kind != BodyKind.Dynamic:
-                continue
-            ray = Ray(body.shape.boundary().center, body.velocity * dt)
-            # self.raycast
 
     def raycast(self, ray: Ray, kind: BodyKind) -> RaycastHit | None:
         if hit := self.root.raycast(ray, kind):
