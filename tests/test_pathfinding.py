@@ -2,7 +2,9 @@ import pytest
 from pyglet.math import Vec2
 
 from barfight.pathfinding import Grid, Pathfinding
-from barfight.physics import Body, BodyKind, PhysicsWorld, Rectangle
+from barfight.physics import PhysicsWorld
+from barfight.physics.body import Body, BodyKind
+from barfight.physics.primitives import Rectangle
 
 
 @pytest.fixture
