@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from math import inf
 
 from loguru import logger
 from pyglet.math import Vec2
@@ -153,6 +154,14 @@ class PhysicsWorld:
         return resolved_collisions, still_colliding
 
     def raycast(self, ray: Ray, kind: BodyKind) -> RaycastHit | None:
+        closest_hit = None
+        closest_body = None
+        closest_distance = inf
+
+        broad_bodies = self.query(ray.boundary())
+        for body in broad_bodies:
+            ...
+
         if hit := self.root.raycast(ray, kind):
             return RaycastHit(hit[0].point, hit[0].normal, hit[1])
 
