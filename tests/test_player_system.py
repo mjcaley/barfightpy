@@ -3,7 +3,8 @@ from pyglet.math import Vec2
 
 from barfight import ecs, events
 from barfight.components import Actor, ActorState, PhysicsBody, Position, Velocity
-from barfight.physics import Body, Rectangle
+from barfight.physics import Body
+from barfight.physics.primitives import Rectangle
 from barfight.systems import ActorSystem
 
 
