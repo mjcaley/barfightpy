@@ -186,7 +186,7 @@ def test_quadtree_nearest_in_subdivision(test_input, expected):
 
     expected_center = expected.origin + expected.size / 2
     ray_hit = Ray(test_input, expected_center - test_input).intersects(expected)
-    assert test_input.distance(ray_hit) == pytest.approx(distance)
+    assert test_input.distance(ray_hit.point) == pytest.approx(distance)
     assert expected == nearest_body.shape.primitive
 
 
