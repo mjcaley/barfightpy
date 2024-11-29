@@ -43,7 +43,7 @@ def main():
     ecs.add_system(input_system)
     ecs.add_handlers(input_system)
 
-    movement_system = MovementSystem(world)
+    movement_system = MovementSystem()
     ecs.add_system(movement_system)
     ecs.add_handlers(movement_system)
 

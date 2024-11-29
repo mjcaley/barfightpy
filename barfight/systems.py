@@ -248,53 +248,12 @@ class InputSystem(ecs.SystemProtocol, InputProtocol):
 
 
 class MovementSystem(ecs.SystemProtocol):
-    def __init__(self, world: PhysicsWorld):
-        self.world = world
-
-    def collide_and_slide(self, origin: Vec2, velocity: Vec2, depth: int = 8) -> Vec2:
-        from .physics.primitives import project_vector
-
-        if depth <= 0:
-            return Vec2()
-        
-        ray = Ray(origin, velocity)
-        if hit := self.world.raycast(ray, BodyKind.Static):
-            distance = ray.origin.distance(hit.point)
-            snap_to_surface = velocity * distance
-            leftover = velocity - snap_to_surface
-            magnitude = leftover.mag
-            leftover = project_vector(leftover, hit.normal).normalize()
-            leftover *= magnitude
-
-            return snap_to_surface + self.collide_and_slide(leftover, origin + snap_to_surface, depth - 1)
-        
-        return velocity
-    
-    @staticmethod
-    def body_edge(direction: Vec2, physics_body: PhysicsBody) -> Vec2:
-        primitive = physics_body.body.shape.primitive
-        match primitive:
-            case Rectangle():
-                x = primitive.center.x + (primitive.size.x * direction.x)
-                y = primitive.center.y + (primitive.size.y * direction.y)
-
-                return Vec2(x, y)
-            case _:
-                # TODO: Implement other shapes
-                raise ValueError("Can't handle any other shapes yet")
-
     def process(self, dt: float):
         for entity, (_, position, velocity, physics_body) in ecs.get_components(
             Actor, Position, Velocity, PhysicsBody
         ):
             change = velocity.direction * velocity.speed * dt
             if change != Vec2(0, 0):
-                # breakpoint()
-                # edge of physics body
-                
-
-                cs_change = self.collide_and_slide(self.body_edge(velocity.direction, physics_body), change)
-                logger.debug("Collide and slide change {}; Original change change {}", cs_change, change)
                 position.position += velocity.direction * velocity.speed * dt
                 physics_body.body.position += change
                 ecs.dispatch_event(events.POSITION_CHANGED_EVENT, entity)
