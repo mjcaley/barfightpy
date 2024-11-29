@@ -14,10 +14,17 @@ class RayIntersection:
 
 
 class Ray:
-    def __init__(self, origin: Vec2 = None, direction: Vec2 = None):
+    def __init__(self, origin: Vec2 = None, direction: Vec2 = None, max_distance: float = 1.0):
         self.origin = origin or Vec2()
         self._direction = direction or Vec2()
         self._direction.normalize()
+        self.max_distance = max_distance
+
+    def boundary(self) -> Rectangle:
+        ray_start = self.origin
+        ray_end = (self.origin + self.direction).from_magnitude(self.max_distance)
+
+        return Rectangle(Vec2(min(ray_start.x, ray_end.x), min(ray_start.y, ray_end.y)), Vec2(max(ray_start.x, ray_end.x), max(ray_start.y, ray_end.y)))
 
     @property
     def direction(self) -> Vec2:
