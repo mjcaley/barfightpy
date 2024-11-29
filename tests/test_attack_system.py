@@ -5,7 +5,8 @@ from pyglet.math import Vec2
 from barfight import ecs, events
 from barfight.bundles import add_attack
 from barfight.components import Attack, Health
-from barfight.physics import Arbiter, Body, Rectangle
+from barfight.physics import Arbiter, Body
+from barfight.physics.primitives import Rectangle
 from barfight.systems import AttackSystem
 
 
