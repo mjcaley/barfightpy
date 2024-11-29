@@ -3,7 +3,7 @@ from pyglet.math import Vec2
 from barfight.physics.body import Body, BodyKind
 from barfight.physics.raycast import Ray
 from barfight.physics.shapes import RectangleShape
-from barfight.physics.world import BroadCollision, PhysicsWorld
+from barfight.physics.world import CollisionPair, PhysicsWorld
 
 
 def test_body_added():
@@ -44,8 +44,8 @@ def test_broad_phase():
     w.add(b3)
     collisions = w.broad_phase()
 
-    assert BroadCollision(b1, b2) in collisions
-    assert BroadCollision(b2, b1) in collisions
+    assert CollisionPair(b1, b2) in collisions
+    assert CollisionPair(b2, b1) in collisions
     for collision in collisions:
         assert b3 is not collision.first
         assert b3 is not collision.second
@@ -57,8 +57,8 @@ def test_discrete_phase():
     b2 = Body(RectangleShape(Vec2(5, 5), Vec2(10, 10)), data=2)
     w.add(b1)
     w.add(b2)
-    broad_collisions = {BroadCollision(b1, b2), BroadCollision(b2, b1)}
-    collisions = w.discrete_phase(broad_collisions)
+    broad_collisions = {CollisionPair(b1, b2), CollisionPair(b2, b1)}
+    collisions, resolutions = w.discrete_phase(broad_collisions)
 
     assert 2 == len(collisions)
     collisions_list = [c for c in collisions]
