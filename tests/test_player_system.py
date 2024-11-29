@@ -2,9 +2,9 @@ import pytest
 from pyglet.math import Vec2
 
 from barfight import ecs, events
-from barfight.components import Actor, ActorState, PhysicsBody, Position, Velocity
+from barfight.components import Actor, ActorState, PhysicsBody, Player, Position, Velocity
 from barfight.physics import Body
-from barfight.physics.primitives import Rectangle
+from barfight.physics.shapes import RectangleShape
 from barfight.systems import ActorSystem
 
 
@@ -13,8 +13,8 @@ def player_entity(ecs_world):
     player = Actor(max_speed=10)
     position = Position()
     velocity = Velocity()
-    physics_body = PhysicsBody(Body(Rectangle(Vec2(), Vec2())))
-    ecs.create_entity(player, position, velocity, physics_body)
+    physics_body = PhysicsBody(Body(RectangleShape(Vec2(), Vec2())))
+    ecs.create_entity(player, position, velocity, physics_body, Player())
 
     yield player, position, velocity
 
@@ -116,7 +116,7 @@ def test_player_other_to_attacking(player_entity, state):
 def test_player_attacking_to_attacking(player_entity):
     player_system = ActorSystem()
     ecs.add_system(player_system)
-    ecs.set_handler(events.PLAYER_ATTACK_EVENT, player_system.on_player_attack)
+    ecs.add_handlers(player_system)
     player, position, velocity = player_entity
     player.state = ActorState.Attacking
     player.cooldown = 0
