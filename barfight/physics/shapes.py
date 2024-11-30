@@ -6,7 +6,7 @@ from pyglet.math import Vec2
 from .primitives import Circle, Collision, LineSegment, OrientedRectangle, Rectangle
 
 
-class Shape(Protocol):
+class ShapeProtocol(Protocol):
     @property
     def primitive(self) -> Circle | LineSegment | OrientedRectangle | Rectangle: ...
 
@@ -18,11 +18,9 @@ class Shape(Protocol):
 
     def boundary(self) -> Rectangle: ...
 
-    def collision(self, shape: Self) -> bool:
-        ...
+    def collision(self, shape: Self) -> bool: ...
 
-    def penetration(self, shape: Self) -> Collision | None:
-        ...
+    def penetration(self, shape: Self) -> Collision | None: ...
 
 
 # class LineSegmentShape(Shape):
@@ -68,10 +66,10 @@ class RectangleShape:
     def boundary(self) -> Rectangle:
         return self._primitive
 
-    def collision(self, shape: Shape) -> bool:
+    def collision(self, shape: ShapeProtocol) -> bool:
         return self.primitive.collision(shape.primitive)
 
-    def penetration(self, shape: Shape) -> Collision | None:
+    def penetration(self, shape: ShapeProtocol) -> Collision | None:
         return self.primitive.penetration(shape.primitive)
 
 
@@ -82,7 +80,7 @@ class OrientedRectangleShape:
         center = center or Vec2()
         half_extent = half_extent or Vec2()
         self._primitive = OrientedRectangle(center, half_extent, rotation)
-        
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(primitive: {self.primitive})"
 
@@ -112,10 +110,10 @@ class OrientedRectangleShape:
 
         return Rectangle(Vec2(min_x, min_y), Vec2(max_x - min_x, max_y - min_y))
 
-    def collision(self, shape: Shape) -> bool:
+    def collision(self, shape: ShapeProtocol) -> bool:
         return self.primitive.collision(shape.primitive)
 
-    def penetration(self, shape: Shape) -> Collision | None:
+    def penetration(self, shape: ShapeProtocol) -> Collision | None:
         return self.primitive.penetration(shape.primitive)
 
 
@@ -123,7 +121,7 @@ class CircleShape:
     def __init__(self, center: Vec2 = None, radius: float = 0):
         center = center or Vec2()
         self._primitive = Circle(center, radius)
-        
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(primitive: {self.primitive})"
 
@@ -146,8 +144,8 @@ class CircleShape:
             self._primitive + Vec2(self._primitive.radius, self._primitive.radius),
         )
 
-    def collision(self, shape: Shape) -> bool:
+    def collision(self, shape: ShapeProtocol) -> bool:
         return self.primitive.collision(shape.primitive)
 
-    def penetration(self, shape: Shape) -> Collision | None:
+    def penetration(self, shape: ShapeProtocol) -> Collision | None:
         return self.primitive.penetration(shape.primitive)

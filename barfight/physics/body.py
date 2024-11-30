@@ -4,7 +4,7 @@ from typing import Any
 
 from pyglet.math import Vec2
 
-from .shapes import Shape
+from .shapes import ShapeProtocol
 
 
 class BodyKind(Enum):
@@ -15,7 +15,7 @@ class BodyKind(Enum):
 
 @dataclass
 class Body:
-    shape: Shape
+    shape: ShapeProtocol
     kind: BodyKind = BodyKind.Dynamic
     velocity: Vec2 = field(default_factory=Vec2)
     data: Any = None
