@@ -4,9 +4,9 @@ from typing import Self
 from loguru import logger
 from pyglet.math import Vec2
 
-from .body import Body, BodyKind
+from .body import Body
 from .primitives import Rectangle
-from .raycast import Ray, RayIntersection
+from .raycast import Ray
 
 
 class QuadTree:
@@ -94,10 +94,12 @@ class QuadTree:
             self.top_right.remove(body_index)
 
             if not all(
-                [self.bottom_left.children,
-                self.bottom_right.children,
-                self.top_left.children,
-                self.top_right.children,]
+                [
+                    self.bottom_left.children,
+                    self.bottom_right.children,
+                    self.top_left.children,
+                    self.top_right.children,
+                ]
             ):
                 self.bottom_left = self.bottom_right = self.top_left = (
                     self.top_right
@@ -193,50 +195,6 @@ class QuadTree:
                     best_distance, closest = child_distance, child_body
 
         return best_distance, closest
-
-    def raycast(self, ray: Ray, kind: BodyKind) -> tuple[RayIntersection, Body] | None:
-        if not ray.intersects(self.boundary):
-            return None
-
-        closest_hit = None
-        closest_body = None
-        closest_distance = inf
-        for body_index in self.children:
-            body = self.bodies[body_index]
-            if body is None or body.kind != kind:
-                continue
-            if intersection := ray.intersects(body.shape.primitive):
-                distance = ray.origin.distance(intersection.point)
-                if distance < closest_distance:
-                    closest_hit = intersection
-                    closest_distance = distance
-                    closest_body = body
-
-        if self.is_divided:
-            if bottom_left_result := self.bottom_left.raycast(ray, kind):
-                if bottom_left_result[0] < closest_distance:
-                    closest_distance = bottom_left_result[0]
-                    closest_body = bottom_left_result[1]
-
-            if bottom_left_result := self.bottom_right.raycast(ray, kind):
-                if bottom_left_result[0] < closest_distance:
-                    closest_distance = bottom_left_result[0]
-                    closest_body = bottom_left_result[1]
-
-            if top_left_result := self.top_left.raycast(ray, kind):
-                if top_left_result[0] < closest_distance:
-                    closest_distance = top_left_result[0]
-                    closest_body = top_left_result[1]
-
-            if top_right_result := self.top_right.raycast(ray, kind):
-                if top_right_result[0] < closest_distance:
-                    closest_distance = top_right_result[0]
-                    closest_body = top_right_result[1]
-
-        if closest_body is None:
-            return None
-        else:
-            return closest_hit, closest_body
 
     def collisions(self, parent_bodies: list[Body]) -> list[tuple[Body, Body]]:
         colliding = []

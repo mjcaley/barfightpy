@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from functools import singledispatchmethod
 from math import cos, inf, isnan, sin, sqrt
+
 from pyglet.math import Vec2
 
 from .primitives import Circle, Line, LineSegment, OrientedRectangle, Rectangle
@@ -14,7 +15,9 @@ class RayIntersection:
 
 
 class Ray:
-    def __init__(self, origin: Vec2 = None, direction: Vec2 = None, max_distance: float = 1.0):
+    def __init__(
+        self, origin: Vec2 = None, direction: Vec2 = None, max_distance: float = 1.0
+    ):
         self.origin = origin or Vec2()
         self._direction = (direction or Vec2()).normalize()
         self.max_distance = max_distance
@@ -23,12 +26,15 @@ class Ray:
         ray_start = self.origin
         ray_end = self.direction.from_magnitude(self.max_distance) + self.origin
 
-        return Rectangle(Vec2(min(ray_start.x, ray_end.x), min(ray_start.y, ray_end.y)), Vec2(max(ray_start.x, ray_end.x), max(ray_start.y, ray_end.y)))
+        return Rectangle(
+            Vec2(min(ray_start.x, ray_end.x), min(ray_start.y, ray_end.y)),
+            Vec2(max(ray_start.x, ray_end.x), max(ray_start.y, ray_end.y)),
+        )
 
     @property
     def direction(self) -> Vec2:
         return self._direction
-    
+
     @direction.setter
     def _(self, value: Vec2):
         self._direction = value.normalize()
@@ -85,7 +91,7 @@ class Ray:
             hit = self.origin + self.direction * t
             normal = Vec2(-direction.y, direction.x).normalize()
             distance = self.origin.distance(hit)
-            
+
             return RayIntersection(hit, normal, distance)
 
         return None
@@ -114,12 +120,20 @@ class Ray:
     @intersects.register
     def _(self, rectangle: Rectangle) -> RayIntersection | None:
         t_near = Vec2(
-            (rectangle.origin.x - self.origin.x) / self.direction.x if self.direction.x != 0 else -inf,
-            (rectangle.origin.y - self.origin.y) / self.direction.y if self.direction.y != 0 else -inf,
+            (rectangle.origin.x - self.origin.x) / self.direction.x
+            if self.direction.x != 0
+            else -inf,
+            (rectangle.origin.y - self.origin.y) / self.direction.y
+            if self.direction.y != 0
+            else -inf,
         )
         t_far = Vec2(
-            (rectangle.origin.x + rectangle.size.x - self.origin.x) / self.direction.x if self.direction.x != 0 else inf,
-            (rectangle.origin.y + rectangle.size.y - self.origin.y) / self.direction.y if self.direction.y != 0 else inf,
+            (rectangle.origin.x + rectangle.size.x - self.origin.x) / self.direction.x
+            if self.direction.x != 0
+            else inf,
+            (rectangle.origin.y + rectangle.size.y - self.origin.y) / self.direction.y
+            if self.direction.y != 0
+            else inf,
         )
 
         if isnan(t_far.y) or isnan(t_far.x):
@@ -146,7 +160,6 @@ class Ray:
             normal = Vec2(0, -1 if self.direction.y > 0 else 1)
 
         return RayIntersection(hit, normal, distance)
-
 
     @intersects.register
     def _(self, rectangle: OrientedRectangle) -> RayIntersection | None:
@@ -176,12 +189,15 @@ class Ray:
             return None
 
         # Transform hit point back to world space
-        world_hit = Vec2(
-            local_hit.x * cos(rectangle.rotation)
-            - local_hit.y * sin(rectangle.rotation),
-            local_hit.x * sin(rectangle.rotation)
-            + local_hit.y * cos(rectangle.rotation),
-        ) + rectangle.center
+        world_hit = (
+            Vec2(
+                local_hit.x * cos(rectangle.rotation)
+                - local_hit.y * sin(rectangle.rotation),
+                local_hit.x * sin(rectangle.rotation)
+                + local_hit.y * cos(rectangle.rotation),
+            )
+            + rectangle.center
+        )
 
         world_normal = Vec2(
             local_hit.normal.x * cos(rectangle.rotation)

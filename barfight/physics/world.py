@@ -1,14 +1,16 @@
 from dataclasses import dataclass
+from functools import singledispatchmethod
 from math import inf
+from typing import Any
 
 from loguru import logger
 from pyglet.math import Vec2
 
-from barfight.physics.raycast import Ray
-
 from .body import Body, BodyKind
-from .primitives import Rectangle
+from .primitives import Circle, OrientedRectangle, Rectangle
+from .raycast import Ray
 from .response import Arbiter
+from .shapes import CircleShape, OrientedRectangleShape
 from .spatial import QuadTree
 
 
@@ -98,7 +100,9 @@ class PhysicsWorld:
 
         return new_collisions
 
-    def discrete_phase(self, broad_collisions: set[CollisionPair]) -> tuple[set[CollisionPair], dict[CollisionPair, Resolution]]:
+    def discrete_phase(
+        self, broad_collisions: set[CollisionPair]
+    ) -> tuple[set[CollisionPair], dict[CollisionPair, Resolution]]:
         discrete_collisions = set()
         collision_resolution = {}
 
@@ -113,12 +117,20 @@ class PhysicsWorld:
 
     def step(self, dt: float):
         broad_collisions = self.broad_phase()
-        discrete_collisions, collision_resolutions = self.discrete_phase(broad_collisions)
-        resolved_collisions, still_colliding = self.resolve(discrete_collisions, collision_resolutions)
-        self.active_collisions = self.active_collisions - resolved_collisions | still_colliding
+        discrete_collisions, collision_resolutions = self.discrete_phase(
+            broad_collisions
+        )
+        resolved_collisions, still_colliding = self.resolve(
+            discrete_collisions, collision_resolutions
+        )
+        self.active_collisions = (
+            self.active_collisions - resolved_collisions | still_colliding
+        )
 
     def resolve(
-        self, collisions: set[CollisionPair], resolutions: dict[CollisionPair, Resolution]
+        self,
+        collisions: set[CollisionPair],
+        resolutions: dict[CollisionPair, Resolution],
     ) -> tuple[set[CollisionPair], set[CollisionPair]]:
         resolved_collisions = set()
         still_colliding = set()
@@ -127,13 +139,21 @@ class PhysicsWorld:
             match collision.first.kind, collision.second.kind:
                 case BodyKind.Dynamic, BodyKind.Static:
                     if not collision.first.shape.collision(collision.second.shape):
-                        resolved_collisions.add(CollisionPair(collision.first, collision.second))
+                        resolved_collisions.add(
+                            CollisionPair(collision.first, collision.second)
+                        )
                         continue
-                    
+
                     collision.first.shape.position -= resolutions[collision].penetration
-                    resolved_collisions.add(CollisionPair(collision.first, collision.second))
-                    arbiter = Arbiter(collision.first, collision.second, collision not in self.active_collisions)
-                    
+                    resolved_collisions.add(
+                        CollisionPair(collision.first, collision.second)
+                    )
+                    arbiter = Arbiter(
+                        collision.first,
+                        collision.second,
+                        collision not in self.active_collisions,
+                    )
+
                     logger.debug(
                         "Collision resolved {body1} {body2} {penetration}",
                         body1=collision.first,
@@ -144,10 +164,16 @@ class PhysicsWorld:
                     self._call_on_collision(arbiter)
                 case BodyKind.Dynamic, BodyKind.Sensor:
                     if not collision.first.shape.collision(collision.second.shape):
-                        resolved_collisions.add(CollisionPair(collision.first, collision.second))
+                        resolved_collisions.add(
+                            CollisionPair(collision.first, collision.second)
+                        )
                         continue
 
-                    arbiter = Arbiter(collision.first, collision.second, collision not in self.active_collisions)
+                    arbiter = Arbiter(
+                        collision.first,
+                        collision.second,
+                        collision not in self.active_collisions,
+                    )
                     still_colliding.add(collision)
                     self._call_on_sensor(arbiter)
 
@@ -158,18 +184,58 @@ class PhysicsWorld:
         closest_body = None
         closest_distance = inf
 
-        broad_bodies = self.query(ray.boundary())
-        for body in broad_bodies:
-            ...
+        for body in self.query(ray.boundary()):
+            if body.kind != kind:
+                continue
+            if intersection := ray.intersects(body.shape.primitive):
+                if intersection.distance < closest_distance:
+                    closest_hit = intersection
+                    closest_distance = intersection.distance
+                    closest_body = body
 
-        if hit := self.root.raycast(ray, kind):
-            return RaycastHit(hit[0].point, hit[0].normal, hit[1])
+        if closest_body is None or closest_hit is None:
+            return None
+
+        return RaycastHit(closest_hit.point, closest_hit.normal, closest_body)
 
     def query(self, area: Rectangle) -> list[Body]:
         return self.root.query(area)
 
-    def is_colliding(self, area: Rectangle) -> bool:
-        return self.query(area) != []
+    @singledispatchmethod
+    def is_colliding(self, primitive: Any) -> bool:
+        raise NotImplementedError
+
+    @is_colliding.register
+    def _(self, primitive: Rectangle) -> bool:
+        return self.query(primitive) != []
+
+    @is_colliding.register
+    def _(self, primitive: OrientedRectangle) -> bool:
+        shape = OrientedRectangleShape(
+            primitive.center, primitive.half_extent, primitive.rotation
+        )
+        for body in self.query(shape.boundary()):
+            if body.shape.collision(shape):
+                return True
+
+        return False
+
+    @is_colliding.register
+    def _(self, primitive: Vec2) -> bool:
+        for body in self.query(Rectangle(primitive, Vec2())):
+            if body.shape.collision(primitive):
+                return True
+
+        return False
+
+    @is_colliding.register
+    def _(self, primitive: Circle) -> bool:
+        shape = CircleShape(primitive.center, primitive.radius)
+        for body in self.query(shape.boundary()):
+            if body.shape.collision(shape):
+                return True
+
+        return False
 
     def nearest(self, point: Vec2):
         return self.root.nearest(point)

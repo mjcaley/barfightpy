@@ -91,7 +91,7 @@ def test_raycast():
     b2 = Body(RectangleShape(Vec2(0, 0), Vec2(10, 10)), BodyKind.Static, data=2)
     w.add(b1)
     w.add(b2)
-    hit = w.raycast(Ray(Vec2(-1, -1), Vec2(1, 1)), BodyKind.Static)
+    hit = w.raycast(Ray(Vec2(-1, -1), Vec2(1, 1), 10), BodyKind.Static)
 
     assert hit is not None
     assert Vec2(0, 0) == hit.point
