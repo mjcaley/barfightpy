@@ -237,5 +237,5 @@ class PhysicsWorld:
 
         return False
 
-    def nearest(self, point: Vec2):
-        return self.root.nearest(point)
+    def nearest(self, point: Vec2) -> Body | None:
+        return self.root.nearest(point)[1]

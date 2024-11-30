@@ -177,11 +177,8 @@ class QuadTree:
     ) -> tuple[float, Body]:
         for body_index in self.children:
             body = self.bodies[body_index]
-            center_of_body = (
-                body.shape.boundary().origin + body.shape.boundary().size / 2
-            )
 
-            ray = Ray(point, center_of_body - point)
+            ray = Ray(point, body.shape.boundary().center - point)
             if intersection := ray.intersects(body.shape.primitive):
                 distance = point.distance(intersection.point)
 
@@ -195,28 +192,3 @@ class QuadTree:
                     best_distance, closest = child_distance, child_body
 
         return best_distance, closest
-
-    def collisions(self, parent_bodies: list[Body]) -> list[tuple[Body, Body]]:
-        colliding = []
-        bodies = self.children + parent_bodies
-
-        for first_body in bodies:
-            for second_body in bodies:
-                if first_body is second_body:
-                    continue
-                if not self.boundary.overlaps(
-                    first_body.shape
-                ) or not self.boundary.overlaps(second_body.shape):
-                    continue
-                if first_body.shape.overlaps(second_body.shape):
-                    colliding.append((first_body, second_body))
-
-        if self.is_divided:
-            colliding += (
-                self.bottom_left.collisions(bodies)
-                + self.bottom_right.collisions(bodies)
-                + self.top_left.collisions(bodies)
-                + self.top_right.collisions(bodies)
-            )
-
-        return colliding

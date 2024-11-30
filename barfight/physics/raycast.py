@@ -16,7 +16,7 @@ class RayIntersection:
 
 class Ray:
     def __init__(
-        self, origin: Vec2 = None, direction: Vec2 = None, max_distance: float = 1.0
+        self, origin: Vec2 = None, direction: Vec2 = None, max_distance: float = inf
     ):
         self.origin = origin or Vec2()
         self._direction = (direction or Vec2()).normalize()
@@ -191,10 +191,10 @@ class Ray:
         # Transform hit point back to world space
         world_hit = (
             Vec2(
-                local_hit.x * cos(rectangle.rotation)
-                - local_hit.y * sin(rectangle.rotation),
-                local_hit.x * sin(rectangle.rotation)
-                + local_hit.y * cos(rectangle.rotation),
+                local_hit.point.x * cos(rectangle.rotation)
+                - local_hit.point.y * sin(rectangle.rotation),
+                local_hit.point.x * sin(rectangle.rotation)
+                + local_hit.point.y * cos(rectangle.rotation),
             )
             + rectangle.center
         )

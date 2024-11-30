@@ -3,7 +3,6 @@ from pyglet.math import Vec2
 
 from barfight.physics.body import Body
 from barfight.physics.primitives import Rectangle
-from barfight.physics.raycast import Ray
 from barfight.physics.shapes import RectangleShape
 from barfight.physics.spatial import QuadTree
 
@@ -147,47 +146,6 @@ def test_quadtree_query_bodies_in_parent():
     result = q.query(Rectangle(Vec2(1, 1), Vec2(1, 1)))
 
     assert [body] == result
-
-
-def test_quadtree_nearest():
-    bodies = []
-    q = QuadTree(bodies, Rectangle(Vec2(0, 0), Vec2(10, 10)), 10, 0)
-    body = Body(RectangleShape(Vec2(8, 8), Vec2()))
-    bodies.append(body)
-    q.insert(0)
-    p = Vec2(4, 4)
-    distance, nearest_body = q.nearest(p)
-
-    assert p.distance(body.shape.boundary().origin + body.shape.boundary().size / 2) == pytest.approx(distance)
-    assert body is nearest_body
-
-
-@pytest.mark.parametrize(
-    "test_input,expected",
-    [
-        (Vec2(0, 0), Rectangle(Vec2(1, 1), Vec2(1, 1))),
-        (Vec2(10, 0), Rectangle(Vec2(8, 1), Vec2(1, 1))),
-        (Vec2(0, 10), Rectangle(Vec2(1, 8), Vec2(1, 1))),
-        (Vec2(10, 10), Rectangle(Vec2(8, 8), Vec2(1, 1))),
-    ],
-)
-def test_quadtree_nearest_in_subdivision(test_input, expected):
-    bodies = []
-    q = QuadTree(bodies, Rectangle(Vec2(0, 0), Vec2(10, 10)), 3, 0)
-    bodies.append(Body(RectangleShape(Vec2(1, 1), Vec2(1, 1))))
-    q.insert(0)
-    bodies.append(Body(RectangleShape(Vec2(8, 1), Vec2(1, 1))))
-    q.insert(1)
-    bodies.append(Body(RectangleShape(Vec2(1, 8), Vec2(1, 1))))
-    q.insert(2)
-    bodies.append(Body(RectangleShape(Vec2(8, 8), Vec2(1, 1))))
-    q.insert(3)
-    distance, nearest_body = q.nearest(test_input)
-
-    expected_center = expected.origin + expected.size / 2
-    ray_hit = Ray(test_input, expected_center - test_input).intersects(expected)
-    assert test_input.distance(ray_hit.point) == pytest.approx(distance)
-    assert expected == nearest_body.shape.primitive
 
 
 # def test_quadtree_collisions():

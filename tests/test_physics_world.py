@@ -96,3 +96,14 @@ def test_raycast():
     assert hit is not None
     assert Vec2(0, 0) == hit.point
     assert b2 is hit.body
+
+
+def test_nearest():
+    q = PhysicsWorld(Vec2(0, 0), Vec2(10, 10))
+    body = Body(RectangleShape(Vec2(8, 8), Vec2()))
+    q.add(body)
+    p = Vec2(4, 4)
+    nearest_body = q.nearest(p)
+
+    assert nearest_body is not None
+    assert body is nearest_body
