@@ -35,9 +35,6 @@ from .events import (
 )
 from .pathfinding import Pathfinding
 from .physics import Arbiter, Body, PhysicsWorld
-from .physics.body import BodyKind
-from .physics.primitives import Rectangle
-from .physics.raycast import Ray
 from .physics.shapes import OrientedRectangleShape, RectangleShape
 
 # region Attack
@@ -172,7 +169,9 @@ class DrawSystem(ecs.SystemProtocol, DrawProtocol, ComponentAddedProtocol):
             case OrientedRectangleShape():
                 shape.shape.x = physics_body.body.shape.primitive.center.x
                 shape.shape.y = physics_body.body.shape.primitive.center.y
-                shape.shape.rotation = degrees(physics_body.body.shape.primitive.rotation)
+                shape.shape.rotation = degrees(
+                    physics_body.body.shape.primitive.rotation
+                )
 
     def on_draw(self, window: Window):
         for _, (position, sprite) in ecs.get_components(Position, Sprite):

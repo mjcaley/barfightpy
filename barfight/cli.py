@@ -1,6 +1,8 @@
 from math import radians
+
 import pyglet
 import pyglet.info
+from loguru import logger
 from pyglet.math import Vec2
 from pyglet.window import Window
 from pyglet.window.key import KeyStateHandler
@@ -22,8 +24,6 @@ from .systems import (
     MovementSystem,
     PhysicsSystem,
 )
-
-from loguru import logger
 
 
 def main():

@@ -496,7 +496,9 @@ def oriented_rectangle_point_collision(
     oriented_rect: OrientedRectangle, point: Vec2
 ) -> bool:
     lr = Rectangle(Vec2(0, 0), oriented_rect.half_extent * 2)
-    lp = (point - oriented_rect.center).rotate(-oriented_rect.rotation) + oriented_rect.half_extent
+    lp = (point - oriented_rect.center).rotate(
+        -oriented_rect.rotation
+    ) + oriented_rect.half_extent
 
     return rectangle_point_collision(lr, lp)
 
@@ -510,7 +512,8 @@ def line_oriented_rectangle_collision(
 ) -> bool:
     lr = Rectangle(Vec2(0, 0), oriented_rectangle.half_extent * 2)
     ll = Line(
-        (line.base - oriented_rectangle.center).rotate(-oriented_rectangle.rotation) + oriented_rectangle.half_extent,
+        (line.base - oriented_rectangle.center).rotate(-oriented_rectangle.rotation)
+        + oriented_rectangle.half_extent,
         line.direction.rotate(-oriented_rectangle.rotation),
     )
 
@@ -680,14 +683,6 @@ def circle_oriented_rectangle_penetration(
 def rectangle_oriented_rectangle_penetration(
     r: Rectangle, o: OrientedRectangle
 ) -> Collision | None:
-    # Rectangle vertices in world space
-    rect_vertices = [
-        r.origin,
-        Vec2(r.origin.x + r.size.x, r.origin.y),
-        Vec2(r.origin.x + r.size.x, r.origin.y + r.size.y),
-        Vec2(r.origin.x, r.origin.y + r.size.y),
-    ]
-
     # Track the minimum penetration axis and depth
     min_penetration_depth = inf
     min_penetration_axis = Vec2()
