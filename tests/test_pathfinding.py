@@ -10,7 +10,7 @@ from barfight.physics.shapes import RectangleShape
 @pytest.fixture
 def physics_world():
     p = PhysicsWorld(Vec2(), Vec2(3, 3))
-    p.add(Body(RectangleShape(Vec2(1, 0), Vec2(2, 2)), BodyKind.Static))
+    p.add(Body(RectangleShape(Vec2(1.5, 0), Vec2(0.25, 2)), BodyKind.Static))
     yield p
 
 

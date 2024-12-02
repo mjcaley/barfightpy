@@ -29,18 +29,22 @@ class Grid:
     def __getitem__(self, key):
         return self.grid[key]
 
+    @property
+    def diameter(self) -> float:
+        return self.radius * 2
+
     def create_grid(self) -> list[list[Cell]]:
-        num_x_cells = int(self.world.boundary.size.x // (self.radius * 2))
-        num_y_cells = int(self.world.boundary.size.y // (self.radius * 2))
+        num_x_cells = int(self.world.boundary.size.x // (self.diameter))
+        num_y_cells = int(self.world.boundary.size.y // (self.diameter))
         grid = []
         for x in range(num_x_cells):
             line = []
             for y in range(num_y_cells):
                 rect = Rectangle(
-                    Vec2(x * (self.radius * 2), y * (self.radius * 2)),
+                    Vec2(x * (self.diameter), y * (self.diameter)),
                     Vec2(
-                        x * (self.radius * 2) + (self.radius * 2),
-                        y * (self.radius * 2) + (self.radius * 2),
+                        self.diameter,
+                        self.diameter,
                     ),
                 )
                 cell = Cell(rect)
@@ -55,8 +59,8 @@ class Grid:
                 cell.colliding = self.world.is_colliding(cell.rectangle)
 
     def coord_from_position(self, position: Vec2) -> tuple[int, int]:
-        x = int(position.x // (self.radius * 2))
-        y = int(position.y // (self.radius * 2))
+        x = int(position.x // (self.diameter))
+        y = int(position.y // (self.diameter))
 
         return x, y
 
@@ -127,5 +131,7 @@ class Pathfinding:
                         heapq.heappush(
                             open_set, (f_score[neighbour], id(neighbour), neighbour)
                         )
+            # if len(open_set) == 0:
+            #     breakpoint()
 
         return None
