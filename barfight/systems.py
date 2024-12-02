@@ -78,7 +78,11 @@ class DebugSystem(
     ComponentAddedProtocol,
     ComponentRemovedProtocol,
     CollisionProtocol,
+    DrawProtocol,
 ):
+    def __init__(self):
+        self.batch = Batch()
+
     def process(self, *args): ...
 
     def on_collision(self, arbiter: Arbiter):
@@ -121,31 +125,36 @@ class DebugSystem(
         )
 
     def on_component_added(self, entity: int, component: Any):
-        if isinstance(component, PhysicsBody):
-            match component.body.shape:
-                case RectangleShape():
-                    shape = pyglet.shapes.Box(
-                        component.body.shape.primitive.origin.x,
-                        component.body.shape.primitive.origin.y,
-                        component.body.shape.primitive.size.x,
-                        component.body.shape.primitive.size.y,
-                        color=(50, 25, 255),
-                    )
-                case OrientedRectangleShape():
-                    shape = pyglet.shapes.Box(
-                        component.body.shape.primitive.center.x,
-                        component.body.shape.primitive.center.y,
-                        component.body.shape.primitive.half_extent.x * 2,
-                        component.body.shape.primitive.half_extent.y * 2,
-                        color=(50, 25, 255),
-                    )
-                    shape.anchor_position = component.body.shape.primitive.half_extent
-                    shape.rotation = degrees(component.body.shape.primitive.rotation)
-            ecs.add_component(entity, Shape(shape, Layer.Debug))
+        if not isinstance(component, PhysicsBody):
+            return
+
+        match component.body.shape:
+            case RectangleShape():
+                shape = pyglet.shapes.Box(
+                    component.body.shape.primitive.origin.x,
+                    component.body.shape.primitive.origin.y,
+                    component.body.shape.primitive.size.x,
+                    component.body.shape.primitive.size.y,
+                    color=(50, 25, 255),
+                )
+            case OrientedRectangleShape():
+                shape = pyglet.shapes.Box(
+                    component.body.shape.primitive.center.x,
+                    component.body.shape.primitive.center.y,
+                    component.body.shape.primitive.half_extent.x * 2,
+                    component.body.shape.primitive.half_extent.y * 2,
+                    color=(50, 25, 255),
+                )
+                shape.anchor_position = component.body.shape.primitive.half_extent
+                shape.rotation = degrees(component.body.shape.primitive.rotation)
+        ecs.add_component(entity, Shape(shape, Layer.Debug))
 
     def on_component_removed(self, entity: int, component: Any):
         if isinstance(component, PhysicsBody):
             ecs.remove_component(entity, Shape)
+
+    def on_draw(self, window: Window):
+        self.batch.draw()
 
 
 # endregion
