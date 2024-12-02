@@ -206,6 +206,10 @@ def rotate90(v: Vec2) -> Vec2:
     return Vec2(-v.y, v.x)
 
 
+def rotate180(v: Vec2) -> Vec2:
+    return Vec2(-v.x, -v.y)
+
+
 def is_parallel_line(a: Vec2, b: Vec2) -> bool:
     return 0 == rotate90(a).dot(b)
 
@@ -277,6 +281,13 @@ def clamp_rectangle(point: Vec2, rectangle: Rectangle) -> Vec2:
         clamp(point.x, rectangle.origin.x, rectangle.origin.x + rectangle.size.x),
         clamp(point.y, rectangle.origin.y, rectangle.origin.y + rectangle.size.y),
     )
+
+
+def reverse_collision(collision: Collision | None) -> Collision | None:
+    if collision:
+        return Collision(rotate180(collision.penetration), collision.depth)
+    
+    return None
 
 
 # endregion
@@ -842,7 +853,7 @@ def _(self, rectangle: Rectangle) -> Vec2 | None:
 
 @Rectangle.penetration.register
 def _(self, circle: Circle) -> Collision | None:
-    return circle_rectangle_penetration(circle, self)
+    return reverse_collision(circle_rectangle_penetration(circle, self))
 
 
 @Rectangle.penetration.register
@@ -882,12 +893,12 @@ def _(self, oriented_rectangle: OrientedRectangle) -> Collision | None:
 
 @OrientedRectangle.penetration.register
 def _(self, rectangle: Rectangle) -> Vec2 | None:
-    return rectangle_oriented_rectangle_penetration(rectangle, self)
+    return reverse_collision(rectangle_oriented_rectangle_penetration(rectangle, self))
 
 
 @OrientedRectangle.penetration.register
 def _(self, circle: Circle) -> Collision | None:
-    return circle_rectangle_penetration(circle, self)
+    return reverse_collision(circle_rectangle_penetration(circle, self))
 
 
 # endregion

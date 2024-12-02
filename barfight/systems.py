@@ -35,7 +35,7 @@ from .events import (
 )
 from .pathfinding import Pathfinding
 from .physics import Arbiter, Body, PhysicsWorld
-from .physics.shapes import OrientedRectangleShape, RectangleShape
+from .physics.shapes import CircleShape, OrientedRectangleShape, RectangleShape
 
 # region Attack
 
@@ -78,11 +78,7 @@ class DebugSystem(
     ComponentAddedProtocol,
     ComponentRemovedProtocol,
     CollisionProtocol,
-    DrawProtocol,
 ):
-    def __init__(self):
-        self.batch = Batch()
-
     def process(self, *args): ...
 
     def on_collision(self, arbiter: Arbiter):
@@ -147,14 +143,18 @@ class DebugSystem(
                 )
                 shape.anchor_position = component.body.shape.primitive.half_extent
                 shape.rotation = degrees(component.body.shape.primitive.rotation)
+            case CircleShape():
+                shape = pyglet.shapes.Circle(
+                    component.body.shape.primitive.center.x,
+                    component.body.shape.primitive.center.y,
+                    component.body.shape.primitive.radius,
+                    color=(50, 25, 255),
+                )
         ecs.add_component(entity, Shape(shape, Layer.Debug))
 
     def on_component_removed(self, entity: int, component: Any):
         if isinstance(component, PhysicsBody):
             ecs.remove_component(entity, Shape)
-
-    def on_draw(self, window: Window):
-        self.batch.draw()
 
 
 # endregion
@@ -173,14 +173,15 @@ class DrawSystem(ecs.SystemProtocol, DrawProtocol, ComponentAddedProtocol):
     def draw_debug_shape(self, physics_body: PhysicsBody, shape: Shape):
         match physics_body.body.shape:
             case RectangleShape():
-                shape.shape.x = physics_body.body.shape.primitive.origin.x
-                shape.shape.y = physics_body.body.shape.primitive.origin.y
+                shape.shape.position = physics_body.body.shape.primitive.origin
             case OrientedRectangleShape():
-                shape.shape.x = physics_body.body.shape.primitive.center.x
-                shape.shape.y = physics_body.body.shape.primitive.center.y
+                shape.shape.position = physics_body.body.shape.primitive.center
                 shape.shape.rotation = degrees(
                     physics_body.body.shape.primitive.rotation
                 )
+            case CircleShape():
+                shape.shape.position = physics_body.body.shape.primitive.center
+                shape.shape.radius = physics_body.body.shape.primitive.radius
 
     def on_draw(self, window: Window):
         for _, (position, sprite) in ecs.get_components(Position, Sprite):

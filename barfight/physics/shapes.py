@@ -141,7 +141,7 @@ class CircleShape:
         return Rectangle(
             self._primitive.center
             - Vec2(self._primitive.radius, self._primitive.radius),
-            self._primitive + Vec2(self._primitive.radius, self._primitive.radius),
+            self._primitive.center + Vec2(self._primitive.radius, self._primitive.radius),
         )
 
     def collision(self, shape: ShapeProtocol) -> bool:
