@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from functools import singledispatchmethod
 from itertools import chain, islice, pairwise
-from math import cos, inf, radians, sin
+from math import cos, inf, pi, radians, sin
 from typing import Generator, Iterator, Self
 
 from pyglet.math import Vec2
@@ -67,6 +67,13 @@ class Circle:
     @singledispatchmethod
     def penetration(self, any) -> Vec2 | None:
         raise NotImplementedError
+    
+    def vertices(self, num_points = 16) -> Generator[Vec2, None, None]:
+        point = self.center + Vec2(self.radius, 0)
+        rotation = 2 * pi / num_points
+        for _ in range(num_points):
+            point = point.rotate(rotation)
+            yield point
 
 
 @dataclass
@@ -724,6 +731,10 @@ def rectangle_oriented_rectangle_penetration(
     # Return the Collision object with penetration vector and depth
     return Collision(penetration=penetration_vector, depth=min_penetration_depth)
 
+
+# endregion
+
+# region Minkowski difference functions
 
 # endregion
 
