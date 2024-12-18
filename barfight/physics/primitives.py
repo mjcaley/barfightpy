@@ -204,6 +204,14 @@ class OrientedRectangle:
 class Polygon:
     points: list[Vec2]
 
+    @singledispatchmethod
+    def collision(self, any) -> bool:
+        raise NotImplementedError
+
+    @singledispatchmethod
+    def penetration(self, any) -> Vec2 | None:
+        raise NotImplementedError
+
     def vertices(self) -> Generator[Vec2, None, None]:
         return (point for point in self.points)
 
@@ -890,6 +898,11 @@ def _(self, oriented_rectangle: OrientedRectangle) -> bool:
     return circle_oriented_rectangle_collision(self, oriented_rectangle)
 
 
+@Circle.collision.register
+def _(self, polygon: Polygon) -> bool:
+    return circle_polygon_collision(self, polygon)
+
+
 @Circle.penetration.register
 def _(self, circle: Circle) -> Collision | None:
     return circle_circle_penetration(self, circle)
@@ -928,6 +941,11 @@ def _(self, rectangle: Rectangle) -> bool:
 @Rectangle.collision.register
 def _(self, oriented_rectangle: OrientedRectangle) -> bool:
     return rectangle_oriented_rectangle_collision(self, oriented_rectangle)
+
+
+@Rectangle.collision.register
+def _(self, polygon: Polygon) -> bool:
+    return rectangle_polygon_collision(self, polygon)
 
 
 @Rectangle.penetration.register
@@ -970,6 +988,11 @@ def _(self, oriented_rectangle: OrientedRectangle) -> bool:
     return oriented_rect_oriented_rect_collision(self, oriented_rectangle)
 
 
+@OrientedRectangle.collision.register
+def _(self, polygon: Polygon) -> bool:
+    return oriented_rectangle_polygon_collision(self, polygon)
+
+
 @OrientedRectangle.penetration.register
 def _(self, oriented_rectangle: OrientedRectangle) -> Collision | None:
     return oriented_rectangle_oriented_rectangle_penetration(self, oriented_rectangle)
@@ -983,6 +1006,31 @@ def _(self, rectangle: Rectangle) -> Vec2 | None:
 @OrientedRectangle.penetration.register
 def _(self, circle: Circle) -> Collision | None:
     return reverse_collision(circle_rectangle_penetration(circle, self))
+
+
+@Polygon.collision.register
+def _(self, polygon: Polygon) -> bool:
+    return polygon_polygon_collision(self, polygon)
+
+
+@Polygon.collision.register
+def _(self, point: Vec2) -> bool:
+    return point_polygon_collision(point, self)
+
+
+@Polygon.collision.register
+def _(self, circle: Circle) -> bool:
+    return circle_polygon_collision(circle, self)
+
+
+@Polygon.collision.register
+def _(self, rectangle: Rectangle) -> bool:
+    return rectangle_polygon_collision(rectangle, self)
+
+
+@Polygon.collision.register
+def _(self, oriented_rectangle: OrientedRectangle) -> bool:
+    return oriented_rectangle_polygon_collision(oriented_rectangle, self)
 
 
 # endregion
