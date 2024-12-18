@@ -200,6 +200,47 @@ class OrientedRectangle:
         return Rectangle(Vec2(min_x, min_y), Vec2(max_x - min_x, max_y - min_y))
 
 
+@dataclass
+class Polygon:
+    points: list[Vec2]
+
+    def vertices(self) -> Generator[Vec2, None, None]:
+        return (point for point in self.points)
+    
+    def edges(self) -> Generator[LineSegment, None, None]:
+        for v1, v2 in pairwise(chain(self.vertices(), islice(self.vertices(), 1))):
+            yield LineSegment(v1, v2)
+
+    def axes(self) -> Generator[Vec2, None, None]:
+        for edge in self.edges():
+            yield rotate90(edge.point2 - edge.point1).normalize()
+
+    @property
+    def bounding_box(self) -> Rectangle:
+        min_x = inf
+        max_x = -inf
+        min_y = inf
+        max_y = -inf
+
+        for vertex in self.vertices():
+            min_x = min(min_x, vertex.x)
+            max_x = max(max_x, vertex.x)
+            min_y = min(min_y, vertex.y)
+            max_y = max(max_y, vertex.y)
+
+        return Rectangle(Vec2(min_x, min_y), Vec2(max_x - min_x, max_y - min_y))
+    
+    def is_convex(self) -> bool:
+        cross = []
+
+        for e1, e2 in pairwise(chain(self.edges(), islice(self.edges(), 1))):
+            v1 = e1.point2 - e1.point1
+            v2 = e2.point2 - e2.point1
+            cross.append(v1.x * v2.y - v1.y * v2.x)
+
+        all_positive = all()
+
+
 # endregion
 
 # region Utility
@@ -554,6 +595,35 @@ def line_segment_oriented_rectangle_collision(
     )
 
     return rectangle_lineseg_collision(lr, ls)
+
+
+def point_polygon_collision(point: Vec2, polygon: Polygon) -> bool:
+    if not rectangle_point_collision(polygon.bounding_box, point):
+        return False
+
+    polygon_vertices = [_ for _ in polygon.vertices()]
+    for axis in polygon.axes():
+        point_min, point_max = min_max_vertex(axis, [point])
+        poly_min, poly_max = min_max_vertex(axis, polygon_vertices)
+        if point_max < poly_min or poly_max < point_min:
+            return False
+
+    return True
+
+
+def rectangle_polygon_collision(rectangle: Rectangle, polygon: Polygon) -> bool:
+    if not rect_rect_collision(rectangle, polygon.bounding_box):
+        return False
+    
+    rect_vertices = [_ for _ in rectangle.vertices()]
+    orect_vertices = [_ for _ in polygon.vertices()]
+    for axis in chain(polygon.axes(), rectangle.axes()):
+        a_min, a_max = min_max_vertex(axis, rect_vertices)
+        b_min, b_max = min_max_vertex(axis, orect_vertices)
+        if a_max < b_min or b_max < a_min:
+            return False
+
+    return True
 
 
 # region Penetration functions
