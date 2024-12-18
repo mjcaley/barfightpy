@@ -635,6 +635,27 @@ def circle_polygon_collision(circle: Circle, polygon: Polygon) -> bool:
     
     return True
 
+
+def oriented_rectangle_polygon_collision(oriented_rectangle: OrientedRectangle, polygon: Polygon) -> bool:
+    for axis in chain(oriented_rectangle.axes(), polygon.axes()):
+        p_min, p_max = min_max_vertex(axis, polygon.vertices())
+        o_min, o_max = min_max_vertex(axis, oriented_rectangle.vertices())
+        if p_max < o_min or o_max < p_min:
+            return False
+    
+    return True
+
+
+def polygon_polygon_collision(p1: Polygon, p2: Polygon) -> bool:
+    for axis in chain(p1.axes(), p2.axes()):
+        p1_min, p1_max = min_max_vertex(axis, p1.vertices())
+        p2_min, p2_max = min_max_vertex(axis, p2.vertices())
+        if p1_max < p2_min or p2_max < p1_min:
+            return False
+        
+    return True
+
+
 # region Penetration functions
 
 
