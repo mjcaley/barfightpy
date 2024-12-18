@@ -665,33 +665,6 @@ def rectangle_rectangle_penetration(r1: Rectangle, r2: Rectangle) -> Vec2 | None
 
     return Collision(penetration_vector, penetration_depth)
 
-    # r1_left = r1.origin.x
-    # r1_right = r1_left + r1.size.x
-    # r2_left = r2.origin.x
-    # r2_right = r2_left + r2.size.x
-
-    # r1_bottom = r1.origin.y
-    # r1_top = r1_bottom + r1.size.y
-    # r2_bottom = r2.origin.y
-    # r2_top = r2_bottom + r2.size.y
-
-    # if not overlapping(r1_left, r1_right, r2_left, r2_right) and not overlapping(
-    #     r1_bottom, r1_top, r2_bottom, r2_top
-    # ):
-    #     return None
-
-    # x_overlap = min(r1_left, r1_right) - max(r1_left, r1_right)
-    # y_overlap = min(r1_bottom, r2_bottom) - max(r1_top, r2_top)
-
-    # if x_overlap < y_overlap:
-    #     penetration_vector = Vec2(-x_overlap, 0) if r1.origin.x < r2.origin.x else Vec2(x_overlap, 0)
-    #     penetration_depth = abs(x_overlap)
-    # else:
-    #     penetration_vector = Vec2(0, -y_overlap) if r1.origin.y < r2.origin.y else Vec2(0, y_overlap)
-    #     penetration_depth = abs(y_overlap)
-
-    # return Collision(penetration_vector, penetration_depth)
-
 
 def overlap_on_axis(
     o1: OrientedRectangle, o2: OrientedRectangle, axis: Vec2
