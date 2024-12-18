@@ -626,6 +626,15 @@ def rectangle_polygon_collision(rectangle: Rectangle, polygon: Polygon) -> bool:
     return True
 
 
+def circle_polygon_collision(circle: Circle, polygon: Polygon) -> bool:
+    for axis in polygon.axes():
+        p_min, p_max = min_max_vertex(axis, polygon.vertices())
+        c_min, c_max = min_max_vertex(axis, [circle.center + axis.normalize().from_magnitude(circle.radius), circle.center + axis.normalize().from_magnitude(-circle.radius)])
+        if p_max < c_min or c_max < p_min:
+            return False
+    
+    return True
+
 # region Penetration functions
 
 
