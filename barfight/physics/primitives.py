@@ -206,7 +206,7 @@ class Polygon:
 
     def vertices(self) -> Generator[Vec2, None, None]:
         return (point for point in self.points)
-    
+
     def edges(self) -> Generator[LineSegment, None, None]:
         for v1, v2 in pairwise(chain(self.vertices(), islice(self.vertices(), 1))):
             yield LineSegment(v1, v2)
@@ -229,7 +229,7 @@ class Polygon:
             max_y = max(max_y, vertex.y)
 
         return Rectangle(Vec2(min_x, min_y), Vec2(max_x - min_x, max_y - min_y))
-    
+
     def is_convex(self) -> bool:
         cross = []
 
@@ -614,7 +614,7 @@ def point_polygon_collision(point: Vec2, polygon: Polygon) -> bool:
 def rectangle_polygon_collision(rectangle: Rectangle, polygon: Polygon) -> bool:
     if not rect_rect_collision(rectangle, polygon.bounding_box):
         return False
-    
+
     rect_vertices = [_ for _ in rectangle.vertices()]
     orect_vertices = [_ for _ in polygon.vertices()]
     for axis in chain(polygon.axes(), rectangle.axes()):
