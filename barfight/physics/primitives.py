@@ -824,6 +824,11 @@ def rectangle_oriented_rectangle_penetration(
 
 
 @Line.collision.register
+def _(self, point: Vec2) -> bool:
+    return line_point_collision(self, point)
+
+
+@Line.collision.register
 def _(self, line: Line) -> bool:
     return line_line_collision(self, line)
 
@@ -849,6 +854,11 @@ def _(self, oriented_rectangle: OrientedRectangle) -> bool:
 
 
 @LineSegment.collision.register
+def _(self, point: Vec2) -> bool:
+    return line_segment_point_collision(self, point)
+
+
+@LineSegment.collision.register
 def _(self, line: Line) -> bool:
     return line_line_segment_collision(line, self)
 
@@ -871,6 +881,11 @@ def _(self, rectangle: Rectangle) -> bool:
 @LineSegment.collision.register
 def _(self, oriented_rectangle: OrientedRectangle) -> bool:
     return line_segment_oriented_rectangle_collision(self, oriented_rectangle)
+
+
+@Circle.collision.register
+def _(self, point: Vec2) -> bool:
+    return circle_point_collision(self, point)
 
 
 @Circle.collision.register
@@ -919,6 +934,11 @@ def _(self, oriented_rectangle: OrientedRectangle) -> Collision | None:
 
 
 @Rectangle.collision.register
+def _(self, point: Vec2) -> bool:
+    return rectangle_point_collision(self, point)
+
+
+@Rectangle.collision.register
 def _(self, line: Line) -> bool:
     return rectangle_line_collision(self, line)
 
@@ -961,6 +981,11 @@ def _(self, circle: Circle) -> Collision | None:
 @Rectangle.penetration.register
 def _(self, oriented_rectangle: OrientedRectangle) -> Collision | None:
     return rectangle_oriented_rectangle_penetration(self, oriented_rectangle)
+
+
+@OrientedRectangle.collision.register
+def _(self, point: Vec2) -> bool:
+    return oriented_rectangle_point_collision(self, point)
 
 
 @OrientedRectangle.collision.register
