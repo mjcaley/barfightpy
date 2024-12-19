@@ -813,6 +813,118 @@ def rectangle_oriented_rectangle_penetration(
     return Collision(penetration=penetration_vector, depth=min_penetration_depth)
 
 
+def polygon_polygon_penetration(p1: Polygon, p2: Polygon) -> Collision | None:
+    min_penetration = inf
+    penetration_axis = Vec2()
+
+    for axis in chain(p1.axes(), p2.axes()):
+        axis = axis.normalize()
+        p1_min, p1_max = project_vertices(p1.vertices(), axis)
+        p2_min, p2_max = project_vertices(p2.vertices(), axis)
+        overlap = min(p1_max, p2_max) - max(p1_min, p2_min)
+
+        if overlap <= 0:
+            return None
+
+        if overlap < min_penetration:
+            min_penetration = overlap
+            penetration_axis = axis
+
+    penetration_vector = penetration_axis.from_magnitude(min_penetration)
+
+    return Collision(penetration_vector, min_penetration)
+
+
+def polygon_circle_penetration(polygon: Polygon, circle: Circle) -> Collision | None:
+    min_penetration = inf
+    penetration_axis = Vec2()
+
+    for axis in polygon.axes():
+        axis = axis.normalize()
+        p_min, p_max = project_vertices(polygon.vertices(), axis)
+        c_min, c_max = project_vertices(
+            [circle.center + axis.normalize().from_magnitude(circle.radius), 
+             circle.center + axis.normalize().from_magnitude(-circle.radius)], axis)
+        overlap = min(p_max, c_max) - max(p_min, c_min)
+
+        if overlap <= 0:
+            return None
+
+        if overlap < min_penetration:
+            min_penetration = overlap
+            penetration_axis = axis
+
+    penetration_vector = penetration_axis.from_magnitude(min_penetration)
+
+    return Collision(penetration_vector, min_penetration)
+
+
+def polygon_rectangle_penetration(polygon: Polygon, rectangle: Rectangle) -> Collision | None:
+    min_penetration = inf
+    penetration_axis = Vec2()
+
+    for axis in chain(polygon.axes(), rectangle.axes()):
+        axis = axis.normalize()
+        p_min, p_max = project_vertices(polygon.vertices(), axis)
+        r_min, r_max = project_vertices(rectangle.vertices(), axis)
+        overlap = min(p_max, r_max) - max(p_min, r_min)
+
+        if overlap <= 0:
+            return None
+
+        if overlap < min_penetration:
+            min_penetration = overlap
+            penetration_axis = axis
+
+    penetration_vector = penetration_axis.from_magnitude(min_penetration)
+
+    return Collision(penetration_vector, min_penetration)
+
+
+def polygon_oriented_rectangle_penetration(polygon: Polygon, oriented_rectangle: OrientedRectangle) -> Collision | None:
+    min_penetration = inf
+    penetration_axis = Vec2()
+
+    for axis in chain(polygon.axes(), oriented_rectangle.axes()):
+        axis = axis.normalize()
+        p_min, p_max = project_vertices(polygon.vertices(), axis)
+        o_min, o_max = project_vertices(oriented_rectangle.vertices(), axis)
+        overlap = min(p_max, o_max) - max(p_min, o_min)
+
+        if overlap <= 0:
+            return None
+
+        if overlap < min_penetration:
+            min_penetration = overlap
+            penetration_axis = axis
+
+    penetration_vector = penetration_axis.from_magnitude(min_penetration)
+
+    return Collision(penetration_vector, min_penetration)
+
+
+def polygon_point_penetration(polygon: Polygon, point: Vec2) -> Collision | None:
+    min_penetration = inf
+    penetration_axis = Vec2()
+
+    for axis in polygon.axes():
+        axis = axis.normalize()
+        p_min, p_max = project_vertices(polygon.vertices(), axis)
+        point_proj = point.dot(axis)
+        overlap = min(p_max, point_proj) - max(p_min, point_proj)
+
+        if overlap <= 0:
+            return None
+
+        if overlap < min_penetration:
+            min_penetration = overlap
+            penetration_axis = axis
+
+    penetration_vector = penetration_axis.from_magnitude(min_penetration)
+
+    return Collision(penetration_vector, min_penetration)
+
+
 # endregion
 
 # region Minkowski difference functions
@@ -933,6 +1045,11 @@ def _(self, oriented_rectangle: OrientedRectangle) -> Collision | None:
     return circle_oriented_rectangle_penetration(self, oriented_rectangle)
 
 
+@Circle.penetration.register
+def _(self, polygon: Polygon) -> Collision | None:
+    return reverse_collision(polygon_circle_penetration(polygon, self))
+
+
 @Rectangle.collision.register
 def _(self, point: Vec2) -> bool:
     return rectangle_point_collision(self, point)
@@ -981,6 +1098,11 @@ def _(self, circle: Circle) -> Collision | None:
 @Rectangle.penetration.register
 def _(self, oriented_rectangle: OrientedRectangle) -> Collision | None:
     return rectangle_oriented_rectangle_penetration(self, oriented_rectangle)
+
+
+@Rectangle.penetration.register
+def _(self, polygon: Polygon) -> Collision | None:
+    return reverse_collision(polygon_rectangle_penetration(polygon, self))
 
 
 @OrientedRectangle.collision.register
@@ -1032,6 +1154,10 @@ def _(self, rectangle: Rectangle) -> Vec2 | None:
 def _(self, circle: Circle) -> Collision | None:
     return reverse_collision(circle_rectangle_penetration(circle, self))
 
+@OrientedRectangle.penetration.register
+def _(self, polygon: Polygon) -> Collision | None:
+    return reverse_collision(polygon_oriented_rectangle_penetration(polygon, self))
+
 
 @Polygon.collision.register
 def _(self, polygon: Polygon) -> bool:
@@ -1056,6 +1182,31 @@ def _(self, rectangle: Rectangle) -> bool:
 @Polygon.collision.register
 def _(self, oriented_rectangle: OrientedRectangle) -> bool:
     return oriented_rectangle_polygon_collision(oriented_rectangle, self)
+
+
+@Polygon.penetration.register
+def _(self, polygon: Polygon) -> Collision | None:
+    return polygon_polygon_penetration(self, polygon)
+
+
+@Polygon.penetration.register
+def _(self, circle: Circle) -> Collision | None:
+    return polygon_circle_penetration(self, circle)
+
+
+@Polygon.penetration.register
+def _(self, rectangle: Rectangle) -> Collision | None:
+    return polygon_rectangle_penetration(self, rectangle)
+
+
+@Polygon.penetration.register
+def _(self, oriented_rectangle: OrientedRectangle) -> Collision | None:
+    return polygon_oriented_rectangle_penetration(self, oriented_rectangle)
+
+
+@Polygon.penetration.register
+def _(self, point: Vec2) -> Collision | None:
+    return polygon_point_penetration(self, point)
 
 
 # endregion
