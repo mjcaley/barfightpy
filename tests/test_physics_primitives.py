@@ -1,4 +1,5 @@
 from math import radians
+
 from pyglet.math import Vec2
 
 from barfight.physics.primitives import (
@@ -8,7 +9,6 @@ from barfight.physics.primitives import (
     OrientedRectangle,
     Polygon,
     Rectangle,
-    point_point_collision,
 )
 
 
@@ -29,16 +29,6 @@ def test_circle_circle_collision():
 
     assert a.collision(b)
     assert b.collision(c)
-
-
-def test_point_point_collision():
-    a = Vec2(2, 3)
-    b = Vec2(2, 3)
-    c = Vec2(3, 4)
-
-    assert point_point_collision(a, b)
-    assert not point_point_collision(a, c)
-    assert not point_point_collision(b, c)
 
 
 def test_line_line_collision():
@@ -139,7 +129,7 @@ def test_rectangle_oriented_rectangle_collision():
     r2 = Rectangle(Vec2(1, 5), Vec2(3, 3))
     o2 = OrientedRectangle(Vec2(1, 5), Vec2(4, 2), radians(25))
 
-    assert r.collision(o2)
+    assert r2.collision(o2)
 
     r3 = Rectangle(Vec2(-5, -5), Vec2(5, 5))
     o3 = OrientedRectangle(Vec2(0, -20), Vec2(5, 5), radians(45))

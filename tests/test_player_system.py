@@ -2,7 +2,14 @@ import pytest
 from pyglet.math import Vec2
 
 from barfight import ecs, events
-from barfight.components import Actor, ActorState, PhysicsBody, Player, Position, Velocity
+from barfight.components import (
+    Actor,
+    ActorState,
+    PhysicsBody,
+    Player,
+    Position,
+    Velocity,
+)
 from barfight.physics import Body
 from barfight.physics.shapes import RectangleShape
 from barfight.systems import ActorSystem
