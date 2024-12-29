@@ -243,4 +243,7 @@ class Polygon:
             v2 = e2.point2 - e2.point1
             cross.append(v1.x * v2.y - v1.y * v2.x)
 
-        all_positive = all()
+        all_positive = all(c >= 0 for c in cross)
+        all_negative = all(c <= 0 for c in cross)
+
+        return all_positive != all_negative
