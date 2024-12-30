@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from functools import singledispatchmethod
 from itertools import chain, islice, pairwise
 from math import cos, inf, pi, radians, sin
-from typing import Generator, Self
+from typing import Any, Generator, Self
 
 from pyglet.math import Vec2
 
@@ -65,6 +65,10 @@ class Circle:
     def penetration(self, any) -> Vec2 | None:
         raise NotImplementedError
 
+    @singledispatchmethod
+    def minkowski(self, any) -> Any:
+        raise NotImplementedError
+
     def vertices(self, num_points=16) -> Generator[Vec2, None, None]:
         point = self.center + Vec2(self.radius, 0)
         rotation = 2 * pi / num_points
@@ -84,6 +88,10 @@ class Rectangle:
 
     @singledispatchmethod
     def penetration(self, any) -> Vec2 | None:
+        raise NotImplementedError
+
+    @singledispatchmethod
+    def minkowski(self, any) -> Any:
         raise NotImplementedError
 
     @property
@@ -137,6 +145,10 @@ class OrientedRectangle:
 
     @singledispatchmethod
     def penetration(self, any) -> Vec2 | None:
+        raise NotImplementedError
+
+    @singledispatchmethod
+    def minkowski(self, any) -> Any:
         raise NotImplementedError
 
     @property
@@ -207,6 +219,10 @@ class Polygon:
 
     @singledispatchmethod
     def penetration(self, any) -> Vec2 | None:
+        raise NotImplementedError
+
+    @singledispatchmethod
+    def minkowski(self, any) -> Any:
         raise NotImplementedError
 
     def vertices(self) -> Generator[Vec2, None, None]:
