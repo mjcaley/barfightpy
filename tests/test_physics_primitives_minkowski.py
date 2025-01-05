@@ -29,3 +29,17 @@ def test_oriented_rectangle_minkowski_difference():
             Vec2(-2, 1),
         ]
     )
+
+
+def test_polygon_minkowski_difference():
+    p1 = Polygon([Vec2(0, 0), Vec2(1, 0), Vec2(1, 1), Vec2(0, 1)])
+    p2 = Polygon([Vec2(1, 0), Vec2(2, 0), Vec2(2, 1), Vec2(1, 1)])
+
+    assert p1.minkowski_difference(p2) == Polygon(
+        [
+            Vec2(-2, -1),
+            Vec2(0, -1),
+            Vec2(0, 1),
+            Vec2(-2, 1),
+        ]
+    )
