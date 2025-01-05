@@ -24,7 +24,7 @@ def test_input_sets_direction(mocker, ecs_world, test_input, expected):
 
     player = Actor(0)
     ecs.create_entity(player)
-    
+
     def player_direction_handler(direction: Vec2):
         player.direction = direction
 

@@ -66,7 +66,7 @@ class Circle:
         raise NotImplementedError
 
     @singledispatchmethod
-    def minkowski(self, any) -> Any:
+    def minkowski_difference(self, any) -> Any:
         raise NotImplementedError
 
     def vertices(self, num_points=16) -> Generator[Vec2, None, None]:
@@ -91,7 +91,7 @@ class Rectangle:
         raise NotImplementedError
 
     @singledispatchmethod
-    def minkowski(self, any) -> Any:
+    def minkowski_difference(self, any) -> Any:
         raise NotImplementedError
 
     @property
@@ -148,7 +148,7 @@ class OrientedRectangle:
         raise NotImplementedError
 
     @singledispatchmethod
-    def minkowski(self, any) -> Any:
+    def minkowski_difference(self, any) -> Any:
         raise NotImplementedError
 
     @property
@@ -222,7 +222,7 @@ class Polygon:
         raise NotImplementedError
 
     @singledispatchmethod
-    def minkowski(self, any) -> Any:
+    def minkowski_difference(self, any) -> Any:
         raise NotImplementedError
 
     def vertices(self) -> Generator[Vec2, None, None]:

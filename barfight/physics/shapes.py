@@ -5,6 +5,8 @@ from pyglet.math import Vec2
 
 from .primitives import Circle, Collision, LineSegment, OrientedRectangle, Rectangle
 
+PrimitiveType = Circle | LineSegment | OrientedRectangle | Rectangle
+
 
 class ShapeProtocol(Protocol):
     @property
@@ -22,24 +24,9 @@ class ShapeProtocol(Protocol):
 
     def penetration(self, shape: Self) -> Collision | None: ...
 
+    def minkowski_difference(self, shape: Self) -> PrimitiveType: ...
 
-# class LineSegmentShape(Shape):
-#     def __init__(self, point1: Vec2 = None, point2: Vec2 = None):
-#         point1 = point1 or Vec2()
-#         point2 = point2 or Vec2()
-#         self._primitive = LineSegment(point1, point2)
-
-#     @property
-#     def primitive(self) -> LineSegment:
-#         return self._primitive
-
-#     def boundary(self) -> Rectangle:
-#         min_x = min(self._primitive.point1.x, self._primitive.point2.y)
-#         max_x = max(self._primitive.point1.x, self._primitive.point2.y)
-#         min_y = min(self._primitive.point1.x, self._primitive.point2.y)
-#         max_y = min(self._primitive.point1.x, self._primitive.point2.y)
-
-#         return Rectangle(Vec2(min_x, min_y), Vec2(max_x - min_x, max_y - min_y))
+    def __copy__(self) -> Self: ...
 
 
 class RectangleShape:
@@ -71,6 +58,12 @@ class RectangleShape:
 
     def penetration(self, shape: ShapeProtocol) -> Collision | None:
         return self.primitive.penetration(shape.primitive)
+
+    def minkowski_difference(self, shape: ShapeProtocol) -> PrimitiveType:
+        return self.primitive.minkowski_difference(shape.primitive)
+
+    def __copy__(self) -> Self:
+        return RectangleShape(self._primitive.origin, self._primitive.size)
 
 
 class OrientedRectangleShape:
@@ -116,6 +109,16 @@ class OrientedRectangleShape:
     def penetration(self, shape: ShapeProtocol) -> Collision | None:
         return self.primitive.penetration(shape.primitive)
 
+    def minkowski_difference(self, shape: ShapeProtocol) -> PrimitiveType:
+        return self.primitive.minkowski_difference(shape.primitive)
+
+    def __copy__(self) -> Self:
+        return OrientedRectangleShape(
+            self._primitive.center,
+            self._primitive.half_extent,
+            self._primitive.rotation,
+        )
+
 
 class CircleShape:
     def __init__(self, center: Vec2 = None, radius: float = 0):
@@ -134,14 +137,15 @@ class CircleShape:
         return self._primitive.center
 
     @position.setter
-    def _(self, value: Vec2):
+    def position(self, value: Vec2):
         self._primitive.center = value
 
     def boundary(self) -> Rectangle:
         return Rectangle(
             self._primitive.center
             - Vec2(self._primitive.radius, self._primitive.radius),
-            self._primitive.center + Vec2(self._primitive.radius, self._primitive.radius),
+            self._primitive.center
+            + Vec2(self._primitive.radius, self._primitive.radius),
         )
 
     def collision(self, shape: ShapeProtocol) -> bool:
@@ -149,3 +153,9 @@ class CircleShape:
 
     def penetration(self, shape: ShapeProtocol) -> Collision | None:
         return self.primitive.penetration(shape.primitive)
+
+    def minkowski_difference(self, shape: ShapeProtocol) -> PrimitiveType:
+        return self.primitive.minkowski_difference(shape.primitive)
+
+    def __copy__(self) -> Self:
+        return CircleShape(self._primitive.center, self._primitive.radius)

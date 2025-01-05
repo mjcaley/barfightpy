@@ -88,3 +88,27 @@ def reverse_collision(collision: Collision | None) -> Collision | None:
         return Collision(collision.penetration.rotate180(), collision.depth)
 
     return None
+
+
+def convex_hull(vertices: list[Vec2]) -> list[Vec2]:
+    if len(vertices) < 3:
+        raise ValueError("Convex hull requires at least 3 vertices.")
+
+    sorted_vertices = sorted(vertices, key=lambda vertex: tuple(vertex))
+    lower = []
+    for vertex in sorted_vertices:
+        while (
+            len(lower) >= 2 and (lower[-1] - lower[-2]).cross(vertex - lower[-1]) <= 0
+        ):
+            lower.pop()
+        lower.append(vertex)
+
+    upper = []
+    for vertex in reversed(sorted_vertices):
+        while (
+            len(upper) >= 2 and (upper[-1] - upper[-2]).cross(vertex - upper[-1]) <= 0
+        ):
+            upper.pop()
+        upper.append(vertex)
+
+    return lower[:-1] + upper[:-1]

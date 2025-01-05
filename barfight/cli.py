@@ -27,7 +27,8 @@ from .systems import (
 
 
 def main():
-    logger.disable("barfight.physics")
+    logger.disable("barfight")
+    logger.enable("barfight.physics")
 
     window = Window(800, 600, "Bar Fight")
     world = PhysicsWorld(Vec2(-200, -200), Vec2(2000, 1500))

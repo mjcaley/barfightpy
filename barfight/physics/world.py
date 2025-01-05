@@ -1,3 +1,4 @@
+from copy import copy
 from dataclasses import dataclass
 from functools import singledispatchmethod
 from math import inf
@@ -34,10 +35,12 @@ class RaycastHit:
 
 
 class PhysicsWorld:
-    def __init__(self, origin: Vec2, size: Vec2, max_depth=8):
+    def __init__(self, origin: Vec2, size: Vec2, max_depth=8, step_iterations=8):
         self.origin = origin
         self.size = size
         self.max_depth = max_depth
+        self.step_iterations = step_iterations
+
         self.bodies: list[Body | None] = []
         self.root = QuadTree(
             self.bodies, Rectangle(self.origin, self.size), self.max_depth
@@ -116,16 +119,8 @@ class PhysicsWorld:
         return discrete_collisions, collision_resolution
 
     def step(self, dt: float):
-        broad_collisions = self.broad_phase()
-        discrete_collisions, collision_resolutions = self.discrete_phase(
-            broad_collisions
-        )
-        resolved_collisions, still_colliding = self.resolve(
-            discrete_collisions, collision_resolutions
-        )
-        self.active_collisions = (
-            self.active_collisions - resolved_collisions | still_colliding
-        )
+        self.collisions()
+        self.move(dt)
 
     def resolve(
         self,
@@ -197,6 +192,73 @@ class PhysicsWorld:
             return None
 
         return RaycastHit(closest_hit.point, closest_hit.normal, closest_body)
+
+    def collisions(self):
+        for _ in range(self.step_iterations):
+            broad_collisions = self.broad_phase()
+            discrete_collisions, collision_resolutions = self.discrete_phase(
+                broad_collisions
+            )
+            resolved_collisions, still_colliding = self.resolve(
+                discrete_collisions, collision_resolutions
+            )
+            self.active_collisions = (
+                self.active_collisions - resolved_collisions | still_colliding
+            )
+
+    def move(self, dt: float):
+        for body in self.bodies:
+            if body is None:
+                continue
+            if body.kind != BodyKind.Dynamic:
+                continue
+
+            current_shape = body.shape
+            target_shape = copy(current_shape)
+            target_shape.position += (
+                body.velocity
+            )  # * dt  # TODO: Takeover deltatime calculation later
+            min_origin = Vec2(
+                min(
+                    current_shape.boundary().origin.x, target_shape.boundary().origin.x
+                ),
+                min(
+                    current_shape.boundary().origin.y, target_shape.boundary().origin.y
+                ),
+            )
+            max_x = max(
+                current_shape.boundary().top_right_vertex.x,
+                target_shape.boundary().top_right_vertex.x,
+            )
+            max_y = max(
+                current_shape.boundary().top_right_vertex.y,
+                target_shape.boundary().top_right_vertex.y,
+            )
+            max_size = Vec2(max_x - min_origin.x, max_y - min_origin.y)
+            boundary = Rectangle(min_origin, max_size)
+            broad_collisions = self.query(boundary)
+
+            for collision in broad_collisions:
+                if collision is body:
+                    continue
+                if collision.kind != BodyKind.Static:
+                    continue
+                minkowski_difference = current_shape.minkowski_difference(
+                    collision.shape
+                )
+                if minkowski_difference.collision(Vec2()):
+                    # breakpoint()
+                    logger.debug("Minkoski difference colliding, skipping")
+                    continue
+                ray = Ray(Vec2(), body.velocity.normalize(), body.velocity.mag)
+                intersection = ray.intersects(minkowski_difference)
+                if intersection:
+                    logger.debug(
+                        "Minkowski intersection found - {intersection}",
+                        intersection=intersection,
+                    )
+                else:
+                    logger.debug("Minkowski - No intersection found")
 
     def query(self, area: Rectangle) -> list[Body]:
         return self.root.query(area)

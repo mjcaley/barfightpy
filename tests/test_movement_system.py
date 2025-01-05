@@ -13,7 +13,12 @@ def test_movement_moves_player(ecs_world):
     dt = 1 / 60
 
     position = Position()
-    ecs.create_entity(position, Velocity(direction=direction, speed=speed), Actor(10), PhysicsBody(Body(RectangleShape(Vec2(0.5, 0.5), Vec2(1, 1)))))
+    ecs.create_entity(
+        position,
+        Velocity(direction=direction, speed=speed),
+        Actor(10),
+        PhysicsBody(Body(RectangleShape(Vec2(0.5, 0.5), Vec2(1, 1)))),
+    )
     ecs.add_system(MovementSystem())
 
     ecs.update(dt)

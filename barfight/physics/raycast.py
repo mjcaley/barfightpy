@@ -4,7 +4,7 @@ from math import cos, inf, isnan, sin, sqrt
 
 from pyglet.math import Vec2
 
-from .primitives import Circle, Line, LineSegment, OrientedRectangle, Rectangle
+from .primitives import Circle, Line, LineSegment, OrientedRectangle, Polygon, Rectangle
 
 
 @dataclass(frozen=True)
@@ -36,7 +36,7 @@ class Ray:
         return self._direction
 
     @direction.setter
-    def _(self, value: Vec2):
+    def direction(self, value: Vec2):
         self._direction = value.normalize()
 
     @singledispatchmethod
@@ -209,3 +209,35 @@ class Ray:
         world_distance = self.origin.distance(world_hit)
 
         return RayIntersection(world_hit, world_normal, world_distance)
+
+    @intersects.register
+    def _(self, polygon: Polygon) -> RayIntersection | None:
+        closest_hit = None
+        min_distance = float("inf")
+
+        for edge in polygon.edges():
+            # Calculate intersection parameters
+            x1, y1 = edge.point1
+            x2, y2 = edge.point2
+            x3, y3 = self.origin
+            x4, y4 = self.origin + self.direction
+
+            denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+            if denominator == 0:  # Lines are parallel
+                continue
+
+            t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denominator
+            u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denominator
+
+            # Check if intersection is valid
+            if 0 <= t <= 1 and u >= 0:
+                hit_point = Vec2(x1 + t * (x2 - x1), y1 + t * (y2 - y1))
+
+                distance = self.origin.distance(hit_point)
+                if distance < min_distance:
+                    min_distance = distance
+                    edge_vector = edge.point2 - edge.point1
+                    normal = Vec2(-edge_vector.y, edge_vector.x).normalize()
+                    closest_hit = RayIntersection(hit_point, normal, distance)
+
+        return closest_hit
