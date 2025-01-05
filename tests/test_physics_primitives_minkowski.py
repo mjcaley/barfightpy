@@ -18,14 +18,14 @@ def test_rectangle_minkowski_difference():
 
 
 def test_oriented_rectangle_minkowski_difference():
-    o1 = OrientedRectangle(Vec2(0, 0), Vec2(1, 1), 0)
-    o2 = OrientedRectangle(Vec2(1, 0), Vec2(1, 1), 0)
+    o1 = OrientedRectangle(Vec2(0.5, 0.5), Vec2(0.5, 0.5), 0)
+    o2 = OrientedRectangle(Vec2(1.5, 0.5), Vec2(0.5, 0.5), 0)
 
     assert o1.minkowski_difference(o2) == Polygon(
         [
-            Vec2(-1, -1),
-            Vec2(1, -1),
-            Vec2(1, 1),
-            Vec2(-1, 1),
+            Vec2(-2, -1),
+            Vec2(0, -1),
+            Vec2(0, 1),
+            Vec2(-2, 1),
         ]
     )
