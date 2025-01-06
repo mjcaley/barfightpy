@@ -23,7 +23,7 @@ class Line:
         raise NotImplementedError
 
     @singledispatchmethod
-    def penetration(self, any) -> Vec2 | None:
+    def penetration(self, any) -> Collision | None:
         raise NotImplementedError
 
     @property
@@ -41,7 +41,7 @@ class LineSegment:
         raise NotImplementedError
 
     @singledispatchmethod
-    def penetration(self, any) -> Vec2 | None:
+    def penetration(self, any) -> Collision | None:
         raise NotImplementedError
 
     def edges(self) -> Generator[Self, None, None]:
@@ -62,7 +62,7 @@ class Circle:
         raise NotImplementedError
 
     @singledispatchmethod
-    def penetration(self, any) -> Vec2 | None:
+    def penetration(self, any) -> Collision | None:
         raise NotImplementedError
 
     @singledispatchmethod
@@ -87,7 +87,7 @@ class Rectangle:
         raise NotImplementedError
 
     @singledispatchmethod
-    def penetration(self, any) -> Vec2 | None:
+    def penetration(self, any) -> Collision | None:
         raise NotImplementedError
 
     @singledispatchmethod
@@ -144,7 +144,7 @@ class OrientedRectangle:
         raise NotImplementedError
 
     @singledispatchmethod
-    def penetration(self, any) -> Vec2 | None:
+    def penetration(self, any) -> Collision | None:
         raise NotImplementedError
 
     @singledispatchmethod
@@ -218,7 +218,7 @@ class Polygon:
         raise NotImplementedError
 
     @singledispatchmethod
-    def penetration(self, any) -> Vec2 | None:
+    def penetration(self, any) -> Collision | None:
         raise NotImplementedError
 
     @singledispatchmethod
