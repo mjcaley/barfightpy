@@ -43,3 +43,20 @@ def test_polygon_minkowski_difference():
             Vec2(-2, 1),
         ]
     )
+
+
+def test_circle_rectangle_minkowski_difference():
+    c = Circle(Vec2(0, 0), 1)
+    r = Rectangle(Vec2(0, -1), Vec2(2, 2))
+
+    # md = c.minkowski_difference(r)
+    # assert md.penetration(Vec2()) == Vec2(1, 0)
+
+    assert c.minkowski_difference(r) == Polygon(
+        [
+            Vec2(-0.5, -0.5),
+            Vec2(0.5, -0.5),
+            Vec2(0.5, 0.5),
+            Vec2(-0.5, 0.5),
+        ]
+    )

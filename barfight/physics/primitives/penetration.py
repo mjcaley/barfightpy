@@ -238,7 +238,7 @@ def polygon_oriented_rectangle_penetration(
         axis = axis.normalize()
         p_min, p_max = project_vertices(polygon.vertices(), axis)
         o_min, o_max = project_vertices(oriented_rectangle.vertices(), axis)
-        overlap = min(p_max, o_max) - max(p_min, o_min)
+        overlap = min(p_max, o_max) - max(p_min, o_max)
 
         if overlap <= 0:
             return None
@@ -260,17 +260,23 @@ def polygon_point_penetration(polygon: Polygon, point: Vec2) -> Collision | None
         axis = axis.normalize()
         p_min, p_max = project_vertices(polygon.vertices(), axis)
         point_proj = point.dot(axis)
-        overlap = min(p_max, point_proj) - max(p_min, point_proj)
 
-        if overlap <= 0:
-            return None
+        if point_proj < p_min:
+            overlap = p_min - point_proj
+        elif point_proj > p_max:
+            overlap = point_proj - p_max
+        else:
+            # Point is between min/max - use smallest distance to either boundary
+            overlap = min(point_proj - p_min, p_max - point_proj)
 
         if overlap < min_penetration:
             min_penetration = overlap
             penetration_axis = axis
 
-    penetration_vector = penetration_axis.from_magnitude(min_penetration)
+    if min_penetration == inf:
+        return None
 
+    penetration_vector = penetration_axis.from_magnitude(min_penetration)
     return Collision(penetration_vector, min_penetration)
 
 

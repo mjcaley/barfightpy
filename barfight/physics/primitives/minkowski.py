@@ -29,7 +29,6 @@ def minkowski_difference_oriented_rectangles(
 ) -> Polygon:
     """Calculate the Minkowski difference between two oriented rectangles."""
 
-    # breakpoint()
     vertices = []
     for vertex_a in o1.vertices():
         for vertex_b in o2.vertices():
@@ -38,45 +37,36 @@ def minkowski_difference_oriented_rectangles(
     return Polygon(convex_hull(vertices))
 
 
-def minkowski_difference_circle_rectangle(circle: Circle, rect: Rectangle) -> Polygon:
-    """Calculate the Minkowski difference between a circle and a rectangle."""
+def _minkowski_difference_circle_any(circle: Circle, other) -> Polygon:
     vertices = []
     num_points = 8  # Approximation points for circle
     for i in range(num_points):
         angle = 2 * pi * i / num_points
         circle_point = circle.center + Vec2(cos(angle), sin(angle)) * circle.radius
-        for rect_vertex in rect.vertices():
-            vertices.append(circle_point - rect_vertex)
+        for other_vertex in other.vertices():
+            vertices.append(circle_point - other_vertex)
 
     return Polygon(convex_hull(vertices))
+
+
+def minkowski_difference_circle_rectangle(circle: Circle, rect: Rectangle) -> Polygon:
+    """Calculate the Minkowski difference between a circle and a rectangle."""
+
+    return _minkowski_difference_circle_any(circle, rect)
 
 
 def minkowski_difference_circle_oriented_rectangle(
     circle: Circle, rect: OrientedRectangle
 ) -> Polygon:
     """Calculate the Minkowski difference between a circle and an oriented rectangle."""
-    vertices = []
-    num_points = 8  # Approximation points for circle
-    for i in range(num_points):
-        angle = 2 * pi * i / num_points
-        circle_point = circle.center + Vec2(cos(angle), sin(angle)) * circle.radius
-        for rect_vertex in rect.vertices():
-            vertices.append(circle_point - rect_vertex)
 
-    return Polygon(convex_hull(vertices))
+    return _minkowski_difference_circle_any(circle, rect)
 
 
 def minkowski_difference_circle_polygon(c: Circle, p: Polygon) -> Polygon:
     """Calculate Circle-Polygon Minkowski difference."""
-    vertices = []
-    num_points = 8  # Approximation points for circle
-    for i in range(num_points):
-        angle = 2 * pi * i / num_points
-        circle_point = c.center + Vec2(cos(angle), sin(angle)) * c.radius
-        for poly_vertex in p.vertices():
-            vertices.append(circle_point - poly_vertex)
 
-    return Polygon(convex_hull(vertices))
+    return _minkowski_difference_circle_any(c, p)
 
 
 def minkowski_difference_polygon_polygon(p1: Polygon, p2: Polygon) -> Polygon:
