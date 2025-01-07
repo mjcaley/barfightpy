@@ -1,8 +1,9 @@
+from math import radians
 from pyglet.math import Vec2
 
 from barfight.physics.body import Body, BodyKind
 from barfight.physics.raycast import Ray
-from barfight.physics.shapes import RectangleShape
+from barfight.physics.shapes import RectangleShape, OrientedRectangleShape
 from barfight.physics.world import CollisionPair, PhysicsWorld
 
 
@@ -107,3 +108,21 @@ def test_nearest():
 
     assert nearest_body is not None
     assert body is nearest_body
+
+
+def test_move_body_rectangles():
+    q = PhysicsWorld(Vec2(0, 0), Vec2(100, 100))
+    body = Body(RectangleShape(Vec2(1, 1), Vec2(1, 1)), velocity=Vec2(10.0, 0))
+    static_body = Body(RectangleShape(Vec2(5, 0), Vec2(10, 10)), BodyKind.Static)
+    q.add(body)
+    q.add(static_body)
+    q.move(10.0)
+
+
+def test_move_body_rectangle_oriented_rectangle():
+    q = PhysicsWorld(Vec2(0, 0), Vec2(100, 100))
+    body = Body(RectangleShape(Vec2(50, 50), Vec2(1, 1)), velocity=Vec2(10.0, 0))
+    static_body = Body(OrientedRectangleShape(Vec2(55, 50), Vec2(5, 5), radians(45)), BodyKind.Static)
+    q.add(body)
+    q.add(static_body)
+    q.move(10.0)    

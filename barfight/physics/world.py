@@ -119,8 +119,8 @@ class PhysicsWorld:
         return discrete_collisions, collision_resolution
 
     def step(self, dt: float):
-        self.collisions()
         self.move(dt)
+        self.collisions()
 
     def resolve(
         self,
@@ -206,6 +206,31 @@ class PhysicsWorld:
                 self.active_collisions - resolved_collisions | still_colliding
             )
 
+    @staticmethod
+    def _movement_boundary(body: Body, dt: float) -> Rectangle:
+        current_shape = body.shape
+        target_shape = copy(current_shape)
+        target_shape.position += body.velocity * dt
+        min_origin = Vec2(
+            min(
+                current_shape.boundary().origin.x, target_shape.boundary().origin.x
+            ),
+            min(
+                current_shape.boundary().origin.y, target_shape.boundary().origin.y
+            ),
+        )
+        max_x = max(
+            current_shape.boundary().top_right_vertex.x,
+            target_shape.boundary().top_right_vertex.x,
+        )
+        max_y = max(
+            current_shape.boundary().top_right_vertex.y,
+            target_shape.boundary().top_right_vertex.y,
+        )
+        max_size = Vec2(max_x - min_origin.x, max_y - min_origin.y)
+
+        return Rectangle(min_origin, max_size)
+
     def move(self, dt: float):
         for body in self.bodies:
             if body is None:
@@ -214,28 +239,7 @@ class PhysicsWorld:
                 continue
 
             current_shape = body.shape
-            target_shape = copy(current_shape)
-            target_shape.position += (
-                body.velocity
-            )  # * dt  # TODO: Takeover deltatime calculation later
-            min_origin = Vec2(
-                min(
-                    current_shape.boundary().origin.x, target_shape.boundary().origin.x
-                ),
-                min(
-                    current_shape.boundary().origin.y, target_shape.boundary().origin.y
-                ),
-            )
-            max_x = max(
-                current_shape.boundary().top_right_vertex.x,
-                target_shape.boundary().top_right_vertex.x,
-            )
-            max_y = max(
-                current_shape.boundary().top_right_vertex.y,
-                target_shape.boundary().top_right_vertex.y,
-            )
-            max_size = Vec2(max_x - min_origin.x, max_y - min_origin.y)
-            boundary = Rectangle(min_origin, max_size)
+            boundary = self._movement_boundary(body, dt)
             broad_collisions = self.query(boundary)
 
             for collision in broad_collisions:
@@ -243,13 +247,10 @@ class PhysicsWorld:
                     continue
                 if collision.kind != BodyKind.Static:
                     continue
-                minkowski_difference = current_shape.minkowski_difference(
-                    collision.shape
-                )
-                if minkowski_difference.collision(Vec2()):
-                    # breakpoint()
-                    logger.debug("Minkoski difference colliding, skipping")
-                    continue
+                # minkowski_difference = current_shape.minkowski_difference(
+                #     collision.shape
+                # )
+                minkowski_difference = collision.shape.minkowski_difference(current_shape)
                 ray = Ray(Vec2(), body.velocity.normalize(), body.velocity.mag)
                 intersection = ray.intersects(minkowski_difference)
                 if intersection:
@@ -259,6 +260,9 @@ class PhysicsWorld:
                     )
                 else:
                     logger.debug("Minkowski - No intersection found")
+                if minkowski_difference.collision(Vec2()):
+                    logger.debug("Minkoski difference colliding, skipping")
+                    continue
 
     def query(self, area: Rectangle) -> list[Body]:
         return self.root.query(area)
