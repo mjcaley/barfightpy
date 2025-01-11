@@ -207,10 +207,10 @@ class PhysicsWorld:
             )
 
     @staticmethod
-    def _movement_boundary(body: Body, dt: float) -> Rectangle:
+    def _movement_boundary(body: Body, velocity: Vec2) -> Rectangle:
         current_shape = body.shape
         target_shape = copy(current_shape)
-        target_shape.position += body.velocity * dt
+        target_shape.position += velocity
         min_origin = Vec2(
             min(current_shape.boundary().origin.x, target_shape.boundary().origin.x),
             min(current_shape.boundary().origin.y, target_shape.boundary().origin.y),
@@ -227,6 +227,46 @@ class PhysicsWorld:
 
         return Rectangle(min_origin, max_size)
 
+    def _move_body(self, body: Body, leftover: Vec2, max_depth: int = 50) -> Vec2:
+        if not max_depth:
+            return Vec2()
+
+        current_shape = body.shape
+        boundary = self._movement_boundary(body, leftover)
+        broad_collisions = self.query(boundary)
+
+        had_collision = False
+        for collision in broad_collisions:
+            if collision is body:
+                continue
+            if collision.kind != BodyKind.Static:
+                continue
+
+            minkowski_difference = collision.shape.minkowski_difference(current_shape)
+            if minkowski_difference.collision(Vec2()):
+                logger.debug("Minkoski difference colliding, skipping")
+                continue
+
+            ray = Ray(Vec2(), leftover.normalize(), leftover.mag)
+            intersection = ray.intersects(minkowski_difference)
+            if intersection:
+                had_collision = True
+                dot_product = leftover.dot(intersection.normal)
+                sliding_vector = leftover - (intersection.normal * dot_product)
+                leftover = sliding_vector
+
+                logger.debug(
+                    "Minkowski intersection found - {intersection}\nVelocity changed to {velocity}",
+                    intersection=intersection,
+                    velocity=leftover,
+                )
+            else:
+                logger.debug("Minkowski - No intersection found")
+
+        if had_collision:
+            return self._move_body(body, leftover, max_depth - 1)
+        return leftover
+
     def move(self, dt: float):
         for body in self.bodies:
             if body is None:
@@ -234,51 +274,9 @@ class PhysicsWorld:
             if body.kind != BodyKind.Dynamic:
                 continue
 
-            current_shape = body.shape
-            boundary = self._movement_boundary(body, dt)
-            broad_collisions = self.query(boundary)
-            leftover = body.velocity * dt
+            final_velocity = self._move_body(body, body.velocity * dt)
 
-            for collision in broad_collisions:
-                if collision is body:
-                    continue
-                if collision.kind != BodyKind.Static:
-                    continue
-                # minkowski_difference = current_shape.minkowski_difference(
-                #     collision.shape
-                # )
-
-                # if body.velocity != Vec2():
-                #     breakpoint()
-                minkowski_difference = collision.shape.minkowski_difference(
-                    current_shape
-                )
-                ray = Ray(Vec2(), body.velocity.normalize(), body.velocity.mag)
-                intersection = ray.intersects(minkowski_difference)
-                if intersection:
-                    # remaining = intersection.point.from_heading(intersection.normal.heading).from_magnitude(body.velocity.mag - intersection.distance)
-                    snap_to_surface = (
-                        body.velocity.normalize() * intersection.distance * dt
-                    )
-                    leftover = body.velocity - snap_to_surface
-                    leftover = leftover.project(intersection.normal).normalize()
-                    leftover *= leftover.mag
-
-                    # breakpoint()
-                    # body.velocity = remaining
-                    body.position += body.velocity * dt
-                    logger.debug(
-                        "Minkowski intersection found - {intersection}\nVelocity changed to {velocity}",
-                        intersection=intersection,
-                        velocity=body.velocity,
-                    )
-                else:
-                    logger.debug("Minkowski - No intersection found")
-                if minkowski_difference.collision(Vec2()):
-                    logger.debug("Minkoski difference colliding, skipping")
-                    continue
-
-            body.position += leftover
+            body.position += final_velocity
             self._call_position_change(body)
 
     def query(self, area: Rectangle) -> list[Body]:
