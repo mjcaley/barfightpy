@@ -260,24 +260,29 @@ class MovementSystem(ecs.SystemProtocol):
     def __init__(self, world: PhysicsWorld):
         self.world = world
 
-    def collide_and_slide(self, entity: int, position: Position, velocity: Velocity, physics_body: PhysicsBody):
-        ...
+    def collide_and_slide(
+        self,
+        entity: int,
+        position: Position,
+        velocity: Velocity,
+        physics_body: PhysicsBody,
+    ): ...
 
     def process(self, dt: float):
         for entity, (_, position, velocity, physics_body) in ecs.get_components(
             Actor, Position, Velocity, PhysicsBody
         ):
-            change = velocity.direction * velocity.speed * dt
             physics_body.body.velocity = velocity.direction * velocity.speed
-            if change != Vec2(0, 0):
-                position.position += velocity.direction * velocity.speed * dt
-                physics_body.body.position += change
-                ecs.dispatch_event(events.POSITION_CHANGED_EVENT, entity)
-                logger.debug(
-                    "Player position {}; physics {}",
-                    position.position,
-                    physics_body.body.position,
-                )
+            # change = velocity.direction * velocity.speed * dt
+            # if change != Vec2(0, 0):
+            #     position.position += velocity.direction * velocity.speed * dt
+            #     physics_body.body.position += change
+            #     ecs.dispatch_event(events.POSITION_CHANGED_EVENT, entity)
+            #     logger.debug(
+            #         "Player position {}; physics {}",
+            #         position.position,
+            #         physics_body.body.position,
+            #     )
 
 
 # endregion

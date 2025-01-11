@@ -212,12 +212,8 @@ class PhysicsWorld:
         target_shape = copy(current_shape)
         target_shape.position += body.velocity * dt
         min_origin = Vec2(
-            min(
-                current_shape.boundary().origin.x, target_shape.boundary().origin.x
-            ),
-            min(
-                current_shape.boundary().origin.y, target_shape.boundary().origin.y
-            ),
+            min(current_shape.boundary().origin.x, target_shape.boundary().origin.x),
+            min(current_shape.boundary().origin.y, target_shape.boundary().origin.y),
         )
         max_x = max(
             current_shape.boundary().top_right_vertex.x,
@@ -241,6 +237,7 @@ class PhysicsWorld:
             current_shape = body.shape
             boundary = self._movement_boundary(body, dt)
             broad_collisions = self.query(boundary)
+            leftover = body.velocity * dt
 
             for collision in broad_collisions:
                 if collision is body:
@@ -250,19 +247,39 @@ class PhysicsWorld:
                 # minkowski_difference = current_shape.minkowski_difference(
                 #     collision.shape
                 # )
-                minkowski_difference = collision.shape.minkowski_difference(current_shape)
+
+                # if body.velocity != Vec2():
+                #     breakpoint()
+                minkowski_difference = collision.shape.minkowski_difference(
+                    current_shape
+                )
                 ray = Ray(Vec2(), body.velocity.normalize(), body.velocity.mag)
                 intersection = ray.intersects(minkowski_difference)
                 if intersection:
+                    # remaining = intersection.point.from_heading(intersection.normal.heading).from_magnitude(body.velocity.mag - intersection.distance)
+                    snap_to_surface = (
+                        body.velocity.normalize() * intersection.distance * dt
+                    )
+                    leftover = body.velocity - snap_to_surface
+                    leftover = leftover.project(intersection.normal).normalize()
+                    leftover *= leftover.mag
+
+                    # breakpoint()
+                    # body.velocity = remaining
+                    body.position += body.velocity * dt
                     logger.debug(
-                        "Minkowski intersection found - {intersection}",
+                        "Minkowski intersection found - {intersection}\nVelocity changed to {velocity}",
                         intersection=intersection,
+                        velocity=body.velocity,
                     )
                 else:
                     logger.debug("Minkowski - No intersection found")
                 if minkowski_difference.collision(Vec2()):
                     logger.debug("Minkoski difference colliding, skipping")
                     continue
+
+            body.position += leftover
+            self._call_position_change(body)
 
     def query(self, area: Rectangle) -> list[Body]:
         return self.root.query(area)

@@ -1,5 +1,6 @@
 from math import inf
 from typing import Iterator
+from warnings import deprecated
 
 from pyglet.math import Vec2
 
@@ -30,6 +31,7 @@ def on_one_side(axis: Line, segment: LineSegment) -> bool:
     return n.dot(d1) * n.dot(d2) > 0
 
 
+@deprecated("Use Vec2.project instead.")
 def project_vector(project: Vec2, onto: Vec2) -> Vec2:
     dot_onto = onto.dot(onto)
     if 0 < dot_onto:
