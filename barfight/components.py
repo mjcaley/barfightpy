@@ -4,7 +4,8 @@ from enum import Enum, IntEnum, auto
 import pyglet
 from pyglet.math import Vec2
 
-from .physics import Body
+# from .physics import Body
+from pymunk import Body, Shape
 
 
 class ActorState(Enum):
@@ -68,6 +69,7 @@ class Sprite:
 @dataclass
 class PhysicsBody:
     body: Body
+    shapes: list[Shape]
 
 
 @dataclass

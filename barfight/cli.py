@@ -7,6 +7,7 @@ from pyglet.math import Vec2
 from pyglet.window import Window
 from pyglet.window.key import KeyStateHandler
 from pyglet.window.mouse import MouseStateHandler
+from pymunk import Space
 
 from barfight.pathfinding import Grid, Pathfinding
 
@@ -32,6 +33,8 @@ def main():
 
     window = Window(800, 600, "Bar Fight")
     world = PhysicsWorld(Vec2(-200, -200), Vec2(2000, 1500))
+    space = Space()
+    space.damping = 0.1
 
     debug_system = DebugSystem()
     ecs.add_system(debug_system, 100)
@@ -48,9 +51,12 @@ def main():
     ecs.add_system(movement_system)
     ecs.add_handlers(movement_system)
 
-    physics_system = PhysicsSystem(world)
+    physics_system = PhysicsSystem(space)
     ecs.add_system(physics_system)
     ecs.add_handlers(physics_system)
+    # physics_system = PhysicsSystem(world)
+    # ecs.add_system(physics_system)
+    # ecs.add_handlers(physics_system)
 
     draw_system = DrawSystem()
     ecs.add_system(draw_system)

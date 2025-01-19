@@ -1,11 +1,12 @@
-from math import degrees
 from typing import Any
 
-import pyglet
+import pymunk
+import pymunk.pyglet_util
 from loguru import logger
 from pyglet.graphics import Batch, Group
 from pyglet.math import Vec2
 from pyglet.window import Window, key, mouse
+from pymunk import Body, Space
 
 from . import ecs, events
 from .bundles import add_attack
@@ -34,8 +35,9 @@ from .events import (
     PlayerStateProtocol,
 )
 from .pathfinding import Pathfinding
-from .physics import Arbiter, Body, PhysicsWorld
-from .physics.shapes import CircleShape, OrientedRectangleShape, RectangleShape
+
+# from .physics import Arbiter, Body, PhysicsWorld
+# from .physics.shapes import CircleShape, OrientedRectangleShape, RectangleShape
 
 # region Attack
 
@@ -48,9 +50,9 @@ class AttackSystem(ecs.SystemProtocol, CollisionProtocol):
             else:
                 attack.cleanup = True
 
-    def on_collision(self, arbiter: Arbiter): ...
+    def on_collision(self, arbiter: Any): ...
 
-    def on_sensor(self, arbiter: Arbiter):
+    def on_sensor(self, arbiter: Any):
         health = ecs.try_component(arbiter.first_body.data, Health)
         attack = ecs.try_component(arbiter.second_body.data, Attack)
         if health is None or attack is None:
@@ -81,80 +83,81 @@ class DebugSystem(
 ):
     def process(self, *args): ...
 
-    def on_collision(self, arbiter: Arbiter):
-        lposition, lcollider = ecs.try_components(
-            arbiter.first_body.data, Position, PhysicsBody
-        )
-        lvelocity = ecs.try_component(arbiter.first_body.data, Velocity)
 
-        rposition, rcollider = ecs.try_components(
-            arbiter.second_body.data, Position, PhysicsBody
-        )
-        rvelocity = ecs.try_component(arbiter.second_body.data, Velocity)
-        logger.debug(
-            "Collision detected\n{lentity}\n\t[Position {lposition}]\n\t[Velocity {lvelocity}]\n\t[Collider {lcollider}]\n{rentity}\n\t[Position {rposition}]\n\t[Velocity {rvelocity}]\n\t[Collider {rcollider}]",
-            lentity=arbiter.first_body.data,
-            lposition=lposition,
-            lvelocity=lvelocity,
-            lcollider=lcollider,
-            rentity=arbiter.second_body.data,
-            rposition=rposition,
-            rvelocity=rvelocity,
-            rcollider=rcollider,
-        )
+#     def on_collision(self, arbiter: Arbiter):
+#         lposition, lcollider = ecs.try_components(
+#             arbiter.first_body.data, Position, PhysicsBody
+#         )
+#         lvelocity = ecs.try_component(arbiter.first_body.data, Velocity)
 
-    def on_sensor(self, arbiter: Arbiter):
-        lposition, lbody = ecs.try_components(
-            arbiter.first_body.data, Position, PhysicsBody
-        )
-        rposition, rbody = ecs.try_components(
-            arbiter.second_body.data, Position, PhysicsBody
-        )
-        logger.debug(
-            "Sensor detected - {lentity} {lposition} {lbody} - {rentity} {rposition} {rbody}",
-            lentity=arbiter.first_body.data,
-            lposition=lposition,
-            lbody=lbody,
-            rentity=arbiter.second_body.data,
-            rposition=rposition,
-            rbody=rbody,
-        )
+#         rposition, rcollider = ecs.try_components(
+#             arbiter.second_body.data, Position, PhysicsBody
+#         )
+#         rvelocity = ecs.try_component(arbiter.second_body.data, Velocity)
+#         logger.debug(
+#             "Collision detected\n{lentity}\n\t[Position {lposition}]\n\t[Velocity {lvelocity}]\n\t[Collider {lcollider}]\n{rentity}\n\t[Position {rposition}]\n\t[Velocity {rvelocity}]\n\t[Collider {rcollider}]",
+#             lentity=arbiter.first_body.data,
+#             lposition=lposition,
+#             lvelocity=lvelocity,
+#             lcollider=lcollider,
+#             rentity=arbiter.second_body.data,
+#             rposition=rposition,
+#             rvelocity=rvelocity,
+#             rcollider=rcollider,
+#         )
 
-    def on_component_added(self, entity: int, component: Any):
-        if not isinstance(component, PhysicsBody):
-            return
+#     def on_sensor(self, arbiter: Arbiter):
+#         lposition, lbody = ecs.try_components(
+#             arbiter.first_body.data, Position, PhysicsBody
+#         )
+#         rposition, rbody = ecs.try_components(
+#             arbiter.second_body.data, Position, PhysicsBody
+#         )
+#         logger.debug(
+#             "Sensor detected - {lentity} {lposition} {lbody} - {rentity} {rposition} {rbody}",
+#             lentity=arbiter.first_body.data,
+#             lposition=lposition,
+#             lbody=lbody,
+#             rentity=arbiter.second_body.data,
+#             rposition=rposition,
+#             rbody=rbody,
+#         )
 
-        match component.body.shape:
-            case RectangleShape():
-                shape = pyglet.shapes.Box(
-                    component.body.shape.primitive.origin.x,
-                    component.body.shape.primitive.origin.y,
-                    component.body.shape.primitive.size.x,
-                    component.body.shape.primitive.size.y,
-                    color=(50, 25, 255),
-                )
-            case OrientedRectangleShape():
-                shape = pyglet.shapes.Box(
-                    component.body.shape.primitive.center.x,
-                    component.body.shape.primitive.center.y,
-                    component.body.shape.primitive.half_extent.x * 2,
-                    component.body.shape.primitive.half_extent.y * 2,
-                    color=(50, 25, 255),
-                )
-                shape.anchor_position = component.body.shape.primitive.half_extent
-                shape.rotation = degrees(component.body.shape.primitive.rotation)
-            case CircleShape():
-                shape = pyglet.shapes.Circle(
-                    component.body.shape.primitive.center.x,
-                    component.body.shape.primitive.center.y,
-                    component.body.shape.primitive.radius,
-                    color=(50, 25, 255),
-                )
-        ecs.add_component(entity, Shape(shape, Layer.Debug))
+#     def on_component_added(self, entity: int, component: Any):
+#         if not isinstance(component, PhysicsBody):
+#             return
 
-    def on_component_removed(self, entity: int, component: Any):
-        if isinstance(component, PhysicsBody):
-            ecs.remove_component(entity, Shape)
+#         match component.body.shape:
+#             case RectangleShape():
+#                 shape = pyglet.shapes.Box(
+#                     component.body.shape.primitive.origin.x,
+#                     component.body.shape.primitive.origin.y,
+#                     component.body.shape.primitive.size.x,
+#                     component.body.shape.primitive.size.y,
+#                     color=(50, 25, 255),
+#                 )
+#             case OrientedRectangleShape():
+#                 shape = pyglet.shapes.Box(
+#                     component.body.shape.primitive.center.x,
+#                     component.body.shape.primitive.center.y,
+#                     component.body.shape.primitive.half_extent.x * 2,
+#                     component.body.shape.primitive.half_extent.y * 2,
+#                     color=(50, 25, 255),
+#                 )
+#                 shape.anchor_position = component.body.shape.primitive.half_extent
+#                 shape.rotation = degrees(component.body.shape.primitive.rotation)
+#             case CircleShape():
+#                 shape = pyglet.shapes.Circle(
+#                     component.body.shape.primitive.center.x,
+#                     component.body.shape.primitive.center.y,
+#                     component.body.shape.primitive.radius,
+#                     color=(50, 25, 255),
+#                 )
+#         ecs.add_component(entity, Shape(shape, Layer.Debug))
+
+#     def on_component_removed(self, entity: int, component: Any):
+#         if isinstance(component, PhysicsBody):
+#             ecs.remove_component(entity, Shape)
 
 
 # endregion
@@ -171,17 +174,18 @@ class DrawSystem(ecs.SystemProtocol, DrawProtocol, ComponentAddedProtocol):
     def process(self, *_): ...
 
     def draw_debug_shape(self, physics_body: PhysicsBody, shape: Shape):
-        match physics_body.body.shape:
-            case RectangleShape():
-                shape.shape.position = physics_body.body.shape.primitive.origin
-            case OrientedRectangleShape():
-                shape.shape.position = physics_body.body.shape.primitive.center
-                shape.shape.rotation = degrees(
-                    physics_body.body.shape.primitive.rotation
-                )
-            case CircleShape():
-                shape.shape.position = physics_body.body.shape.primitive.center
-                shape.shape.radius = physics_body.body.shape.primitive.radius
+        # match physics_body.body.shape:
+        #     case RectangleShape():
+        #         shape.shape.position = physics_body.body.shape.primitive.origin
+        #     case OrientedRectangleShape():
+        #         shape.shape.position = physics_body.body.shape.primitive.center
+        #         shape.shape.rotation = degrees(
+        #             physics_body.body.shape.primitive.rotation
+        #         )
+        #     case CircleShape():
+        #         shape.shape.position = physics_body.body.shape.primitive.center
+        #         shape.shape.radius = physics_body.body.shape.primitive.radius
+        ...
 
     def on_draw(self, window: Window):
         for _, (position, sprite) in ecs.get_components(Position, Sprite):
@@ -233,16 +237,16 @@ class InputSystem(ecs.SystemProtocol, InputProtocol):
         self.mouse_handler = mouse_handler
 
     def process(self, *_):
-        direction = Vec2()
+        x, y = 0, 0
         if self.key_handler[key.W]:
-            direction.y += 1
+            y += 1
         if self.key_handler[key.S]:
-            direction.y -= 1
+            y -= 1
         if self.key_handler[key.A]:
-            direction.x -= 1
+            x -= 1
         if self.key_handler[key.D]:
-            direction.x += 1
-        direction.normalize()
+            x += 1
+        direction = Vec2(x, y).normalize()
 
         ecs.dispatch_event(events.PLAYER_DIRECTION_EVENT, direction)
 
@@ -257,7 +261,7 @@ class InputSystem(ecs.SystemProtocol, InputProtocol):
 
 
 class MovementSystem(ecs.SystemProtocol):
-    def __init__(self, world: PhysicsWorld):
+    def __init__(self, world: Space):
         self.world = world
 
     def collide_and_slide(
@@ -272,7 +276,10 @@ class MovementSystem(ecs.SystemProtocol):
         for entity, (_, position, velocity, physics_body) in ecs.get_components(
             Actor, Position, Velocity, PhysicsBody
         ):
-            physics_body.body.velocity = velocity.direction * velocity.speed
+            physics_body.body.apply_force_at_local_point(
+                tuple(velocity.direction * velocity.speed)
+            )
+            # physics_body.body.velocity = velocity.direction * velocity.speed
             # change = velocity.direction * velocity.speed * dt
             # if change != Vec2(0, 0):
             #     position.position += velocity.direction * velocity.speed * dt
@@ -294,49 +301,88 @@ class PhysicsSystem(
     ecs.SystemProtocol,
     events.ComponentAddedProtocol,
     events.ComponentRemovedProtocol,
-    events.PositionChangedProtocol,
+    events.DrawProtocol,
 ):
-    def __init__(self, world: PhysicsWorld):
-        self.world = world
-        self.world.on_collision_callback = self.on_physics_collision
-        self.world.position_change_callback = self.on_physics_position_change
-        self.world.on_sensor_callback = self.on_physics_sensor
+    def __init__(self, space: Space):
+        self.space = space
 
     def process(self, dt: float):
-        self.world.step(dt)
+        self.space.step(dt)
+        for _, (position, physics_body) in ecs.get_components(Position, PhysicsBody):
+            position.position = Vec2(
+                physics_body.body.position.x, physics_body.body.position.y
+            )
 
-    def on_component_added(self, entity: int, component: Any):
-        if isinstance(component, PhysicsBody):
-            self.world.add(component.body)
-
-    def on_component_removed(self, entity: int, component: Any):
-        if isinstance(component, PhysicsBody):
-            self.world.remove(component.body)
-
-    # def on_position_changed(self, entity: int):
-    #     position, physics_body = ecs.try_components(entity, Position, PhysicsBody)
-    #     if position and physics_body:
-    #         physics_body.body.shape.center = position.position
-    #         self.world.remove(physics_body.body)
-    #         self.world.add(physics_body.body)
-
-    def on_physics_position_change(self, body: Body):
+    @staticmethod
+    def position_callback(body: Body, dt: float):
+        logger.debug(
+            "PhysicsSystem: Position update for {entity} to {position}",
+            entity=body.data,
+            position=body.position,
+        )
         position = ecs.get_component(body.data, Position)
-        physics_body = ecs.get_component(body.data, PhysicsBody)
-        # breakpoint()
-        position.position = physics_body.body.position
+        position.position = Vec2(body.position.x, body.position.y)
 
-    def on_physics_collision(self, arbiter: Arbiter):
-        logger.debug(
-            f"Physics event - collision callback - {arbiter.first_body.data} collides with {arbiter.second_body.data} first time: {arbiter.is_first_collision}"
-        )
-        ecs.dispatch_event(events.COLLISION_EVENT, arbiter)
+    def on_component_added(self, source, component):
+        if isinstance(component, PhysicsBody):
+            self.space.add(component.body, *component.shapes)
+            # component.body.position_func = PhysicsSystem.position_callback
 
-    def on_physics_sensor(self, arbiter: Arbiter):
-        logger.debug(
-            f"Physics event - sensor callback - {arbiter.first_body.data} collides with {arbiter.second_body.data} first time: {arbiter.is_first_collision}"
-        )
-        ecs.dispatch_event(events.SENSOR_EVENT, arbiter)
+    def on_component_removed(self, source, component):
+        if isinstance(component, PhysicsBody):
+            self.space.remove(component.body, *component.shapes)
+
+    def on_draw(self, window):
+        self.space.debug_draw(pymunk.pyglet_util.DrawOptions())
+
+
+# class PhysicsSystem(
+#     ecs.SystemProtocol,
+#     events.ComponentAddedProtocol,
+#     events.ComponentRemovedProtocol,
+#     events.PositionChangedProtocol,
+# ):
+#     def __init__(self, world: PhysicsWorld):
+#         self.world = world
+#         self.world.on_collision_callback = self.on_physics_collision
+#         self.world.position_change_callback = self.on_physics_position_change
+#         self.world.on_sensor_callback = self.on_physics_sensor
+
+#     def process(self, dt: float):
+#         self.world.step(dt)
+
+#     def on_component_added(self, entity: int, component: Any):
+#         if isinstance(component, PhysicsBody):
+#             self.world.add(component.body)
+
+#     def on_component_removed(self, entity: int, component: Any):
+#         if isinstance(component, PhysicsBody):
+#             self.world.remove(component.body)
+
+#     # def on_position_changed(self, entity: int):
+#     #     position, physics_body = ecs.try_components(entity, Position, PhysicsBody)
+#     #     if position and physics_body:
+#     #         physics_body.body.shape.center = position.position
+#     #         self.world.remove(physics_body.body)
+#     #         self.world.add(physics_body.body)
+
+#     def on_physics_position_change(self, body: Body):
+#         position = ecs.get_component(body.data, Position)
+#         physics_body = ecs.get_component(body.data, PhysicsBody)
+#         # breakpoint()
+#         position.position = physics_body.body.position
+
+#     def on_physics_collision(self, arbiter: Arbiter):
+#         logger.debug(
+#             f"Physics event - collision callback - {arbiter.first_body.data} collides with {arbiter.second_body.data} first time: {arbiter.is_first_collision}"
+#         )
+#         ecs.dispatch_event(events.COLLISION_EVENT, arbiter)
+
+#     def on_physics_sensor(self, arbiter: Arbiter):
+#         logger.debug(
+#             f"Physics event - sensor callback - {arbiter.first_body.data} collides with {arbiter.second_body.data} first time: {arbiter.is_first_collision}"
+#         )
+#         ecs.dispatch_event(events.SENSOR_EVENT, arbiter)
 
 
 # endregion

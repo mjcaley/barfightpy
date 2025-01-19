@@ -1,5 +1,8 @@
+from math import inf
+
 import pyglet
 from pyglet.math import Vec2
+from pymunk import Body, Poly
 
 from . import ecs
 from .components import (
@@ -15,8 +18,12 @@ from .components import (
     Velocity,
     Wall,
 )
-from .physics.body import Body, BodyKind
-from .physics.shapes import OrientedRectangleShape, RectangleShape
+
+# from .physics.body import Body, BodyKind
+# from .physics.shapes import OrientedRectangleShape, RectangleShape
+
+COLLISION_ACTOR = 1
+COLLISION_WALL = 2
 
 
 def add_player(position: Vec2) -> int:
@@ -32,9 +39,20 @@ def add_player(position: Vec2) -> int:
         Health(100, 100),
         Player(),
     )
-    shape = RectangleShape(position - Vec2(100, 100) / 2, Vec2(100, 100))
-    # breakpoint()
-    ecs.add_component(entity, PhysicsBody(Body(shape, data=entity)))
+    body = Body(1, moment=inf)
+    body.data = entity
+    shape = Poly(
+        body,
+        [
+            (position.x - 50, position.y - 50),
+            (position.x - 50, position.y + 50),
+            (position.x + 50, position.y + 50),
+            (position.x + 50, position.y - 50),
+        ],
+    )
+    shape.collision_type = COLLISION_ACTOR
+    shape.elasticity = 0
+    ecs.add_component(entity, PhysicsBody(body, [shape]))
 
     return entity
 
@@ -52,8 +70,19 @@ def add_enemy(position: Vec2) -> int:
         Health(100, 100),
         Actor(max_speed=200),
     )
-    shape = RectangleShape(position - Vec2(100, 100) / 2, Vec2(100, 100))
-    ecs.add_component(entity, PhysicsBody(Body(shape, data=entity)))
+    body = Body(1, moment=inf)
+    body.data = entity
+    shape = Poly(
+        body,
+        [
+            (position.x - 50, position.y - 50),
+            (position.x - 50, position.y + 50),
+            (position.x + 50, position.y + 50),
+            (position.x + 50, position.y - 50),
+        ],
+    )
+    shape.collision_type = COLLISION_ACTOR
+    ecs.add_component(entity, PhysicsBody(body, [shape]))
 
     return entity
 
@@ -68,68 +97,77 @@ def add_wall(x: float, y: float, width: float, height: float) -> int:
         Position(Vec2(x, y)),
         Sprite(pyglet.sprite.Sprite(image), Layer.Game),
     )
-    ecs.add_component(
-        entity,
-        PhysicsBody(
-            Body(
-                RectangleShape(
-                    Vec2(x, y) - Vec2(width, height) / 2, Vec2(width, height)
-                ),
-                kind=BodyKind.Static,
-                data=entity,
-            )
-        ),
+    body = Body(body_type=Body.STATIC)
+    body.data = entity
+    shape = Poly(
+        body, [(x, y), (x, y + height), (x + width, y + height), (x + width, y)]
     )
+    shape.collision_type = COLLISION_WALL
+    shape.elasticity = 0
+    ecs.add_component(entity, PhysicsBody(body, [shape]))
 
     return entity
 
 
 def add_rotated_wall(x: float, y: float, rotation: float) -> int:
-    entity = ecs.create_entity(
-        Wall(),
-        Position(Vec2(x, y)),
-    )
-    ecs.add_component(
-        entity,
-        PhysicsBody(
-            Body(
-                OrientedRectangleShape(
-                    Vec2(x, y),
-                    Vec2(25, 25),
-                    rotation,
-                ),
-                BodyKind.Static,
-                data=entity,
-            )
-        )
-    )
+    ...
+    # entity = ecs.create_entity(
+    #     Wall(),
+    #     Position(Vec2(x, y)),
+    # )
+    # ecs.add_component(
+    #     entity,
+    #     PhysicsBody(
+    #         Body(
+    #             OrientedRectangleShape(
+    #                 Vec2(x, y),
+    #                 Vec2(25, 25),
+    #                 rotation,
+    #             ),
+    #             BodyKind.Static,
+    #             data=entity,
+    #         )
+    #     )
+    # )
 
-    return entity
+    # return entity
 
 
 def add_attack(attack_entity: int, origin: Vec2, size: Vec2) -> int:
-    rect = RectangleShape(origin, size)
     entity = ecs.create_entity(
         Attack(attack_entity),
-        Position(rect.position),
+        Position(origin + (size / 2)),
     )
-    ecs.add_component(
-        entity,
-        PhysicsBody(
-            Body(
-                rect,
-                kind=BodyKind.Sensor,
-                data=entity,
-            )
-        ),
+    body = Body(body_type=Body.STATIC)
+    body.data = entity
+    shape = Poly(
+        body,
+        [
+            (origin.x, origin.y),
+            (origin.x, origin.y + size.y),
+            (origin.x + size.x, origin.y + size.y),
+            (origin.x + size.x, origin.y),
+        ],
     )
+    ecs.add_component(entity, PhysicsBody(body, [shape]))
 
     return entity
 
 
 def add_sensor(origin: Vec2, size: Vec2) -> int:
-    rect = RectangleShape(origin, size)
-    entity = ecs.create_entity(Position(rect.position))
-    ecs.add_component(entity, PhysicsBody(Body(rect, kind=BodyKind.Sensor, data=entity)))
+    entity = ecs.create_entity(Position(origin + (size / 2)))
+    body = Body(body_type=Body.STATIC)
+    body.data = entity
+    shape = Poly(
+        body,
+        [
+            (origin.x, origin.y),
+            (origin.x, origin.y + size.y),
+            (origin.x + size.x, origin.y + size.y),
+            (origin.x + size.x, origin.y),
+        ],
+    )
+    shape.sensor = True
+    ecs.add_component(entity, PhysicsBody(body, [shape]))
 
     return entity
