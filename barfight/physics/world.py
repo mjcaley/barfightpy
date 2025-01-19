@@ -251,6 +251,7 @@ class PhysicsWorld:
             intersection = ray.intersects(minkowski_difference)
             if intersection:
                 had_collision = True
+                breakpoint()
                 dot_product = leftover.dot(intersection.normal)
                 sliding_vector = leftover - (intersection.normal * dot_product)
                 leftover = sliding_vector
@@ -274,9 +275,23 @@ class PhysicsWorld:
             if body.kind != BodyKind.Dynamic:
                 continue
 
+            logger.debug(
+                "Begin moving {body}, velocity: {velocity}, position: {position}",
+                body=body,
+                velocity=body.velocity,
+                position=body.position,
+            )
+            # if body.velocity != Vec2():
+            #     breakpoint()
             final_velocity = self._move_body(body, body.velocity * dt)
-
+            body.velocity = final_velocity
             body.position += final_velocity
+            logger.debug(
+                "End moving {body}, velocity: {velocity}, position: {position}",
+                body=body,
+                velocity=body.velocity,
+                position=body.position,
+            )
             self._call_position_change(body)
 
     def query(self, area: Rectangle) -> list[Body]:
