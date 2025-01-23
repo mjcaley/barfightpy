@@ -40,14 +40,15 @@ def add_player(position: Vec2) -> int:
         Player(),
     )
     body = Body(1, moment=inf)
+    body.position = tuple(position)
     body.data = entity
     shape = Poly(
         body,
         [
-            (position.x - 50, position.y - 50),
-            (position.x - 50, position.y + 50),
-            (position.x + 50, position.y + 50),
-            (position.x + 50, position.y - 50),
+            (-image.width / 2, -image.height / 2),
+            (-image.width / 2, image.height / 2),
+            (image.width / 2, image.height / 2),
+            (image.width / 2, -image.height / 2),
         ],
     )
     shape.collision_type = COLLISION_ACTOR
@@ -71,14 +72,15 @@ def add_enemy(position: Vec2) -> int:
         Actor(max_speed=200),
     )
     body = Body(1, moment=inf)
+    body.position = position
     body.data = entity
     shape = Poly(
         body,
         [
-            (position.x - 50, position.y - 50),
-            (position.x - 50, position.y + 50),
-            (position.x + 50, position.y + 50),
-            (position.x + 50, position.y - 50),
+            (-image.width / 2, -image.height / 2),
+            (-image.width / 2, image.height / 2),
+            (image.width / 2, image.height / 2),
+            (image.width / 2, -image.height / 2),
         ],
     )
     shape.collision_type = COLLISION_ACTOR
@@ -90,7 +92,7 @@ def add_enemy(position: Vec2) -> int:
 def add_wall(x: float, y: float, width: float, height: float) -> int:
     image = pyglet.image.load("assets/wall.png")
     image.anchor_x = image.width // 2
-    image.anchor_y = image.width // 2
+    image.anchor_y = image.height // 2
 
     entity = ecs.create_entity(
         Wall(),
@@ -98,9 +100,16 @@ def add_wall(x: float, y: float, width: float, height: float) -> int:
         Sprite(pyglet.sprite.Sprite(image), Layer.Game),
     )
     body = Body(body_type=Body.STATIC)
+    body.position = x, y
     body.data = entity
     shape = Poly(
-        body, [(x, y), (x, y + height), (x + width, y + height), (x + width, y)]
+        body,
+        [
+            (-width / 2, -height / 2),
+            (-width / 2, height / 2),
+            (width / 2, height / 2),
+            (width / 2, -height / 2),
+        ],
     )
     shape.collision_type = COLLISION_WALL
     shape.elasticity = 0

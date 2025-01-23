@@ -28,13 +28,13 @@ from .systems import (
 
 
 def main():
-    logger.disable("barfight")
+    logger.enable("barfight")
     logger.enable("barfight.physics")
 
     window = Window(800, 600, "Bar Fight")
     world = PhysicsWorld(Vec2(-200, -200), Vec2(2000, 1500))
     space = Space()
-    space.damping = 0.1
+    space.damping = 0.05
 
     debug_system = DebugSystem()
     ecs.add_system(debug_system, 100)

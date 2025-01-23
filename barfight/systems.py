@@ -6,7 +6,7 @@ from loguru import logger
 from pyglet.graphics import Batch, Group
 from pyglet.math import Vec2
 from pyglet.window import Window, key, mouse
-from pymunk import Body, Space
+from pymunk import Space
 
 from . import ecs, events
 from .bundles import add_attack
@@ -276,9 +276,11 @@ class MovementSystem(ecs.SystemProtocol):
         for entity, (_, position, velocity, physics_body) in ecs.get_components(
             Actor, Position, Velocity, PhysicsBody
         ):
-            physics_body.body.apply_force_at_local_point(
-                tuple(velocity.direction * velocity.speed)
-            )
+            physics_body.body.position += velocity.direction * velocity.speed * dt
+            # physics_body.body.apply_force_at_local_point(
+            #     tuple(velocity.direction * velocity.speed)
+            # )
+
             # physics_body.body.velocity = velocity.direction * velocity.speed
             # change = velocity.direction * velocity.speed * dt
             # if change != Vec2(0, 0):
@@ -305,35 +307,29 @@ class PhysicsSystem(
 ):
     def __init__(self, space: Space):
         self.space = space
+        self.draw_options = pymunk.pyglet_util.DrawOptions()
+        self.draw_options.shape_static_color = (0, 0, 255, 200)
+        self.draw_options.shape_dynamic_color = (255, 0, 0, 200)
 
     def process(self, dt: float):
         self.space.step(dt)
-        for _, (position, physics_body) in ecs.get_components(Position, PhysicsBody):
+        for entity, (position, physics_body) in ecs.get_components(
+            Position, PhysicsBody
+        ):
             position.position = Vec2(
                 physics_body.body.position.x, physics_body.body.position.y
             )
 
-    @staticmethod
-    def position_callback(body: Body, dt: float):
-        logger.debug(
-            "PhysicsSystem: Position update for {entity} to {position}",
-            entity=body.data,
-            position=body.position,
-        )
-        position = ecs.get_component(body.data, Position)
-        position.position = Vec2(body.position.x, body.position.y)
-
     def on_component_added(self, source, component):
         if isinstance(component, PhysicsBody):
             self.space.add(component.body, *component.shapes)
-            # component.body.position_func = PhysicsSystem.position_callback
 
     def on_component_removed(self, source, component):
         if isinstance(component, PhysicsBody):
             self.space.remove(component.body, *component.shapes)
 
     def on_draw(self, window):
-        self.space.debug_draw(pymunk.pyglet_util.DrawOptions())
+        self.space.debug_draw(self.draw_options)
 
 
 # class PhysicsSystem(
