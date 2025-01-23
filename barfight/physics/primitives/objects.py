@@ -14,6 +14,23 @@ class Collision:
 
 
 @dataclass
+class Point:
+    point: Vec2 = field(default_factory=Vec2)
+
+    @singledispatchmethod
+    def collision(self, any) -> bool:
+        raise NotImplementedError
+
+    @singledispatchmethod
+    def penetration(self, any) -> Collision | None:
+        raise NotImplementedError
+
+    @property
+    def center(self) -> Vec2:
+        return self.point
+
+
+@dataclass
 class Line:
     base: Vec2 = field(default_factory=Vec2)
     direction: Vec2 = field(default_factory=Vec2)

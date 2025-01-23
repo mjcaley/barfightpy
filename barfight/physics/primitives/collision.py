@@ -3,7 +3,15 @@ from itertools import chain
 from pyglet.math import Vec2
 
 from ... import pyglet_ext as _
-from .objects import Circle, Line, LineSegment, OrientedRectangle, Polygon, Rectangle
+from .objects import (
+    Circle,
+    Line,
+    LineSegment,
+    OrientedRectangle,
+    Point,
+    Polygon,
+    Rectangle,
+)
 from .utility import (
     clamp_rectangle,
     equivalent_lines,
@@ -77,8 +85,8 @@ def oriented_rect_oriented_rect_collision(
     return True
 
 
-def circle_point_collision(circle: Circle, point: Vec2) -> bool:
-    return circle.center.distance(point) <= circle.radius
+def circle_point_collision(circle: Circle, point: Point) -> bool:
+    return circle.center.distance(point.point) <= circle.radius
 
 
 def circle_line_collision(circle: Circle, line: Line) -> bool:
@@ -124,13 +132,18 @@ def circle_oriented_rectangle_collision(
     return circle_rectangle_collision(local_circle, local_rect)
 
 
-def rectangle_point_collision(rectangle: Rectangle, point: Vec2) -> bool:
+def rectangle_point_collision(rectangle: Rectangle, point: Point) -> bool:
     left = rectangle.origin.x
     right = left + rectangle.size.x
     bottom = rectangle.origin.y
     top = bottom + rectangle.size.y
 
-    return left <= point.x and bottom <= point.y and point.x <= right and point.y <= top
+    return (
+        left <= point.point.x
+        and bottom <= point.point.y
+        and point.point.x <= right
+        and point.point.y <= top
+    )
 
 
 def rectangle_line_collision(rectangle: Rectangle, line: Line) -> bool:
@@ -204,27 +217,27 @@ def rectangle_oriented_rectangle_collision(
     return True
 
 
-def line_point_collision(line: Line, point: Vec2) -> bool:
-    if line.base == point:
+def line_point_collision(line: Line, point: Point) -> bool:
+    if line.base == point.point:
         return True
 
     point_line = point - line.base
     return is_parallel_line(point_line, line.direction)
 
 
-def line_segment_point_collision(line_segment: LineSegment, point: Vec2) -> bool:
+def line_segment_point_collision(line_segment: LineSegment, point: Point) -> bool:
     d = line_segment.point2 - line_segment.point1
-    lp = point - line_segment.point1
+    lp = point.point - line_segment.point1
     pr = project_vector(lp, d)
 
     return lp == pr and pr.mag <= d.mag and 0 <= pr.dot(d)
 
 
 def oriented_rectangle_point_collision(
-    oriented_rect: OrientedRectangle, point: Vec2
+    oriented_rect: OrientedRectangle, point: Point
 ) -> bool:
     lr = Rectangle(Vec2(0, 0), oriented_rect.half_extent * 2)
-    lp = (point - oriented_rect.center).rotate(
+    lp = (point.point - oriented_rect.center).rotate(
         -oriented_rect.rotation
     ) + oriented_rect.half_extent
 
@@ -266,13 +279,13 @@ def line_segment_oriented_rectangle_collision(
     return rectangle_lineseg_collision(lr, ls)
 
 
-def point_polygon_collision(point: Vec2, polygon: Polygon) -> bool:
-    if not rectangle_point_collision(polygon.bounding_box, point):
+def point_polygon_collision(point: Point, polygon: Polygon) -> bool:
+    if not rectangle_point_collision(polygon.bounding_box, point.point):
         return False
 
     polygon_vertices = [_ for _ in polygon.vertices()]
     for axis in polygon.axes():
-        point_min, point_max = min_max_vertex(axis, [point])
+        point_min, point_max = min_max_vertex(axis, [point.point])
         poly_min, poly_max = min_max_vertex(axis, polygon_vertices)
         if point_max < poly_min or poly_max < point_min:
             return False
@@ -333,9 +346,72 @@ def polygon_polygon_collision(p1: Polygon, p2: Polygon) -> bool:
     return True
 
 
+def polygon_point_collision(polygon: Polygon, point: Point) -> bool:
+    min_penetration = inf
+    penetration_axis = Vec2()
+
+    for axis in polygon.axes():
+        axis = axis.normalize()
+        p_min, p_max = project_vertices(polygon.vertices(), axis)
+        point_proj = point.dot(axis)
+
+        if point_proj < p_min:
+            overlap = p_min - point_proj
+        elif point_proj > p_max:
+            overlap = point_proj - p_max
+        else:
+            # Point is between min/max - use smallest distance to either boundary
+            overlap = min(point_proj - p_min, p_max - point_proj)
+
+        if overlap < min_penetration:
+            min_penetration = overlap
+            penetration_axis = axis
+
+    if min_penetration == inf:
+        return None
+
+    penetration_vector = penetration_axis.from_magnitude(min_penetration)
+    return Collision(penetration_vector, min_penetration)
+
+
+@Point.collision.register
+def _(self, point: Point) -> bool:  # noqa: F811
+    return self.point == point.point
+
+
+@Point.collision.register
+def _(self, line: Line) -> bool:
+    return line_point_collision(line, self)
+
+
+@Point.collision.register
+def _(self, line_segment: LineSegment) -> bool:
+    return line_segment_point_collision(line_segment, self)
+
+
+@Point.collision.register
+def _(self, circle: Circle) -> bool:
+    return circle_point_collision(circle, self)
+
+
+@Point.collision.register
+def _(self, rect: Rectangle) -> bool:
+    return rectangle_point_collision(rect, self)
+
+
+@Point.collision.register
+def _(self, rect: OrientedRectangle) -> bool:
+    return oriented_rectangle_point_collision(rect, self)
+
+
 @Line.collision.register
-def _(self, point: Vec2) -> bool:  # noqa: F811
-    return line_point_collision(self, point)
+def _(self, point: Point) -> bool:
+    return line_point_collision(self, point.point)
+
+
+@Line.collision.register
+def _(self, polygon: Polygon) -> bool:
+    return  # TODO: Implement function
 
 
 @Line.collision.register
@@ -364,7 +440,7 @@ def _(self, oriented_rectangle: OrientedRectangle) -> bool:
 
 
 @LineSegment.collision.register
-def _(self, point: Vec2) -> bool:
+def _(self, point: Point) -> bool:
     return line_segment_point_collision(self, point)
 
 
@@ -394,7 +470,7 @@ def _(self, oriented_rectangle: OrientedRectangle) -> bool:
 
 
 @Circle.collision.register
-def _(self, point: Vec2) -> bool:
+def _(self, point: Point) -> bool:
     return circle_point_collision(self, point)
 
 
@@ -429,7 +505,7 @@ def _(self, polygon: Polygon) -> bool:
 
 
 @Rectangle.collision.register
-def _(self, point: Vec2) -> bool:
+def _(self, point: Point) -> bool:
     return rectangle_point_collision(self, point)
 
 
@@ -464,7 +540,7 @@ def _(self, polygon: Polygon) -> bool:
 
 
 @OrientedRectangle.collision.register
-def _(self, point: Vec2) -> bool:
+def _(self, point: Point) -> bool:
     return oriented_rectangle_point_collision(self, point)
 
 
@@ -504,7 +580,7 @@ def _(self, polygon: Polygon) -> bool:
 
 
 @Polygon.collision.register
-def _(self, point: Vec2) -> bool:
+def _(self, point: Point) -> bool:
     return point_polygon_collision(point, self)
 
 

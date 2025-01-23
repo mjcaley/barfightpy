@@ -29,6 +29,29 @@ class ShapeProtocol(Protocol):
     def __copy__(self) -> Self: ...
 
 
+class PointShape:
+    def __init__(self, point: Vec2):
+        self._primitive = point
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(point={self.point})"
+
+    @property
+    def primitive(self) -> Vec2:
+        return self._primitive
+
+    @property
+    def position(self) -> Vec2:
+        return self._primitive
+
+    @position.setter
+    def position(self, value: Vec2):
+        self._primitive = value
+
+    def boundary(self) -> Rectangle:
+        return Rectangle(self._primitive, Vec2())
+
+
 class RectangleShape:
     def __init__(self, origin: Vec2 = None, size: Vec2 = None):
         origin = origin or Vec2()
