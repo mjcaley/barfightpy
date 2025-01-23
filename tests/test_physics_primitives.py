@@ -10,6 +10,7 @@ from barfight.physics.primitives import (
     Polygon,
     Rectangle,
 )
+from barfight.physics.primitives.objects import Point
 
 
 def test_rect_rect_collision():
@@ -63,25 +64,25 @@ def test_oriented_rect_collision():
 
 def test_circle_point_collision():
     c = Circle(Vec2(6, 4), 3)
-    p1 = Vec2(8, 3)
-    p2 = Vec2(11, 7)
+    p1 = Point(Vec2(8, 3))
+    p2 = Point(Vec2(11, 7))
 
     assert c.collision(p1)
     assert not c.collision(p2)
 
 
 def test_circle_line_collision():
-    c = Circle(Vec2(6, 3), 2)
-    l = Line(Vec2(4, 7), Vec2(5, -1))
+    circle = Circle(Vec2(6, 3), 2)
+    line = Line(Vec2(4, 7), Vec2(5, -1))
 
-    assert not c.collision(l)
+    assert not circle.collision(line)
 
 
 def test_circle_lineseg_collision():
-    c = Circle(Vec2(4, 4), 3)
-    l = LineSegment(Vec2(8, 6), Vec2(13, 6))
+    circle = Circle(Vec2(4, 4), 3)
+    line = LineSegment(Vec2(8, 6), Vec2(13, 6))
 
-    assert not c.collision(l)
+    assert not circle.collision(line)
 
 
 def test_circle_rectangle_collision():
@@ -102,15 +103,15 @@ def test_circle_oriented_rectangle_collision():
 
 def test_rectangle_point_collision():
     r = Rectangle(Vec2(3, 2), Vec2(6, 4))
-    p = Vec2(4, 5)
+    p = Point(Vec2(4, 5))
 
     assert r.collision(p)
 
 
 def test_rectangle_line_collision():
-    r = Rectangle(Vec2(3, 2), Vec2(6, 4))
-    l = Line(Vec2(6, 8), Vec2(2, -3))
-    assert r.collision(l)
+    rect = Rectangle(Vec2(3, 2), Vec2(6, 4))
+    line = Line(Vec2(6, 8), Vec2(2, -3))
+    assert rect.collision(line)
 
 
 def test_rectangle_line_segment_collision():
@@ -138,14 +139,14 @@ def test_rectangle_oriented_rectangle_collision():
 
 
 def test_line_point_collision():
-    p = Vec2(5, 3)
-    l = Line(Vec2(3, 7), Vec2(7, -2))
+    point = Point(Vec2(5, 3))
+    line = Line(Vec2(3, 7), Vec2(7, -2))
 
-    assert not l.collision(p)
+    assert not line.collision(point)
 
 
 def test_line_segment_point_collision():
-    p = Vec2(1, 4)
+    p = Point(Vec2(1, 4))
     s = LineSegment(Vec2(6, 6), Vec2(13, 4))
 
     assert not s.collision(p)
@@ -153,25 +154,25 @@ def test_line_segment_point_collision():
 
 def test_oriented_rectangle_point_collision():
     o = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), radians(30))
-    p1 = Vec2(6, 5)
-    p2 = Vec2(10, 6)
+    p1 = Point(Vec2(6, 5))
+    p2 = Point(Vec2(10, 6))
 
     assert o.collision(p1)
     assert not o.collision(p2)
 
 
 def test_line_line_segment_collision():
-    s = LineSegment(Vec2(8, 4), Vec2(11, 7))
-    l = Line(Vec2(3, 4), Vec2(4, -2))
+    seg = LineSegment(Vec2(8, 4), Vec2(11, 7))
+    line = Line(Vec2(3, 4), Vec2(4, -2))
 
-    assert not l.collision(s)
+    assert not line.collision(seg)
 
 
 def test_line_oriented_rectangle_collision():
-    l = Line(Vec2(7, 3), Vec2(2, -1))
-    o = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), radians(30))
+    line = Line(Vec2(7, 3), Vec2(2, -1))
+    rect = OrientedRectangle(Vec2(5, 4), Vec2(3, 2), radians(30))
 
-    assert l.collision(o)
+    assert line.collision(rect)
 
 
 def test_line_segment_oriented_rectangle_collision():
@@ -182,7 +183,7 @@ def test_line_segment_oriented_rectangle_collision():
 
 
 def test_point_polygon_collision():
-    point = Vec2()
+    point = Point()
     polygon = Polygon([Vec2(-1, -1), Vec2(-1, 1), Vec2(1, 1), Vec2(1, -1)])
 
     assert polygon.collision(point)

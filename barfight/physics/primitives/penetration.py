@@ -81,7 +81,7 @@ def circle_rectangle_penetration(c: Circle, r: Rectangle) -> Collision | None:
     closest_point = Vec2(closest_x, closest_y)
 
     center_to_closest = closest_point - c.center
-    distance = center_to_closest.mag
+    distance = center_to_closest.length()
 
     if distance >= c.radius:
         return None
@@ -106,7 +106,7 @@ def circle_oriented_rectangle_penetration(
     closest_point = Vec2(closest_x, closest_y)
 
     penetration_vector_local = local_center - closest_point
-    penetration_distance = penetration_vector_local.mag
+    penetration_distance = penetration_vector_local.length()
 
     if penetration_distance >= c.radius:
         return None

@@ -95,29 +95,29 @@ def circle_line_collision(circle: Circle, line: Line) -> bool:
     projected = project_vector(lc, line.direction)
     nearest = line.base + projected
 
-    return circle_point_collision(circle, nearest)
+    return circle_point_collision(circle, Point(nearest))
 
 
 def circle_lineseg_collision(circle: Circle, line: LineSegment) -> bool:
-    if circle_point_collision(circle, line.point1) or circle_point_collision(
-        circle, line.point2
+    if circle_point_collision(circle, Point(line.point1)) or circle_point_collision(
+        circle, Point(line.point2)
     ):
         return True
 
     line_distance = line.point2 - line.point1
     circle_distance = circle.center - line.point1
     projected = project_vector(circle_distance, line_distance)
-    nearest = line.point1 + projected
+    nearest = Point(line.point1 + projected)
 
     return (
         circle_point_collision(circle, nearest)
-        and projected.mag <= line_distance.mag
+        and projected.length() <= line_distance.length()
         and 0 <= projected.dot(line_distance)
     )
 
 
 def circle_rectangle_collision(circle: Circle, rectangle: Rectangle) -> bool:
-    clamped = clamp_rectangle(circle.center, rectangle)
+    clamped = Point(clamp_rectangle(circle.center, rectangle))
     return circle_point_collision(circle, clamped)
 
 
@@ -222,7 +222,7 @@ def line_point_collision(line: Line, point: Point) -> bool:
     if line.base == point.point:
         return True
 
-    point_line = point - line.base
+    point_line = point.point - line.base
     return is_parallel_line(point_line, line.direction)
 
 
@@ -231,16 +231,17 @@ def line_segment_point_collision(line_segment: LineSegment, point: Point) -> boo
     lp = point.point - line_segment.point1
     pr = project_vector(lp, d)
 
-    return lp == pr and pr.mag <= d.mag and 0 <= pr.dot(d)
+    return lp == pr and pr.length() <= d.length() and 0 <= pr.dot(d)
 
 
 def oriented_rectangle_point_collision(
     oriented_rect: OrientedRectangle, point: Point
 ) -> bool:
     lr = Rectangle(Vec2(0, 0), oriented_rect.half_extent * 2)
-    lp = (point.point - oriented_rect.center).rotate(
-        -oriented_rect.rotation
-    ) + oriented_rect.half_extent
+    lp = Point(
+        (point.point - oriented_rect.center).rotate(-oriented_rect.rotation)
+        + oriented_rect.half_extent
+    )
 
     return rectangle_point_collision(lr, lp)
 

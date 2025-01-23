@@ -25,7 +25,7 @@ dev = [
 requires-dist = [
     { name = "esper", specifier = ">=3.2" },
     { name = "loguru", specifier = ">=0.7" },
-    { name = "pyglet", specifier = ">=2.0" },
+    { name = "pyglet", specifier = ">=2.1" },
 ]
 
 [package.metadata.requires-dev]
@@ -238,11 +238,11 @@ wheels = [
 
 [[package]]
 name = "pyglet"
-version = "2.0.18"
+version = "2.1.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/02/f5/2e29be2bf0cbf32ffc5eec0b3ce01cc271428c33f452ce69629ab61556d0/pyglet-2.0.18.tar.gz", hash = "sha256:7cf9238d70082a2da282759679f8a011cc979753a32224a8ead8ed80e48f99dc", size = 6483782 }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/4b/44b4dc01ffac9f8950d540c99159f83e2c398df2a600394feb6d2dbf7340/pyglet-2.1.2.tar.gz", hash = "sha256:6fc1fed55eb6dc80c87a7a45ac62c2a61be08cd31114b27abef8619959be7845", size = 6515611 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2a/03/17a5cc013b9dbe531f5e64e026f7ec4143ffcd77ae055a0c07e6211cb3d6/pyglet-2.0.18-py3-none-any.whl", hash = "sha256:e592952ae0297e456c587b6486ed8c3e5f9d0c3519d517bb92dde5fdf4c26b41", size = 941096 },
+    { url = "https://files.pythonhosted.org/packages/3c/aa/edc16d04f6de8e833b4cba3068185fd2aad9e6f3a22fbc89afec36414f12/pyglet-2.1.2-py3-none-any.whl", hash = "sha256:2819fa9d66ead4b1682d1b7fa7170692d46277e1a6661b329bdba3e65288c036", size = 961981 },
 ]
 
 [[package]]

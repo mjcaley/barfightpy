@@ -7,7 +7,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "esper >=3.2",
-    "pyglet >=2.0",
+    "pyglet >=2.1",
     "loguru >=0.7"
 ]
 
