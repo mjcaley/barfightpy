@@ -21,6 +21,7 @@ from .utility import (
     overlapping,
     project_segment,
     project_vector,
+    project_vertices,
 )
 
 
@@ -280,7 +281,7 @@ def line_segment_oriented_rectangle_collision(
 
 
 def point_polygon_collision(point: Point, polygon: Polygon) -> bool:
-    if not rectangle_point_collision(polygon.bounding_box, point.point):
+    if not rectangle_point_collision(polygon.bounding_box, point):
         return False
 
     polygon_vertices = [_ for _ in polygon.vertices()]
@@ -314,8 +315,8 @@ def circle_polygon_collision(circle: Circle, polygon: Polygon) -> bool:
         c_min, c_max = min_max_vertex(
             axis,
             [
-                circle.center + axis.normalize().from_magnitude(circle.radius),
-                circle.center + axis.normalize().from_magnitude(-circle.radius),
+                circle.center + axis.normalize() * circle.radius,
+                circle.center + axis.normalize() * -circle.radius,
             ],
         )
         if p_max < c_min or c_max < p_min:
@@ -347,31 +348,18 @@ def polygon_polygon_collision(p1: Polygon, p2: Polygon) -> bool:
 
 
 def polygon_point_collision(polygon: Polygon, point: Point) -> bool:
-    min_penetration = inf
-    penetration_axis = Vec2()
+    if not rectangle_point_collision(polygon.bounding_box, point):
+        return False
 
     for axis in polygon.axes():
         axis = axis.normalize()
         p_min, p_max = project_vertices(polygon.vertices(), axis)
-        point_proj = point.dot(axis)
+        point_proj = point.point.dot(axis)
 
-        if point_proj < p_min:
-            overlap = p_min - point_proj
-        elif point_proj > p_max:
-            overlap = point_proj - p_max
-        else:
-            # Point is between min/max - use smallest distance to either boundary
-            overlap = min(point_proj - p_min, p_max - point_proj)
+        if point_proj < p_min or point_proj > p_max:
+            return False
 
-        if overlap < min_penetration:
-            min_penetration = overlap
-            penetration_axis = axis
-
-    if min_penetration == inf:
-        return None
-
-    penetration_vector = penetration_axis.from_magnitude(min_penetration)
-    return Collision(penetration_vector, min_penetration)
+    return True
 
 
 @Point.collision.register
@@ -406,7 +394,7 @@ def _(self, rect: OrientedRectangle) -> bool:
 
 @Line.collision.register
 def _(self, point: Point) -> bool:
-    return line_point_collision(self, point.point)
+    return line_point_collision(self, point)
 
 
 @Line.collision.register

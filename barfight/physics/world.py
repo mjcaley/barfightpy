@@ -7,6 +7,8 @@ from typing import Any
 from loguru import logger
 from pyglet.math import Vec2
 
+from barfight.physics.primitives.objects import Point
+
 from .body import Body, BodyKind
 from .primitives import Circle, OrientedRectangle, Rectangle
 from .raycast import Ray
@@ -194,17 +196,16 @@ class PhysicsWorld:
         return RaycastHit(closest_hit.point, closest_hit.normal, closest_body)
 
     def collisions(self):
-        for _ in range(self.step_iterations):
-            broad_collisions = self.broad_phase()
-            discrete_collisions, collision_resolutions = self.discrete_phase(
-                broad_collisions
-            )
-            resolved_collisions, still_colliding = self.resolve(
-                discrete_collisions, collision_resolutions
-            )
-            self.active_collisions = (
-                self.active_collisions - resolved_collisions | still_colliding
-            )
+        broad_collisions = self.broad_phase()
+        discrete_collisions, collision_resolutions = self.discrete_phase(
+            broad_collisions
+        )
+        resolved_collisions, still_colliding = self.resolve(
+            discrete_collisions, collision_resolutions
+        )
+        self.active_collisions = (
+            self.active_collisions - resolved_collisions | still_colliding
+        )
 
     @staticmethod
     def _movement_boundary(body: Body, velocity: Vec2) -> Rectangle:
@@ -243,15 +244,15 @@ class PhysicsWorld:
                 continue
 
             minkowski_difference = collision.shape.minkowski_difference(current_shape)
-            if minkowski_difference.collision(Vec2()):
+            if minkowski_difference.collision(Point()):
                 logger.debug("Minkoski difference colliding, skipping")
                 continue
 
-            ray = Ray(Vec2(), leftover.normalize(), leftover.mag)
+            ray = Ray(Vec2(), leftover.normalize(), leftover.length())
             intersection = ray.intersects(minkowski_difference)
             if intersection:
                 had_collision = True
-                breakpoint()
+                # breakpoint()
                 dot_product = leftover.dot(intersection.normal)
                 sliding_vector = leftover - (intersection.normal * dot_product)
                 leftover = sliding_vector

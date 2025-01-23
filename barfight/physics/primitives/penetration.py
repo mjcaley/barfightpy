@@ -16,7 +16,7 @@ def circle_circle_penetration(c1: Circle, c2: Circle) -> Vec2 | None:
         return None
 
     penetration_depth = radii - distance
-    penetration_vector = (c2.center - c1.center).from_magnitude(penetration_depth)
+    penetration_vector = (c2.center - c1.center).normalize() * penetration_depth
 
     return Collision(penetration_vector, penetration_depth)
 
@@ -70,7 +70,7 @@ def oriented_rectangle_oriented_rectangle_penetration(
         else:
             return None
 
-    penetration_vector = penetration_axis.from_magnitude(min_penetration)
+    penetration_vector = penetration_axis.normalize() * min_penetration
 
     return Collision(penetration_vector, min_penetration)
 
@@ -87,7 +87,7 @@ def circle_rectangle_penetration(c: Circle, r: Rectangle) -> Collision | None:
         return None
 
     penetration_depth = c.radius - distance
-    penetration_vector = center_to_closest.from_magnitude(penetration_depth)
+    penetration_vector = center_to_closest.normalize() * penetration_depth
 
     return Collision(penetration=penetration_vector, depth=penetration_depth)
 
@@ -112,10 +112,13 @@ def circle_oriented_rectangle_penetration(
         return None
 
     penetration_depth = c.radius - penetration_distance
-    penetration_vector_world = Vec2(
-        penetration_vector_local.x * cos_r + penetration_vector_local.y * sin_r,
-        -penetration_vector_local.x * sin_r + penetration_vector_local.y * cos_r,
-    ).from_magnitude(penetration_depth)
+    penetration_vector_world = (
+        Vec2(
+            penetration_vector_local.x * cos_r + penetration_vector_local.y * sin_r,
+            -penetration_vector_local.x * sin_r + penetration_vector_local.y * cos_r,
+        ).normalize()
+        * penetration_depth
+    )
 
     return Collision(penetration=penetration_vector_world, depth=penetration_depth)
 
@@ -148,7 +151,7 @@ def rectangle_oriented_rectangle_penetration(
             min_penetration_axis = axis if rect_min < ortho_min else -axis
 
     # Calculate the penetration vector
-    penetration_vector = min_penetration_axis.from_magnitude(min_penetration_depth)
+    penetration_vector = min_penetration_axis.normalize() * min_penetration_depth
 
     # Return the Collision object with penetration vector and depth
     return Collision(penetration=penetration_vector, depth=min_penetration_depth)
@@ -171,7 +174,7 @@ def polygon_polygon_penetration(p1: Polygon, p2: Polygon) -> Collision | None:
             min_penetration = overlap
             penetration_axis = axis
 
-    penetration_vector = penetration_axis.from_magnitude(min_penetration)
+    penetration_vector = penetration_axis.normalize() * min_penetration
 
     return Collision(penetration_vector, min_penetration)
 
@@ -185,8 +188,8 @@ def polygon_circle_penetration(polygon: Polygon, circle: Circle) -> Collision | 
         p_min, p_max = project_vertices(polygon.vertices(), axis)
         c_min, c_max = project_vertices(
             [
-                circle.center + axis.normalize().from_magnitude(circle.radius),
-                circle.center + axis.normalize().from_magnitude(-circle.radius),
+                circle.center + axis.normalize().normalize() * circle.radius,
+                circle.center + axis.normalize().normalize() * -circle.radius,
             ],
             axis,
         )
@@ -199,7 +202,7 @@ def polygon_circle_penetration(polygon: Polygon, circle: Circle) -> Collision | 
             min_penetration = overlap
             penetration_axis = axis
 
-    penetration_vector = penetration_axis.from_magnitude(min_penetration)
+    penetration_vector = penetration_axis.normalize() * min_penetration
 
     return Collision(penetration_vector, min_penetration)
 
@@ -223,7 +226,7 @@ def polygon_rectangle_penetration(
             min_penetration = overlap
             penetration_axis = axis
 
-    penetration_vector = penetration_axis.from_magnitude(min_penetration)
+    penetration_vector = penetration_axis.normalize() * min_penetration
 
     return Collision(penetration_vector, min_penetration)
 
@@ -247,7 +250,7 @@ def polygon_oriented_rectangle_penetration(
             min_penetration = overlap
             penetration_axis = axis
 
-    penetration_vector = penetration_axis.from_magnitude(min_penetration)
+    penetration_vector = penetration_axis.normalize() * min_penetration
 
     return Collision(penetration_vector, min_penetration)
 
@@ -276,7 +279,7 @@ def polygon_point_penetration(polygon: Polygon, point: Vec2) -> Collision | None
     if min_penetration == inf:
         return None
 
-    penetration_vector = penetration_axis.from_magnitude(min_penetration)
+    penetration_vector = penetration_axis.normalize() * min_penetration
     return Collision(penetration_vector, min_penetration)
 
 

@@ -233,16 +233,16 @@ class InputSystem(ecs.SystemProtocol, InputProtocol):
         self.mouse_handler = mouse_handler
 
     def process(self, *_):
-        direction = Vec2()
+        x, y = 0, 0
         if self.key_handler[key.W]:
-            direction.y += 1
+            y += 1
         if self.key_handler[key.S]:
-            direction.y -= 1
+            y -= 1
         if self.key_handler[key.A]:
-            direction.x -= 1
+            x -= 1
         if self.key_handler[key.D]:
-            direction.x += 1
-        direction.normalize()
+            x += 1
+        direction = Vec2(x, y).normalize()
 
         ecs.dispatch_event(events.PLAYER_DIRECTION_EVENT, direction)
 

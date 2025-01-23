@@ -24,7 +24,7 @@ class Ray:
 
     def boundary(self) -> Rectangle:
         ray_start = self.origin
-        ray_end = self.direction.from_magnitude(self.max_distance) + self.origin
+        ray_end = self.direction.normalize() * self.max_distance + self.origin
 
         return Rectangle(
             Vec2(min(ray_start.x, ray_end.x), min(ray_start.y, ray_end.y)),
@@ -140,9 +140,11 @@ class Ray:
             return None
 
         if t_near.x > t_far.x:
-            t_near.x, t_far.x = t_far.x, t_near.x
+            t_near = Vec2(t_far.x, t_near.y)
+            t_far = Vec2(t_near.x, t_far.y)
         if t_near.y > t_far.y:
-            t_near.y, t_far.y = t_far.y, t_near.y
+            t_near = Vec2(t_near.x, t_far.y)
+            t_far = Vec2(t_far.x, t_near.y)
 
         if t_near.x > t_far.y or t_near.y > t_far.x:
             return None
