@@ -3,9 +3,16 @@ from typing import Protocol, Self
 
 from pyglet.math import Vec2
 
-from .primitives import Circle, Collision, LineSegment, OrientedRectangle, Rectangle
+from .primitives import (
+    Circle,
+    Collision,
+    LineSegment,
+    OrientedRectangle,
+    Polygon,
+    Rectangle,
+)
 
-PrimitiveType = Circle | LineSegment | OrientedRectangle | Rectangle
+PrimitiveType = Circle | LineSegment | OrientedRectangle | Rectangle | Polygon
 
 
 class ShapeProtocol(Protocol):
@@ -182,3 +189,40 @@ class CircleShape:
 
     def __copy__(self) -> Self:
         return CircleShape(self._primitive.center, self._primitive.radius)
+
+
+class PolygonShape:
+    def __init__(self, *points: Vec2):
+        if not points:
+            raise ValueError("Polygon must have at least 1 point")
+        self._primitive = Polygon(points)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(primitive: {self.primitive})"
+
+    @property
+    def primitive(self) -> Polygon:
+        return self._primitive
+
+    @property
+    def position(self) -> Vec2:
+        return self._primitive.center
+
+    @position.setter
+    def position(self, value: Vec2):
+        self._primitive.center = value
+
+    def boundary(self) -> Rectangle:
+        return self._primitive.bounding_box
+
+    def collision(self, shape: ShapeProtocol) -> bool:
+        return self.primitive.collision(shape.primitive)
+
+    def penetration(self, shape: ShapeProtocol) -> Collision | None:
+        return self.primitive.penetration(shape.primitive)
+
+    def minkowski_difference(self, shape: ShapeProtocol) -> PrimitiveType:
+        return self.minkowski_difference(shape.primitive)
+
+    def __copy__(self) -> Self:
+        return PolygonShape(self.primitive.points)

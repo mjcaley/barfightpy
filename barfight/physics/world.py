@@ -51,6 +51,7 @@ class PhysicsWorld:
         self.position_change_callback = None
         self.on_collision_callback = None
         self.on_sensor_callback = None
+        self.on_collision_debug = None
 
     @property
     def boundary(self) -> Rectangle:
@@ -65,7 +66,7 @@ class PhysicsWorld:
             index = len(self.bodies) - 1
 
         if not self.root.insert(index):
-            raise ValueError("Not within the boundary")
+            self.bodies.append(body)
 
     def remove(self, body: Body):
         index = self.bodies.index(body)
@@ -91,6 +92,10 @@ class PhysicsWorld:
     def _call_on_sensor(self, arbiter: Arbiter):
         if self.on_sensor_callback:
             self.on_sensor_callback(arbiter)
+
+    def _call_on_collision_debug(self, arbiter: Arbiter):
+        if self.on_collision_debug:
+            self.on_collision_debug(arbiter)
 
     def broad_phase(self) -> set[CollisionPair]:
         new_collisions = set()
@@ -262,6 +267,7 @@ class PhysicsWorld:
                     intersection=intersection,
                     velocity=leftover,
                 )
+                self._call_on_debug_collision(Arbiter(body, collision))
             else:
                 logger.debug("Minkowski - No intersection found")
 

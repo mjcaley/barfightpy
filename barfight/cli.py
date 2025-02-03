@@ -17,6 +17,7 @@ from .systems import (
     AISystem,
     ActorSystem,
     AttackSystem,
+    CollisionDrawSystem,
     DebugSystem,
     DrawSystem,
     HealthSystem,
@@ -28,7 +29,8 @@ from .systems import (
 
 def main():
     logger.disable("barfight")
-    logger.enable("barfight.physics")
+    # logger.enable("barfight.physics")
+    logger.enable("barfight.systems")
 
     window = Window(800, 600, "Bar Fight")
     world = PhysicsWorld(Vec2(-200, -200), Vec2(2000, 1500))
@@ -91,6 +93,10 @@ def main():
     attack_system = AttackSystem()
     ecs.add_system(attack_system)
     ecs.add_handlers(attack_system)
+
+    collision_draw_system = CollisionDrawSystem()
+    ecs.add_system(collision_draw_system)
+    ecs.add_handlers(collision_draw_system)
 
     add_player(Vec2(200, 200))
     add_wall(400, 200, 100, 100)

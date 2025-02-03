@@ -35,7 +35,14 @@ from .events import (
 )
 from .pathfinding import Pathfinding
 from .physics import Arbiter, Body, PhysicsWorld
-from .physics.shapes import CircleShape, OrientedRectangleShape, RectangleShape
+from .physics.body import BodyKind
+from .physics.primitives import Circle, OrientedRectangle, Polygon, Rectangle
+from .physics.shapes import (
+    CircleShape,
+    OrientedRectangleShape,
+    PolygonShape,
+    RectangleShape,
+)
 
 # region Attack
 
@@ -125,30 +132,34 @@ class DebugSystem(
             return
 
         match component.body.shape:
-            case RectangleShape():
+            case RectangleShape() as rectangle:
                 shape = pyglet.shapes.Box(
-                    component.body.shape.primitive.origin.x,
-                    component.body.shape.primitive.origin.y,
-                    component.body.shape.primitive.size.x,
-                    component.body.shape.primitive.size.y,
+                    rectangle.primitive.origin.x,
+                    rectangle.primitive.origin.y,
+                    rectangle.primitive.size.x,
+                    rectangle.primitive.size.y,
                     color=(50, 25, 255),
                 )
-            case OrientedRectangleShape():
+            case OrientedRectangleShape() as rectangle:
                 shape = pyglet.shapes.Box(
-                    component.body.shape.primitive.center.x,
-                    component.body.shape.primitive.center.y,
-                    component.body.shape.primitive.half_extent.x * 2,
-                    component.body.shape.primitive.half_extent.y * 2,
+                    rectangle.primitive.center.x,
+                    rectangle.primitive.center.y,
+                    rectangle.primitive.half_extent.x * 2,
+                    rectangle.primitive.half_extent.y * 2,
                     color=(50, 25, 255),
                 )
                 shape.anchor_position = component.body.shape.primitive.half_extent
                 shape.rotation = degrees(component.body.shape.primitive.rotation)
-            case CircleShape():
+            case CircleShape() as circle:
                 shape = pyglet.shapes.Circle(
-                    component.body.shape.primitive.center.x,
-                    component.body.shape.primitive.center.y,
-                    component.body.shape.primitive.radius,
+                    circle.primitive.center.x,
+                    circle.primitive.center.y,
+                    circle.primitive.radius,
                     color=(50, 25, 255),
+                )
+            case PolygonShape() as polygon:
+                shape = pyglet.shapes.Polygon(
+                    [tuple(p) for p in polygon.primitive.points], color=(50, 25, 255)
                 )
         ecs.add_component(entity, Shape(shape, Layer.Debug))
 
@@ -511,3 +522,53 @@ class AISystem(ecs.SystemProtocol, AIStateProtocol, InputProtocol):
 
 
 # endregion
+
+
+# Visualize collisions
+class CollisionDrawSystem(ecs.SystemProtocol, events.CollisionProtocol):
+    def __init__(self):
+        self.active_collisions = {}
+
+    def process(self, dt: float): ...
+
+    def on_collision(self, arbiter):
+        # breakpoint()
+        logger.debug("New collision")
+        if (
+            arbiter.first_body.data,
+            arbiter.second_body.data,
+        ) not in self.active_collisions:
+            entity = ecs.create_entity()
+        else:
+            entity = self.active_collisions[
+                (arbiter.first_body.data, arbiter.second_body.data)
+            ]
+        m = arbiter.first_body.shape.minkowski_difference(arbiter.second_body.shape)
+        match m:
+            case Rectangle():
+                body = Body(
+                    RectangleShape(m.origin, m.size), BodyKind.Dynamic, data=entity
+                )
+            case OrientedRectangle():
+                body = Body(
+                    OrientedRectangleShape(m.center, m.half_extent, m.rotation),
+                    BodyKind.Dynamic,
+                    data=entity,
+                )
+            case Circle():
+                body = Body(
+                    CircleShape(m.center, m.radius), BodyKind.Dynamic, data=entity
+                )
+            case Polygon():
+                body = Body(PolygonShape(m.points), data=entity)
+
+        breakpoint()
+        ecs.add_component(entity, Position(m.center))
+        ecs.add_component(entity, PhysicsBody(body))
+
+        self.active_collisions[(arbiter.first_body.data, arbiter.second_body.data)] = (
+            entity
+        )
+
+    def on_sensor(self, arbiter):
+        return super().on_sensor(arbiter)

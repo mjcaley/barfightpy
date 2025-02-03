@@ -252,6 +252,14 @@ class Polygon:
             yield (edge.point2 - edge.point1).rotate90().normalize()
 
     @property
+    def center(self) -> Vec2:
+        return self.bounding_box.center
+
+    @center.setter
+    def center(self, value: Vec2):
+        self.points = [point + value for point in self.points]
+
+    @property
     def bounding_box(self) -> Rectangle:
         min_x = inf
         max_x = -inf
