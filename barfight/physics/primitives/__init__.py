@@ -1,5 +1,13 @@
 from . import collision, minkowski, penetration
-from .objects import Circle, Line, LineSegment, OrientedRectangle, Polygon, Rectangle
+from .objects import (
+    Circle,
+    Line,
+    LineSegment,
+    OrientedRectangle,
+    Point,
+    Polygon,
+    Rectangle,
+)
 from .utility import Collision
 
 __all__ = [
@@ -10,6 +18,7 @@ __all__ = [
     "Line",
     "LineSegment",
     "OrientedRectangle",
+    "Point",
     "Polygon",
     "Rectangle",
     "Collision",

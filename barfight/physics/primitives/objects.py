@@ -29,6 +29,9 @@ class Point:
     def center(self) -> Vec2:
         return self.point
 
+    def furthest(self, direction: Vec2) -> Vec2:
+        return self.point
+
 
 @dataclass
 class Line:
@@ -68,6 +71,12 @@ class LineSegment:
     def center(self) -> Vec2:
         return (self.point1 + self.point2) / 2
 
+    def furthest(self, direction: Vec2) -> Vec2:
+        if self.point1.dot(direction) > self.point1.dot(direction):
+            return self.point1
+        else:
+            return self.point2
+
 
 @dataclass
 class Circle:
@@ -92,6 +101,9 @@ class Circle:
         for _ in range(num_points):
             point = point.rotate(rotation)
             yield point
+
+    def furthest(self, direction: Vec2) -> Vec2:
+        return self.center + self.radius * direction.normalize()
 
 
 @dataclass
@@ -148,6 +160,19 @@ class Rectangle:
     def axes(self) -> Generator[Vec2, None, None]:
         yield Vec2(1, 0)
         yield Vec2(0, 1)
+
+    def furthest(self, direction: Vec2) -> Vec2:
+        match direction.normalize():
+            case Vec2(x, y) if x <= 0 and y <= 0:
+                return self.bottom_left_vertex
+            case Vec2(x, y) if x <= 0 and y >= 0:
+                return self.top_left_vertex
+            case Vec2(x, y) if x >= 0 and y >= 0:
+                return self.top_right_vertex
+            case Vec2(x, y) if x >= 0 and y <= 0:
+                return self.bottom_right_vertex
+            case _:
+                raise ValueError("Direction must not be zero")
 
 
 @dataclass
@@ -223,6 +248,18 @@ class OrientedRectangle:
 
         return Rectangle(Vec2(min_x, min_y), Vec2(max_x - min_x, max_y - min_y))
 
+    def furthest(self, direction: Vec2) -> Vec2:
+        furthest_distance = -inf
+        furthest_vertex = self.center
+
+        for vertex in self.vertices():
+            distance = vertex.dot(direction)
+            if distance > furthest_distance:
+                furthest_distance = distance
+                furthest_vertex = vertex
+
+        return furthest_vertex
+
 
 @dataclass
 class Polygon:
@@ -273,6 +310,18 @@ class Polygon:
             max_y = max(max_y, vertex.y)
 
         return Rectangle(Vec2(min_x, min_y), Vec2(max_x - min_x, max_y - min_y))
+
+    def furthest(self, direction: Vec2) -> Vec2:
+        furthest_distance = -inf
+        furthest_vertex = self.center
+
+        for vertex in self.vertices():
+            distance = vertex.dot(direction)
+            if distance > furthest_distance:
+                furthest_distance = distance
+                furthest_vertex = vertex
+
+        return furthest_vertex
 
     def is_convex(self) -> bool:
         cross = []
