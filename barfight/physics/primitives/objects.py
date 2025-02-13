@@ -137,11 +137,11 @@ class Rectangle:
 
     @property
     def bottom_right_vertex(self) -> Vec2:
-        return Vec2(self.origin.x, self.origin.y + self.size.y)
+        return Vec2(self.origin.x + self.size.x, self.origin.y)
 
     @property
     def top_left_vertex(self) -> Vec2:
-        return Vec2(self.origin.x + self.size.x, self.origin.y)
+        return Vec2(self.origin.x, self.origin.y + self.size.y)
 
     @property
     def top_right_vertex(self) -> Vec2:
