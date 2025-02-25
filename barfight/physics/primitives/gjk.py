@@ -116,13 +116,29 @@ def triple_product(a: Vec2, b: Vec2, c: Vec2) -> Vec2:
 
 
 def colliding(shape1: GJKShape, shape2: GJKShape) -> Collision | None:
+    """Implementation of the GJK algorithm.
+    
+    References
+    ==========
+    https://www.youtube.com/watch?v=ajv46BSqcK4
+    """
+
     state = GJKState(shape1, shape2)
     
     return state.colliding()
 
 
 def penetration(collision: Collision) -> Vec2:
-    """EPA (Expanding Polytope Algorithm) implementation"""
+    """EPA (Expanding Polytope Algorithm) implementation.
+    
+    References
+    ==========
+
+
+    https://winter.dev/articles/epa-algorithm
+    https://www.youtube.com/watch?v=0XQ2FSz3EK8&t=344s
+    """
+    
     polytope = collision.simplex.copy()
     
     while True:
