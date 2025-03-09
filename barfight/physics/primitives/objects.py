@@ -163,6 +163,8 @@ class Rectangle:
 
     def furthest(self, direction: Vec2) -> Vec2:
         match direction.normalize():
+            case Vec2(x, y) if x == 0 and y == 0:
+                raise ValueError("Direction vector cannot be 0, 0")
             case Vec2(x, y) if x <= 0 and y <= 0:
                 return self.bottom_left_vertex
             case Vec2(x, y) if x <= 0 and y >= 0:
@@ -249,6 +251,8 @@ class OrientedRectangle:
         return Rectangle(Vec2(min_x, min_y), Vec2(max_x - min_x, max_y - min_y))
 
     def furthest(self, direction: Vec2) -> Vec2:
+        if direction == Vec2(0, 0):
+            raise ValueError("Direction vector cannot be 0, 0")
         furthest_distance = -inf
         furthest_vertex = self.center
 
