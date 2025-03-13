@@ -1,8 +1,7 @@
 from dataclasses import dataclass, field
-from enum import Enum, auto
 from typing import Protocol
 
-from pyglet.math import Vec2, Vec3
+from pyglet.math import Vec2
 
 
 def perpendicular(v: Vec2) -> Vec2:
@@ -38,12 +37,12 @@ class GJKState:
     def __init__(self, shape1: GJKShape, shape2: GJKShape):
         self.shape1 = shape1
         self.shape2 = shape2
-        
+
         # Get initial support point in any direction (using vector between centers)
         self.direction = self.shape1.center - self.shape2.center
         if self.direction.length() == 0:
             self.direction = Vec2(1, 0)
-            
+
         self.simplex = Simplex([support(shape1, shape2, self.direction)])
         self.direction = -self.direction  # Next search toward origin
 
@@ -51,12 +50,12 @@ class GJKState:
         if len(self.simplex.points) == 2:
             return self.line_case()
         return self.triangle_case()
-    
+
     def line_case(self) -> bool:
         b, a = self.simplex.points  # a is the latest point
         ab = b - a
         ao = -a  # Vector from a to origin
-        
+
         # Get perpendicular to ab pointing toward origin
         if same_direction(perpendicular(ab), ao):
             self.direction = perpendicular(ab)
@@ -69,11 +68,11 @@ class GJKState:
         ab = b - a
         ac = c - a
         ao = -a  # Vector from a to origin
-        
+
         # Compute perpendicular vectors for edges
         ab_perp = triple_product(ac, ab, ab)
         ac_perp = triple_product(ab, ac, ac)
-        
+
         if same_direction(ab_perp, ao):
             self.simplex.remove(2)  # Remove c
             self.direction = ab_perp
@@ -87,13 +86,13 @@ class GJKState:
     def colliding(self) -> Collision | None:
         while True:
             point = support(self.shape1, self.shape2, self.direction)
-            
+
             # If we didn't pass the origin, no collision
             if point.dot(self.direction) <= 0:
                 return None
-                
+
             self.simplex.add(point)
-            
+
             # Check if we contain origin and update direction
             if self.handle_simplex():
                 return Collision(self.shape1, self.shape2, self.simplex.points)
@@ -117,20 +116,58 @@ def triple_product(a: Vec2, b: Vec2, c: Vec2) -> Vec2:
 
 def colliding(shape1: GJKShape, shape2: GJKShape) -> Collision | None:
     """Implementation of the GJK algorithm.
-    
+
     References
     ==========
     https://www.youtube.com/watch?v=ajv46BSqcK4
     """
 
     state = GJKState(shape1, shape2)
-    
+
     return state.colliding()
+
+
+@dataclass
+class Edge:
+    normal: Vec2
+    index: int
+    distance: float
+
+
+def closest_edge(polytope) -> Edge:
+    # Find closest edge to origin
+    min_dist = float("inf")
+    min_normal = Vec2(0, 0)
+    min_index = 0
+
+    for i in range(len(polytope)):
+        j = (i + 1) % len(polytope)
+        edge = polytope[j] - polytope[i]
+        normal = Vec2(-edge.y, edge.x).normalize()
+
+        # Make sure normal points toward origin
+        if normal.dot(polytope[i]) < 0:
+            normal = -normal
+
+        dist = normal.dot(polytope[i])
+
+        if dist < min_dist:
+            min_dist = dist
+            min_normal = normal
+            min_index = j
+
+    return Edge(min_normal, min_index, min_dist)
+
+
+@dataclass
+class Penetration:
+    normal: Vec2
+    distance: float
 
 
 def penetration(collision: Collision) -> Vec2:
     """EPA (Expanding Polytope Algorithm) implementation.
-    
+
     References
     ==========
 
@@ -138,38 +175,19 @@ def penetration(collision: Collision) -> Vec2:
     https://winter.dev/articles/epa-algorithm
     https://www.youtube.com/watch?v=0XQ2FSz3EK8&t=344s
     """
-    
+
     polytope = collision.simplex.copy()
-    
+
     while True:
-        # Find closest edge to origin
-        min_dist = float('inf')
-        min_normal = Vec2(0, 0)
-        min_index = 0
-        
-        for i in range(len(polytope)):
-            j = (i + 1) % len(polytope)
-            edge = polytope[j] - polytope[i]
-            normal = Vec2(-edge.y, edge.x).normalize()
-            
-            # Make sure normal points toward origin
-            if normal.dot(polytope[i]) < 0:
-                normal = -normal
-                
-            dist = normal.dot(polytope[i])
-            
-            if dist < min_dist:
-                min_dist = dist
-                min_normal = normal
-                min_index = j
-                
+        edge = closest_edge(polytope)
+
         # Get support point in direction of edge normal
-        support_point = support(collision.shape1, collision.shape2, min_normal)
-        support_dist = min_normal.dot(support_point)
-        
+        support_point = support(collision.shape1, collision.shape2, edge.normal)
+        support_dist = edge.normal.dot(support_point)
+
         # Check if we're done (within tolerance)
-        if abs(support_dist - min_dist) < 0.0001:
-            return min_normal * min_dist
-            
+        if abs(support_dist - edge.distance) < 0.0001:
+            return Penetration(edge.normal, support_dist)
+
         # Insert support point into polytope
-        polytope.insert(min_index, support_point)
+        polytope.insert(edge.index, support_point)

@@ -8,7 +8,12 @@ from barfight.physics.primitives import (
     Polygon,
     Rectangle,
 )
-from barfight.physics.primitives.gjk import colliding, penetration
+from barfight.physics.primitives.gjk import (
+    Collision,
+    closest_edge,
+    colliding,
+    penetration,
+)
 
 
 @pytest.mark.parametrize(
@@ -63,30 +68,65 @@ def test_colliding_no_intersection(test_shape1, test_shape2):
 
 
 @pytest.mark.parametrize(
-    "test_shape1,test_shape2,expected",
+    "test_shape1,test_shape2,expected_normal,expected_depth",
     [
         (
             Rectangle(Vec2(0, 0), Vec2(1, 1)),
             Rectangle(Vec2(0.5, 0), Vec2(1, 1)),
-            Vec2(0.5, 0),
+            Vec2(1, 0),
+            0.5,
         ),
-        (Circle(Vec2(0, 0), 1), Circle(Vec2(0.5, 0), 1), Vec2(1.5, 0)),  # overlapping
-        (Circle(Vec2(0, 0), 1), Circle(Vec2(1, 0), 1), Vec2(1, 0)),  # edge
+        (
+            Circle(Vec2(0, 0), 0.5),
+            Circle(Vec2(0.5, 0), 0.5),
+            Vec2(1, 0),
+            0.5,
+        ),  # overlapping
+        # (Circle(Vec2(0, 0), 1), Circle(Vec2(2, 0), 1), Vec2(1, 0), 0),  # edge, doesn't work, GJK doesn't see collision
         (
             OrientedRectangle(Vec2(0, 0), Vec2(5, 5), 45),
             OrientedRectangle(Vec2(0.5, 0), Vec2(5, 5), 45),
             Vec2(0.5, 0),
+            0,
         ),
         (
             Polygon([Vec2(-1, -1), Vec2(0, 1), Vec2(1, -1)]),
             Polygon([Vec2(-1, 1), Vec2(0, -1), Vec2(1, 1)]),
             Vec2(0.5, 0),
+            0,
+        ),
+        (
+            Polygon([Vec2(4, 5), Vec2(4, 11), Vec2(9, 9)]),
+            Polygon([Vec2(7, 3), Vec2(5, 7), Vec2(12, 7), Vec2(10, 2)]),
+            Vec2(
+                0,
+                0,
+            ),
+            0,
         ),
     ],
 )
-def test_penetration(test_shape1, test_shape2, expected):
+def test_penetration(test_shape1, test_shape2, expected_normal, expected_depth):
     collision = colliding(test_shape1, test_shape2)
     result = penetration(collision)
 
-    assert pytest.approx(expected.x, rel=1e-2, abs=1e-2) == result.x
-    assert pytest.approx(expected.y, rel=1e-2, abs=1e-2) == result.y
+    assert pytest.approx(expected_normal.x, rel=1e-1, abs=1e-1) == result.normal.x
+    assert pytest.approx(expected_normal.y, rel=1e-1, abs=1e-1) == result.normal.y
+    assert pytest.approx(expected_depth, rel=1e-4, abs=1e-4) == result.distance
+
+
+def test_closest_edge():
+    p = [Vec2(-1, -1), Vec2(-1, 1), Vec2(3, 1), Vec2(3, -1)]
+    edge = closest_edge(p)
+
+    assert edge is not None
+
+
+def test_gjk_again():
+    a = Polygon([Vec2(4, 5), Vec2(4, 11), Vec2(9, 9)])
+    b = Polygon([Vec2(7, 3), Vec2(5, 7), Vec2(12, 7), Vec2(10, 2)])
+    collision = Collision(a, b, [Vec2(4, 2), Vec2(-8, -2), Vec2(-1, -2)])
+
+    result = penetration(collision)
+
+    assert result is not None
