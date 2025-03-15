@@ -11,6 +11,7 @@ from barfight.physics.primitives.objects import Point
 
 from .body import Body, BodyKind
 from .primitives import Circle, OrientedRectangle, Rectangle
+from .primitives.gjk import colliding, penetration
 from .raycast import Ray
 from .response import Arbiter
 from .shapes import CircleShape, OrientedRectangleShape
@@ -117,9 +118,12 @@ class PhysicsWorld:
         collision_resolution = {}
 
         for bc in broad_collisions:
-            if collision := bc.first.shape.penetration(bc.second.shape):
+            if collision := colliding(
+                bc.first.shape.primitive, bc.second.shape.primitive
+            ):
+                pen_vec = penetration(collision)
                 pair = CollisionPair(bc.first, bc.second)
-                resolution = Resolution(collision.penetration, collision.depth)
+                resolution = Resolution(pen_vec.normal, pen_vec.distance)
                 discrete_collisions.add(pair)
                 collision_resolution[pair] = resolution
 
@@ -146,7 +150,12 @@ class PhysicsWorld:
                         )
                         continue
 
-                    collision.first.shape.position -= resolutions[collision].penetration
+                    if resolutions[collision].depth > 50:
+                        breakpoint()
+                    collision.first.shape.position -= (
+                        resolutions[collision].penetration
+                        * resolutions[collision].depth
+                    )
                     resolved_collisions.add(
                         CollisionPair(collision.first, collision.second)
                     )
@@ -157,10 +166,11 @@ class PhysicsWorld:
                     )
 
                     logger.debug(
-                        "Collision resolved {body1} {body2} {penetration}",
+                        "Collision resolved {body1} {body2} penetration={penetration} depth={depth}",
                         body1=collision.first,
                         body2=collision.second,
                         penetration=resolutions[collision].penetration,
+                        depth=resolutions[collision].depth,
                     )
                     self._call_position_change(collision.first)
                     self._call_on_collision(arbiter)
@@ -282,23 +292,24 @@ class PhysicsWorld:
             if body.kind != BodyKind.Dynamic:
                 continue
 
-            logger.debug(
-                "Begin moving {body}, velocity: {velocity}, position: {position}",
-                body=body,
-                velocity=body.velocity,
-                position=body.position,
-            )
+            # logger.debug(
+            #     "Begin moving {body}, velocity: {velocity}, position: {position}",
+            #     body=body,
+            #     velocity=body.velocity,
+            #     position=body.position,
+            # )
             # if body.velocity != Vec2():
             #     breakpoint()
-            final_velocity = self._move_body(body, body.velocity * dt)
+            # final_velocity = self._move_body(body, body.velocity * dt)
+            final_velocity = body.velocity * dt
             body.velocity = final_velocity
             body.position += final_velocity
-            logger.debug(
-                "End moving {body}, velocity: {velocity}, position: {position}",
-                body=body,
-                velocity=body.velocity,
-                position=body.position,
-            )
+            # logger.debug(
+            #     "End moving {body}, velocity: {velocity}, position: {position}",
+            #     body=body,
+            #     velocity=body.velocity,
+            #     position=body.position,
+            # )
             self._call_position_change(body)
 
     def query(self, area: Rectangle) -> list[Body]:

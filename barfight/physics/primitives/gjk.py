@@ -165,7 +165,7 @@ class Penetration:
     distance: float
 
 
-def penetration(collision: Collision) -> Vec2:
+def penetration(collision: Collision) -> Penetration:
     """EPA (Expanding Polytope Algorithm) implementation.
 
     References

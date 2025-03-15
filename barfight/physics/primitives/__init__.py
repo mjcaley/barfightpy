@@ -1,4 +1,4 @@
-from . import collision, minkowski, penetration
+from . import collision, penetration
 from .objects import (
     Circle,
     Line,
@@ -13,7 +13,6 @@ from .utility import Collision
 __all__ = [
     "collision",
     "penetration",
-    "minkowski",
     "Circle",
     "Line",
     "LineSegment",
