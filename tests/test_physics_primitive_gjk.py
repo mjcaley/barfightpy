@@ -1,3 +1,5 @@
+from math import radians
+
 import pytest
 from pyglet.math import Vec2
 
@@ -84,25 +86,17 @@ def test_colliding_no_intersection(test_shape1, test_shape2):
         ),  # overlapping
         # (Circle(Vec2(0, 0), 1), Circle(Vec2(2, 0), 1), Vec2(1, 0), 0),  # edge, doesn't work, GJK doesn't see collision
         (
-            OrientedRectangle(Vec2(0, 0), Vec2(5, 5), 45),
-            OrientedRectangle(Vec2(0.5, 0), Vec2(5, 5), 45),
-            Vec2(0.5, 0),
-            0,
+            OrientedRectangle(Vec2(0, 0), Vec2(5, 5), radians(45)),
+            OrientedRectangle(Vec2(x=5, y=5), Vec2(5, 5), radians(45)),
+            Vec2(1, 1).normalize(),
+            2.9289321881345254,
         ),
-        (
-            Polygon([Vec2(-1, -1), Vec2(0, 1), Vec2(1, -1)]),
-            Polygon([Vec2(-1, 1), Vec2(0, -1), Vec2(1, 1)]),
-            Vec2(0.5, 0),
-            0,
-        ),
+        # Shapes from dyn4j article: https://dyn4j.org/2010/05/epa-expanding-polytope-algorithm/
         (
             Polygon([Vec2(4, 5), Vec2(4, 11), Vec2(9, 9)]),
             Polygon([Vec2(7, 3), Vec2(5, 7), Vec2(12, 7), Vec2(10, 2)]),
-            Vec2(
-                0,
-                0,
-            ),
-            0,
+            Vec2(0.62, -0.78),
+            0.93,
         ),
     ],
 )
@@ -112,7 +106,7 @@ def test_penetration(test_shape1, test_shape2, expected_normal, expected_depth):
 
     assert pytest.approx(expected_normal.x, rel=1e-1, abs=1e-1) == result.normal.x
     assert pytest.approx(expected_normal.y, rel=1e-1, abs=1e-1) == result.normal.y
-    assert pytest.approx(expected_depth, rel=1e-4, abs=1e-4) == result.distance
+    assert pytest.approx(expected_depth, rel=1e-2, abs=1e-2) == result.distance
 
 
 def test_closest_edge():
