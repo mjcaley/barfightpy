@@ -4,7 +4,7 @@ from pyglet.math import Vec2
 
 from barfight.physics.body import Body, BodyKind
 from barfight.physics.raycast import Ray
-from barfight.physics.shapes import OrientedRectangleShape, RectangleShape
+from barfight.physics.shapes import CircleShape, OrientedRectangleShape, RectangleShape
 from barfight.physics.world import CollisionPair, PhysicsWorld
 
 
@@ -129,3 +129,15 @@ def test_move_body_rectangle_oriented_rectangle():
     q.add(body)
     q.add(static_body)
     q.move(10.0)
+
+
+def test_time_of_impact():
+    q = PhysicsWorld(Vec2(0, 0), Vec2(100, 100))
+    body = Body(CircleShape(Vec2(0, 0), 10), velocity=Vec2(10.0, 0))
+    static_body = Body(RectangleShape(Vec2(10.5, -10), Vec2(20, 20)), BodyKind.Static)
+    q.add(body)
+    q.add(static_body)
+
+    result = q.time_of_impact(body, static_body, 0.2)
+
+    assert 0 < result

@@ -6,18 +6,18 @@ from pyglet.math import Vec2
 from .primitives import (
     Circle,
     Collision,
-    LineSegment,
     OrientedRectangle,
+    Point,
     Polygon,
     Rectangle,
 )
 
-PrimitiveType = Circle | LineSegment | OrientedRectangle | Rectangle | Polygon
+PrimitiveType = Point | Circle | OrientedRectangle | Rectangle | Polygon
 
 
 class ShapeProtocol(Protocol):
     @property
-    def primitive(self) -> Circle | LineSegment | OrientedRectangle | Rectangle: ...
+    def primitive(self) -> Circle | OrientedRectangle | Rectangle: ...
 
     @property
     def position(self) -> Vec2: ...
@@ -41,7 +41,7 @@ class PointShape:
         self._primitive = point
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(point={self.point})"
+        return f"{self.__class__.__name__}(point={self._primitive.point})"
 
     @property
     def primitive(self) -> Vec2:

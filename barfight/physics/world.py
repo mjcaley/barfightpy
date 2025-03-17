@@ -14,7 +14,7 @@ from .primitives import Circle, OrientedRectangle, Rectangle
 from .primitives.gjk import colliding, penetration
 from .raycast import Ray
 from .response import Arbiter
-from .shapes import CircleShape, OrientedRectangleShape
+from .shapes import CircleShape, OrientedRectangleShape, PrimitiveType
 from .spatial import QuadTree
 
 
@@ -301,9 +301,11 @@ class PhysicsWorld:
             # if body.velocity != Vec2():
             #     breakpoint()
             # final_velocity = self._move_body(body, body.velocity * dt)
-            final_velocity = body.velocity * dt
+            # if body.velocity != Vec2():
+            # breakpoint()
+            final_velocity = body.velocity
             body.velocity = final_velocity
-            body.position += final_velocity
+            body.position += final_velocity * dt
             # logger.debug(
             #     "End moving {body}, velocity: {velocity}, position: {position}",
             #     body=body,
@@ -311,6 +313,51 @@ class PhysicsWorld:
             #     position=body.position,
             # )
             self._call_position_change(body)
+
+    @staticmethod
+    def _time_of_impact_impl(
+        first: PrimitiveType,
+        second: PrimitiveType,
+        velocity: Vec2,
+        dt_min: float,
+        dt_max: float,
+        depth: int = 8,
+    ) -> float:
+        dt_mid = dt_min + ((dt_max - dt_min) / 2)
+        middle = copy(first)
+        middle.center += velocity * dt_mid
+
+        if depth == 0:
+            if colliding(middle, second):
+                return dt_mid
+            else:
+                return dt_min
+        else:
+            if colliding(middle, second):
+                return PhysicsWorld._time_of_impact_impl(
+                    middle, second, velocity, dt_mid, dt_max, depth - 1
+                )
+            else:
+                return PhysicsWorld._time_of_impact_impl(
+                    first, second, velocity, dt_min, dt_mid, depth - 1
+                )
+
+    @staticmethod
+    def time_of_impact(first: Body, second: Body, dt: float) -> float:
+        relative_velocity = first.velocity - second.velocity
+        first_shape = first.shape.primitive
+        second_shape = second.shape.primitive
+        first_at_destination = copy(first_shape)
+        first_at_destination.center += relative_velocity * dt
+
+        if colliding(first_shape, second_shape):
+            return 0.0
+        if not colliding(first_at_destination, second_shape):
+            raise ValueError("Shapes must be colliding")
+
+        return PhysicsWorld._time_of_impact_impl(
+            first_shape, second_shape, relative_velocity, 0.0, dt
+        )
 
     def query(self, area: Rectangle) -> list[Body]:
         return self.root.query(area)
