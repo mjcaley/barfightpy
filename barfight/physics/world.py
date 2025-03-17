@@ -321,7 +321,7 @@ class PhysicsWorld:
         velocity: Vec2,
         dt_min: float,
         dt_max: float,
-        depth: int = 8,
+        depth: int = 16,
     ) -> float:
         dt_mid = dt_min + ((dt_max - dt_min) / 2)
         middle = copy(first)
@@ -335,11 +335,11 @@ class PhysicsWorld:
         else:
             if colliding(middle, second):
                 return PhysicsWorld._time_of_impact_impl(
-                    middle, second, velocity, dt_mid, dt_max, depth - 1
+                    first, second, velocity, dt_min, dt_mid, depth - 1
                 )
             else:
                 return PhysicsWorld._time_of_impact_impl(
-                    first, second, velocity, dt_min, dt_mid, depth - 1
+                    first, second, velocity, dt_mid, dt_max, depth - 1
                 )
 
     @staticmethod
