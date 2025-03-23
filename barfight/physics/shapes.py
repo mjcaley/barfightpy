@@ -4,20 +4,20 @@ from typing import Protocol, Self
 from pyglet.math import Vec2
 
 from .primitives import (
+    Primitive,
     Circle,
     Collision,
     OrientedRectangle,
     Point,
     Polygon,
     Rectangle,
+    colliding,
 )
-
-PrimitiveType = Point | Circle | OrientedRectangle | Rectangle | Polygon
 
 
 class ShapeProtocol(Protocol):
     @property
-    def primitive(self) -> Circle | OrientedRectangle | Rectangle: ...
+    def primitive(self) -> Primitive: ...
 
     @property
     def position(self) -> Vec2: ...
@@ -31,39 +31,51 @@ class ShapeProtocol(Protocol):
 
     def penetration(self, shape: Self) -> Collision | None: ...
 
-    def minkowski_difference(self, shape: Self) -> PrimitiveType: ...
-
     def __copy__(self) -> Self: ...
 
 
-class PointShape:
+class Shape:
+    def __init__(self, primitive: Primitive):
+        self._primitive = primitive
+
+    @property
+    def primitive(self) -> Primitive:
+        return self._primitive
+    
+    @property
+    def position(self) -> Vec2:
+        return self.primitive.center
+    
+    @position.setter
+    def position(self, value: Vec2):
+        self.primitive.center = value
+
+    def collision(self, shape: Self) -> bool:
+        if _ := colliding(self.primitive, shape.primitive):
+            return True
+        else:
+            return False
+        
+    def penetration(self, shape: Self) -> Collision | None:
+        return colliding(self.primitive, shape.primitive)
+
+
+class PointShape(Shape):
     def __init__(self, point: Vec2):
-        self._primitive = point
+        super().__init__(point)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(point={self._primitive.point})"
 
-    @property
-    def primitive(self) -> Vec2:
-        return self._primitive
-
-    @property
-    def position(self) -> Vec2:
-        return self._primitive
-
-    @position.setter
-    def position(self, value: Vec2):
-        self._primitive = value
-
     def boundary(self) -> Rectangle:
-        return Rectangle(self._primitive, Vec2())
+        return Rectangle(self.primitive, Vec2())
 
 
 class RectangleShape:
     def __init__(self, origin: Vec2 = None, size: Vec2 = None):
         origin = origin or Vec2()
         size = size or Vec2()
-        self._primitive = Rectangle(origin, size)
+        super().__init__(Rectangle(origin, size))
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(primitive: {self.primitive})"

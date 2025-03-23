@@ -13,6 +13,13 @@ class Collision:
     depth: float
 
 
+@dataclass(frozen=True)
+class TimeOfImpact:
+    impact_time: float
+    penetration: Vec2
+    depth: float
+
+
 @dataclass
 class Point:
     point: Vec2 = field(default_factory=Vec2)
@@ -28,6 +35,10 @@ class Point:
     @property
     def center(self) -> Vec2:
         return self.point
+    
+    @center.setter
+    def center(self, value: Vec2):
+        self.point = value
 
     def furthest(self, direction: Vec2) -> Vec2:
         return self.point

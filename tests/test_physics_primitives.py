@@ -1,6 +1,7 @@
 from math import radians
 
 from pyglet.math import Vec2
+import pytest
 
 from barfight.physics.primitives import (
     Circle,
@@ -9,6 +10,7 @@ from barfight.physics.primitives import (
     OrientedRectangle,
     Polygon,
     Rectangle,
+    time_of_impact,
 )
 from barfight.physics.primitives.objects import Point
 
@@ -187,3 +189,15 @@ def test_point_polygon_collision():
     polygon = Polygon([Vec2(-1, -1), Vec2(-1, 1), Vec2(1, 1), Vec2(1, -1)])
 
     assert polygon.collision(point)
+
+
+def test_time_of_impact():
+    r1 = Rectangle(Vec2(0, -5), Vec2(10, 10))
+    r2 = Rectangle(Vec2(10.5, -5), Vec2(20, 20))
+
+    result = time_of_impact(r1, r2, Vec2(1, 0), 1)
+
+    assert 0.5 == pytest.approx(result.impact_time, rel=1e-4, abs=1e-4)
+    assert Vec2(1, 0) == result.penetration
+    assert 0.5 == result.depth
+

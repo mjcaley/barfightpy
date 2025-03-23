@@ -130,12 +130,3 @@ def test_move_body_rectangle_oriented_rectangle():
     q.add(body)
     q.add(static_body)
     q.move(10.0)
-
-
-def test_time_of_impact():
-    body = Body(RectangleShape(Vec2(0, -5), Vec2(10, 10)), velocity=Vec2(1.0, 0))
-    static_body = Body(RectangleShape(Vec2(10.5, -5), Vec2(20, 20)), BodyKind.Static)
-
-    result = PhysicsWorld.time_of_impact(body, static_body, 1)
-
-    assert 0.5 == pytest.approx(result, rel=1e-4, abs=1e-4)

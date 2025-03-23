@@ -2,15 +2,15 @@ from copy import copy
 from dataclasses import dataclass
 from functools import singledispatchmethod
 from math import inf
-from typing import Any
+from typing import Any, Generator
 
 from loguru import logger
 from pyglet.math import Vec2
 
-from barfight.physics.primitives.objects import Point
+from barfight.physics.primitives.objects import Point, TimeOfImpact
 
 from .body import Body, BodyKind
-from .primitives import Circle, OrientedRectangle, Rectangle
+from .primitives import Circle, OrientedRectangle, Rectangle, time_of_impact
 from .primitives.gjk import colliding, penetration
 from .raycast import Ray
 from .response import Arbiter
@@ -53,6 +53,16 @@ class PhysicsWorld:
         self.on_collision_callback = None
         self.on_sensor_callback = None
         self.on_collision_debug = None
+
+    def active_bodies(self) -> Generator[Body, None, None]:
+        for body in self.bodies:
+            if body:
+                yield body
+
+    def bodies_of_kind(self, kind: BodyKind) -> Generator[Body, None, None]:
+        for body in self.active_bodies():
+            if body.kind == kind:
+                yield body
 
     @property
     def boundary(self) -> Rectangle:
@@ -243,121 +253,79 @@ class PhysicsWorld:
 
         return Rectangle(min_origin, max_size)
 
-    def _move_body(self, body: Body, leftover: Vec2, max_depth: int = 50) -> Vec2:
-        if not max_depth:
-            return Vec2()
-
-        current_shape = body.shape
-        boundary = self._movement_boundary(body, leftover)
-        broad_collisions = self.query(boundary)
-
-        had_collision = False
-        for collision in broad_collisions:
-            if collision is body:
-                continue
-            if collision.kind != BodyKind.Static:
-                continue
-
-            minkowski_difference = collision.shape.minkowski_difference(current_shape)
-            if minkowski_difference.collision(Point()):
-                logger.debug("Minkoski difference colliding, skipping")
-                continue
-
-            ray = Ray(Vec2(), leftover.normalize(), leftover.length())
-            intersection = ray.intersects(minkowski_difference)
-            if intersection:
-                had_collision = True
-                # breakpoint()
-                dot_product = leftover.dot(intersection.normal)
-                sliding_vector = leftover - (intersection.normal * dot_product)
-                leftover = sliding_vector
-
-                logger.debug(
-                    "Minkowski intersection found - {intersection}\nVelocity changed to {velocity}",
-                    intersection=intersection,
-                    velocity=leftover,
-                )
-                self._call_on_debug_collision(Arbiter(body, collision))
-            else:
-                logger.debug("Minkowski - No intersection found")
-
-        if had_collision:
-            return self._move_body(body, leftover, max_depth - 1)
-        return leftover
-
     def move(self, dt: float):
-        for body in self.bodies:
-            if body is None:
+        for body in self.bodies_of_kind(BodyKind.Dynamic):
+            leftover_dt = dt
+
+            while toi := self.time_of_impact(body, leftover_dt):
+                # TODO: What if we're stuck between a bunch of bodies and never stop colliding?
+                # Need to have a limit on iterations 
+
+                leftover_dt -= toi.impact_time
+                new_velocity = toi.penetration * (body.velocity * leftover_dt).length()
+
+                # Move to impact position
+                body.position += body.velocity * toi.impact_time
+                body.position = new_velocity
+
+
+
+
+        # for body in self.bodies:
+        #     if body is None:
+        #         continue
+        #     if body.kind != BodyKind.Dynamic:
+        #         continue
+
+        #     move_boundary = self._movement_boundary(body, body.velocity)
+        #     colliding_bodies = self.query(move_boundary)
+        #     closest_body = (dt, None)
+        #     for colliding_body in colliding_bodies:
+        #         if impact_time := self.time_of_impact(body, colliding_body, dt):
+        #             if impact_time < closest_body[0]:
+        #                 closest_body = (impact_time, colliding_body)
+
+        #     body.position += body.velocity * closest_body[0]
+
+        #     # logger.debug(
+        #     #     "Begin moving {body}, velocity: {velocity}, position: {position}",
+        #     #     body=body,
+        #     #     velocity=body.velocity,
+        #     #     position=body.position,
+        #     # )
+        #     # if body.velocity != Vec2():
+        #     #     breakpoint()
+        #     # final_velocity = self._move_body(body, body.velocity * dt)
+        #     # if body.velocity != Vec2():
+        #     # breakpoint()
+            
+        #     # logger.debug(
+        #     #     "End moving {body}, velocity: {velocity}, position: {position}",
+        #     #     body=body,
+        #     #     velocity=body.velocity,
+        #     #     position=body.position,
+        #     # )
+        #     self._call_position_change(body)
+
+    def time_of_impact(self, body: Body, dt: float) -> TimeOfImpact | None:
+        colliding_bodies = self.query(self._movement_boundary(body, body.velocity * dt))
+        earliest_impact = inf
+        closest = None
+
+        for other in colliding_bodies:
+            if other.kind != BodyKind.Static:
                 continue
-            if body.kind != BodyKind.Dynamic:
+            
+            if other is body:
                 continue
 
-            # logger.debug(
-            #     "Begin moving {body}, velocity: {velocity}, position: {position}",
-            #     body=body,
-            #     velocity=body.velocity,
-            #     position=body.position,
-            # )
-            # if body.velocity != Vec2():
-            #     breakpoint()
-            # final_velocity = self._move_body(body, body.velocity * dt)
-            # if body.velocity != Vec2():
-            # breakpoint()
-            final_velocity = body.velocity
-            body.velocity = final_velocity
-            body.position += final_velocity * dt
-            # logger.debug(
-            #     "End moving {body}, velocity: {velocity}, position: {position}",
-            #     body=body,
-            #     velocity=body.velocity,
-            #     position=body.position,
-            # )
-            self._call_position_change(body)
+            if toi := time_of_impact(body.shape.primitive, other.shape.primitive, body.velocity, dt):
+                if toi.impact_time < earliest_impact:
+                    closest = toi
+                    earliest_impact = toi.impact_time
 
-    @staticmethod
-    def _time_of_impact_impl(
-        first: PrimitiveType,
-        second: PrimitiveType,
-        velocity: Vec2,
-        dt_min: float,
-        dt_max: float,
-        depth: int = 16,
-    ) -> float:
-        dt_mid = dt_min + ((dt_max - dt_min) / 2)
-        middle = copy(first)
-        middle.center += velocity * dt_mid
+        return closest if earliest_impact < inf else None
 
-        if depth == 0:
-            if colliding(middle, second):
-                return dt_mid
-            else:
-                return dt_min
-        else:
-            if colliding(middle, second):
-                return PhysicsWorld._time_of_impact_impl(
-                    first, second, velocity, dt_min, dt_mid, depth - 1
-                )
-            else:
-                return PhysicsWorld._time_of_impact_impl(
-                    first, second, velocity, dt_mid, dt_max, depth - 1
-                )
-
-    @staticmethod
-    def time_of_impact(first: Body, second: Body, dt: float) -> float:
-        relative_velocity = first.velocity - second.velocity
-        first_shape = first.shape.primitive
-        second_shape = second.shape.primitive
-        first_at_destination = copy(first_shape)
-        first_at_destination.center += relative_velocity * dt
-
-        if colliding(first_shape, second_shape):
-            return 0.0
-        if not colliding(first_at_destination, second_shape):
-            raise ValueError("Shapes must be colliding")
-
-        return PhysicsWorld._time_of_impact_impl(
-            first_shape, second_shape, relative_velocity, 0.0, dt
-        )
 
     def query(self, area: Rectangle) -> list[Body]:
         return self.root.query(area)

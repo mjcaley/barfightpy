@@ -165,7 +165,7 @@ class Penetration:
     distance: float
 
 
-def penetration(collision: Collision) -> Penetration:
+def penetration(collision: Collision | None) -> Penetration:
     """EPA (Expanding Polytope Algorithm) implementation.
 
     References
@@ -175,6 +175,9 @@ def penetration(collision: Collision) -> Penetration:
     https://winter.dev/articles/epa-algorithm
     https://www.youtube.com/watch?v=0XQ2FSz3EK8&t=344s
     """
+
+    if not collision:
+        return None
 
     polytope = collision.simplex.copy()
 
