@@ -7,14 +7,14 @@ from typing import Any, Generator
 from loguru import logger
 from pyglet.math import Vec2
 
-from barfight.physics.primitives.objects import Point, TimeOfImpact
+from barfight.physics.primitives.objects import TimeOfImpact
 
 from .body import Body, BodyKind
 from .primitives import Circle, OrientedRectangle, Rectangle, time_of_impact
 from .primitives.gjk import colliding, penetration
 from .raycast import Ray
 from .response import Arbiter
-from .shapes import CircleShape, OrientedRectangleShape, PrimitiveType
+from .shapes import CircleShape, OrientedRectangleShape
 from .spatial import QuadTree
 
 
@@ -160,8 +160,6 @@ class PhysicsWorld:
                         )
                         continue
 
-                    if resolutions[collision].depth > 50:
-                        breakpoint()
                     collision.first.shape.position -= (
                         resolutions[collision].penetration
                         * resolutions[collision].depth
@@ -255,57 +253,25 @@ class PhysicsWorld:
 
     def move(self, dt: float):
         for body in self.bodies_of_kind(BodyKind.Dynamic):
+            # if body.velocity != Vec2():
+            #     breakpoint()
             leftover_dt = dt
 
-            while toi := self.time_of_impact(body, leftover_dt):
-                # TODO: What if we're stuck between a bunch of bodies and never stop colliding?
-                # Need to have a limit on iterations 
+            for _ in range(8):
+                toi = self.time_of_impact(body, leftover_dt)
+                if not toi:
+                    break
 
                 leftover_dt -= toi.impact_time
                 new_velocity = toi.penetration * (body.velocity * leftover_dt).length()
 
                 # Move to impact position
                 body.position += body.velocity * toi.impact_time
-                body.position = new_velocity
+                body.velocity = new_velocity
+                logger.debug("Move leftover_dt: {}, new velocity: {}, new position: {}", leftover_dt, new_velocity, body.position)
 
-
-
-
-        # for body in self.bodies:
-        #     if body is None:
-        #         continue
-        #     if body.kind != BodyKind.Dynamic:
-        #         continue
-
-        #     move_boundary = self._movement_boundary(body, body.velocity)
-        #     colliding_bodies = self.query(move_boundary)
-        #     closest_body = (dt, None)
-        #     for colliding_body in colliding_bodies:
-        #         if impact_time := self.time_of_impact(body, colliding_body, dt):
-        #             if impact_time < closest_body[0]:
-        #                 closest_body = (impact_time, colliding_body)
-
-        #     body.position += body.velocity * closest_body[0]
-
-        #     # logger.debug(
-        #     #     "Begin moving {body}, velocity: {velocity}, position: {position}",
-        #     #     body=body,
-        #     #     velocity=body.velocity,
-        #     #     position=body.position,
-        #     # )
-        #     # if body.velocity != Vec2():
-        #     #     breakpoint()
-        #     # final_velocity = self._move_body(body, body.velocity * dt)
-        #     # if body.velocity != Vec2():
-        #     # breakpoint()
-            
-        #     # logger.debug(
-        #     #     "End moving {body}, velocity: {velocity}, position: {position}",
-        #     #     body=body,
-        #     #     velocity=body.velocity,
-        #     #     position=body.position,
-        #     # )
-        #     self._call_position_change(body)
+            body.position += body.velocity * leftover_dt
+            self._call_position_change(body)
 
     def time_of_impact(self, body: Body, dt: float) -> TimeOfImpact | None:
         colliding_bodies = self.query(self._movement_boundary(body, body.velocity * dt))

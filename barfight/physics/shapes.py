@@ -62,17 +62,17 @@ class Shape:
 
 class PointShape(Shape):
     def __init__(self, point: Vec2):
-        super().__init__(point)
+        super().__init__(Point(point))
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(point={self._primitive.point})"
+        return f"{self.__class__.__name__}(point={self.primitive.point})"
 
     def boundary(self) -> Rectangle:
-        return Rectangle(self.primitive, Vec2())
+        return Rectangle(self.primitive.point, Vec2())
 
 
-class RectangleShape:
-    def __init__(self, origin: Vec2 = None, size: Vec2 = None):
+class RectangleShape(Shape):
+    def __init__(self, origin: Vec2 | None = None, size: Vec2 | None = None):
         origin = origin or Vec2()
         size = size or Vec2()
         super().__init__(Rectangle(origin, size))
@@ -80,56 +80,23 @@ class RectangleShape:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(primitive: {self.primitive})"
 
-    @property
-    def primitive(self) -> Rectangle:
-        return self._primitive
-
-    @property
-    def position(self) -> Vec2:
-        return self._primitive.center
-
-    @position.setter
-    def position(self, value: Vec2):
-        self._primitive.center = value
-
     def boundary(self) -> Rectangle:
-        return self._primitive
-
-    def collision(self, shape: ShapeProtocol) -> bool:
-        return self.primitive.collision(shape.primitive)
-
-    def penetration(self, shape: ShapeProtocol) -> Collision | None:
-        return self.primitive.penetration(shape.primitive)
-
-    def minkowski_difference(self, shape: ShapeProtocol) -> PrimitiveType:
-        return self.primitive.minkowski_difference(shape.primitive)
+        return self.primitive
 
     def __copy__(self) -> Self:
-        return RectangleShape(self._primitive.origin, self._primitive.size)
+        return RectangleShape(self.primitive.origin, self.primitive.size)
 
 
-class OrientedRectangleShape:
+class OrientedRectangleShape(Shape):
     def __init__(
-        self, center: Vec2 = None, half_extent: Vec2 = None, rotation: float = 0
+        self, center: Vec2 | None = None, half_extent: Vec2 | None = None, rotation: float = 0
     ):
         center = center or Vec2()
         half_extent = half_extent or Vec2()
-        self._primitive = OrientedRectangle(center, half_extent, rotation)
+        super().__init__(OrientedRectangle(center, half_extent, rotation))
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(primitive: {self.primitive})"
-
-    @property
-    def primitive(self) -> OrientedRectangle:
-        return self._primitive
-
-    @property
-    def position(self) -> Vec2:
-        return self._primitive.center
-
-    @position.setter
-    def position(self, value: Vec2):
-        self._primitive.center = value
+        return f"{self.__class__.__name__}(center={self.primitive.center}, half_extent={self.primitive.half_extent}, rotation={self.primitive.rotation})"
 
     def boundary(self) -> Rectangle:
         min_x = inf
@@ -137,22 +104,13 @@ class OrientedRectangleShape:
         min_y = inf
         max_y = -inf
 
-        for vertex in self._primitive.vertices():
+        for vertex in self.primitive.vertices():
             min_x = min(min_x, vertex.x)
             max_x = max(max_x, vertex.x)
             min_y = min(min_y, vertex.y)
             max_y = max(max_y, vertex.y)
 
         return Rectangle(Vec2(min_x, min_y), Vec2(max_x - min_x, max_y - min_y))
-
-    def collision(self, shape: ShapeProtocol) -> bool:
-        return self.primitive.collision(shape.primitive)
-
-    def penetration(self, shape: ShapeProtocol) -> Collision | None:
-        return self.primitive.penetration(shape.primitive)
-
-    def minkowski_difference(self, shape: ShapeProtocol) -> PrimitiveType:
-        return self.primitive.minkowski_difference(shape.primitive)
 
     def __copy__(self) -> Self:
         return OrientedRectangleShape(
@@ -162,79 +120,37 @@ class OrientedRectangleShape:
         )
 
 
-class CircleShape:
-    def __init__(self, center: Vec2 = None, radius: float = 0):
+class CircleShape(Shape):
+    def __init__(self, center: Vec2 | None = None, radius: float = 0):
         center = center or Vec2()
-        self._primitive = Circle(center, radius)
+        super().__init__(Circle(center, radius))
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(primitive: {self.primitive})"
-
-    @property
-    def primitive(self) -> Circle:
-        return self._primitive
-
-    @property
-    def position(self) -> Vec2:
-        return self._primitive.center
-
-    @position.setter
-    def position(self, value: Vec2):
-        self._primitive.center = value
+        return f"{self.__class__.__name__}(center={self.primitive.center}, radius={self.primitive.radius})"
 
     def boundary(self) -> Rectangle:
         return Rectangle(
             self._primitive.center
-            - Vec2(self._primitive.radius, self._primitive.radius),
+            - Vec2(self.primitive.radius, self.primitive.radius),
             self._primitive.center
-            + Vec2(self._primitive.radius, self._primitive.radius),
+            + Vec2(self.primitive.radius, self.primitive.radius),
         )
-
-    def collision(self, shape: ShapeProtocol) -> bool:
-        return self.primitive.collision(shape.primitive)
-
-    def penetration(self, shape: ShapeProtocol) -> Collision | None:
-        return self.primitive.penetration(shape.primitive)
-
-    def minkowski_difference(self, shape: ShapeProtocol) -> PrimitiveType:
-        return self.primitive.minkowski_difference(shape.primitive)
 
     def __copy__(self) -> Self:
         return CircleShape(self._primitive.center, self._primitive.radius)
 
 
-class PolygonShape:
+class PolygonShape(Shape):
     def __init__(self, *points: Vec2):
         if not points:
             raise ValueError("Polygon must have at least 1 point")
-        self._primitive = Polygon(points)
+        super().__init__(Polygon(points))
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(primitive: {self.primitive})"
-
-    @property
-    def primitive(self) -> Polygon:
-        return self._primitive
-
-    @property
-    def position(self) -> Vec2:
-        return self._primitive.center
-
-    @position.setter
-    def position(self, value: Vec2):
-        self._primitive.center = value
+        return f"{self.__class__.__name__}(*points={self.primitive.points})"
 
     def boundary(self) -> Rectangle:
         return self._primitive.bounding_box
-
-    def collision(self, shape: ShapeProtocol) -> bool:
-        return self.primitive.collision(shape.primitive)
-
-    def penetration(self, shape: ShapeProtocol) -> Collision | None:
-        return self.primitive.penetration(shape.primitive)
-
-    def minkowski_difference(self, shape: ShapeProtocol) -> PrimitiveType:
-        return self.minkowski_difference(shape.primitive)
 
     def __copy__(self) -> Self:
         return PolygonShape(self.primitive.points)

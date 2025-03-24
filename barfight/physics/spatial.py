@@ -5,7 +5,7 @@ from loguru import logger
 from pyglet.math import Vec2
 
 from .body import Body
-from .primitives import Rectangle
+from .primitives import Rectangle, colliding
 from .raycast import Ray
 
 
@@ -153,13 +153,13 @@ class QuadTree:
             self.insert(item)
 
     def query(self, area: Rectangle) -> list[Body]:
-        if not self.boundary.collision(area):
+        if not colliding(self.boundary, area):
             return []
 
         bodies = [
             self.bodies[body_index]
             for body_index in self.children
-            if area.collision(self.bodies[body_index].shape.boundary())
+            if colliding(area, self.bodies[body_index].shape.boundary())
         ]
 
         if self.is_divided:

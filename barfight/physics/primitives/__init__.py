@@ -24,6 +24,9 @@ __all__ = [
     "Polygon",
     "Rectangle",
     "Collision",
+    "colliding",
+    "penetration",
+    "time_of_impact",
 ]
 
 
