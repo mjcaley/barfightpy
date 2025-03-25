@@ -2,18 +2,19 @@
 
 from dataclasses import dataclass
 from math import inf
+
 from pyglet.math import Vec2
 
 
 def triple_product(a: Vec2, b: Vec2, c: Vec2) -> Vec2:
     z = a.x * b.y - a.y * b.x
-    
+
     return Vec2(-c.y * z, c.x * z)
 
 
 def support(points: list[Vec2], direction: Vec2) -> Vec2:
     max_dot = -inf
-    best = None
+    best: Vec2
     for point in points:
         dot = point.dot(direction)
         if dot > max_dot:
@@ -23,7 +24,7 @@ def support(points: list[Vec2], direction: Vec2) -> Vec2:
     return best
 
 
-def support2(points1: Vec2, points2: Vec2, direction: Vec2) -> Vec2:
+def support2(points1: list[Vec2], points2: list[Vec2], direction: Vec2) -> Vec2:
     return support(points1, direction) - support(points2, -direction)
 
 
@@ -47,7 +48,7 @@ def gjk(points1: list[Vec2], points2: list[Vec2]) -> list[Vec2] | None:
         if c.dot(v) <= 0.0:
             # Not past the origin
             return None
-        
+
         c0 = -c
         cb = b - c
         ca = a - c
@@ -77,7 +78,7 @@ class Edge:
 def closest_edge(polytope: list[Vec2]) -> Edge:
     npts = len(polytope)
     dmin = inf
-    closest = None
+    closest: Edge
     for i in range(npts):
         p, q = polytope[i], polytope[(i + 1) % npts]
         e = q - p
@@ -96,7 +97,6 @@ class Intersection:
     second: Vec2
     distance: float
     normal: Vec2
-
 
 
 def epa(points1: list[Vec2], points2: list[Vec2], a: Vec2, b: Vec2, c: Vec2):
