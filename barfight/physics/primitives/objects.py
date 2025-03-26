@@ -35,7 +35,7 @@ class Point:
     @property
     def center(self) -> Vec2:
         return self.point
-    
+
     @center.setter
     def center(self, value: Vec2):
         self.point = value
@@ -194,18 +194,6 @@ class OrientedRectangle:
     half_extent: Vec2 = field(default_factory=Vec2)
     rotation: float = 0
 
-    @singledispatchmethod
-    def collision(self, any) -> bool:
-        raise NotImplementedError
-
-    @singledispatchmethod
-    def penetration(self, any) -> Collision | None:
-        raise NotImplementedError
-
-    @singledispatchmethod
-    def minkowski_difference(self, any) -> Any:
-        raise NotImplementedError
-
     @property
     def top_right_vertex(self) -> Vec2:
         vertex = self.half_extent.rotate(self.rotation) + self.center
@@ -309,7 +297,9 @@ class Polygon:
 
     @center.setter
     def center(self, value: Vec2):
-        self.points = [point + value for point in self.points]
+        self.points = [
+            point + value for point in self.points
+        ]  # TODO: This probably wrong
 
     @property
     def bounding_box(self) -> Rectangle:

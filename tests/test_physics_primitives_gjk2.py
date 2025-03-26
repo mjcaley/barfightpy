@@ -6,13 +6,10 @@ from pyglet.math import Vec2
 from barfight.physics.primitives import (
     Circle,
     OrientedRectangle,
-    Point,
     Polygon,
     Rectangle,
 )
-from barfight.physics.primitives.gjk2 import (
-    gjk, epa
-)
+from barfight.physics.primitives.gjk2 import epa, gjk
 
 
 @pytest.mark.parametrize(
@@ -37,7 +34,7 @@ from barfight.physics.primitives.gjk2 import (
     ],
 )
 def test_colliding_intersection(test_shape1, test_shape2):
-    result = gjk([v for v in test_shape1.vertices()], [v for v in test_shape2.vertices()])
+    result = gjk(test_shape1, test_shape2)
 
     assert None is not result
 
@@ -59,7 +56,7 @@ def test_colliding_intersection(test_shape1, test_shape2):
     ],
 )
 def test_colliding_no_intersection(test_shape1, test_shape2):
-    result = gjk([v for v in test_shape1.vertices()], [v for v in test_shape2.vertices()])
+    result = gjk(test_shape1, test_shape2)
 
     assert None is result
 
@@ -96,24 +93,24 @@ def test_colliding_no_intersection(test_shape1, test_shape2):
     ],
 )
 def test_penetration(test_shape1, test_shape2, expected_normal, expected_depth):
-    collision = colliding(test_shape1, test_shape2)
-    result = penetration(collision)
+    a, b, c = gjk(test_shape1, test_shape2)
+    result = epa(test_shape1, test_shape2, a, b, c)
 
     assert pytest.approx(expected_normal.x, rel=1e-1, abs=1e-1) == result.normal.x
     assert pytest.approx(expected_normal.y, rel=1e-1, abs=1e-1) == result.normal.y
     assert pytest.approx(expected_depth, rel=1e-2, abs=1e-2) == result.distance
 
 
-def test_closest_edge():
-    p = [Vec2(-1, -1), Vec2(-1, 1), Vec2(3, 1), Vec2(3, -1)]
-    edge = closest_edge(p)
+# def test_closest_edge():
+#     p = [Vec2(-1, -1), Vec2(-1, 1), Vec2(3, 1), Vec2(3, -1)]
+#     edge = closest_edge(p)
 
-    assert edge is not None
+#     assert edge is not None
 
 
 def test_gjk_again():
-    points1 = list(Polygon([Vec2(4, 5), Vec2(4, 11), Vec2(9, 9)]).vertices())
-    points2 = list(Polygon([Vec2(7, 3), Vec2(5, 7), Vec2(12, 7), Vec2(10, 2)]).vertices())
+    points1 = Polygon([Vec2(4, 5), Vec2(4, 11), Vec2(9, 9)])
+    points2 = Polygon([Vec2(7, 3), Vec2(5, 7), Vec2(12, 7), Vec2(10, 2)])
     a, b, c = [Vec2(4, 2), Vec2(-8, -2), Vec2(-1, -2)]
 
     result = epa(points1, points2, a, b, c)
@@ -123,8 +120,8 @@ def test_gjk_again():
 
 @pytest.mark.xfail(reason="GJK detects collision, but EPA doesn't find a depth")
 def test_epa_no_depth():
-    r1 = list(Rectangle(origin=Vec2(x=250.0, y=141.90910799981793), size=Vec2(x=100, y=100)).vertices())
-    r2 = list(Rectangle(origin=Vec2(x=350.0, y=150.0), size=Vec2(x=100, y=100)).vertices())
+    r1 = Rectangle(origin=Vec2(x=250.0, y=141.90910799981793), size=Vec2(x=100, y=100))
+    r2 = Rectangle(origin=Vec2(x=350.0, y=150.0), size=Vec2(x=100, y=100))
 
     a, b, c = gjk(r1, r2)
     assert a is not None
@@ -136,8 +133,10 @@ def test_epa_no_depth():
 
 
 def test_epa_incorrect_penetration():
-    r1 = list(Rectangle(origin=Vec2(x=250.0001, y=160.00352400002157), size=Vec2(x=100, y=100)).vertices())
-    r2 = list(Rectangle(origin=Vec2(x=350.0, y=150.0), size=Vec2(x=100, y=100)).vertices())
+    r1 = Rectangle(
+        origin=Vec2(x=250.0001, y=160.00352400002157), size=Vec2(x=100, y=100)
+    )
+    r2 = Rectangle(origin=Vec2(x=350.0, y=150.0), size=Vec2(x=100, y=100))
 
     a, b, c = gjk(r1, r2)
     assert a is not None

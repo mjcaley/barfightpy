@@ -2,8 +2,16 @@
 
 from dataclasses import dataclass
 from math import inf
+from typing import Protocol
 
 from pyglet.math import Vec2
+
+
+class GJKShape(Protocol):
+    def furthest(self, direction: Vec2) -> Vec2: ...
+
+    @property
+    def center(self) -> Vec2: ...
 
 
 def triple_product(a: Vec2, b: Vec2, c: Vec2) -> Vec2:
@@ -24,27 +32,41 @@ def support(points: list[Vec2], direction: Vec2) -> Vec2:
     return best
 
 
-def support2(points1: list[Vec2], points2: list[Vec2], direction: Vec2) -> Vec2:
-    return support(points1, direction) - support(points2, -direction)
+def same_direction(a: Vec2, b: Vec2) -> bool:
+    """Check if vectors point in roughly the same direction"""
+    return a.dot(b) > 0
 
 
-def gjk(points1: list[Vec2], points2: list[Vec2]) -> list[Vec2] | None:
+def support2(shape1: GJKShape, shape2: GJKShape, direction: Vec2) -> Vec2:
+    return shape1.furthest(direction) - shape2.furthest(-direction)
+
+
+def perpendicular(v: Vec2) -> Vec2:
+    return Vec2(-v.y, v.x)
+
+
+def gjk(shape1: GJKShape, shape2: GJKShape) -> list[Vec2] | None:
     # First point
-    a = support2(points1, points2, Vec2(1, 1))
+    # a = support2(shape1, shape2, Vec2(1, 1))
+    a = support2(shape1, shape2, (shape2.center - shape1.center).normalize())
 
     # First direction
     v = -a
 
     # Second point
-    b = support2(points1, points2, v)
+    b = support2(shape1, shape2, v)
 
     # Second direction
     ab = b - a
     v = triple_product(ab, -a, ab)
+    if v == Vec2(0, 0):
+        # Probably lies on the line
+        # Need the left/right normal of ab
+        return None
 
     while True:
         # Third point
-        c = support2(points1, points2, v)
+        c = support2(shape1, shape2, v)
         if c.dot(v) <= 0.0:
             # Not past the origin
             return None
@@ -99,12 +121,12 @@ class Intersection:
     normal: Vec2
 
 
-def epa(points1: list[Vec2], points2: list[Vec2], a: Vec2, b: Vec2, c: Vec2):
+def epa(shape1: GJKShape, shape2: GJKShape, a: Vec2, b: Vec2, c: Vec2):
     polytope = [a, b, c]
 
     while True:
         edge = closest_edge(polytope)
-        r = support2(points1, points2, edge.normal)
+        r = support2(shape1, shape2, edge.normal)
         if abs(edge.normal.dot(r) - edge.distance < 0.0001):
             return Intersection(edge.first, edge.second, edge.distance, edge.normal)
         polytope.insert(edge.index + 1, r)
