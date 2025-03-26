@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from math import inf
 from typing import Protocol
 
 from pyglet.math import Vec2
@@ -165,32 +166,39 @@ class Penetration:
     distance: float
 
 
-def penetration(collision: Collision | None) -> Penetration:
-    """EPA (Expanding Polytope Algorithm) implementation.
-
-    References
-    ==========
+EPSILON = 0.00001
+MAX_PENETRATION_ITERATIONS = 64
 
 
-    https://winter.dev/articles/epa-algorithm
-    https://www.youtube.com/watch?v=0XQ2FSz3EK8&t=344s
-    """
-
-    if not collision:
-        return None
-
+def penetration(collision: Collision) -> Penetration:
     polytope = collision.simplex.copy()
+    
+    # Ensure we have a valid simplex
+    if len(polytope) < 3:
+        # Use vector between centers to determine penetration direction
+        direction = (collision.shape1.center - collision.shape2.center).normalize()
+        support_point = support(collision.shape1, collision.shape2, direction)
+        depth = direction.dot(support_point)
+        return Penetration(direction, depth)
 
-    while True:
+    for _ in range(MAX_PENETRATION_ITERATIONS):
         edge = closest_edge(polytope)
-
-        # Get support point in direction of edge normal
         support_point = support(collision.shape1, collision.shape2, edge.normal)
         support_dist = edge.normal.dot(support_point)
 
-        # Check if we're done (within tolerance)
-        if abs(support_dist - edge.distance) < 0.0001:
-            return Penetration(edge.normal, support_dist)
+        if abs(support_dist - edge.distance) < EPSILON:
+            # Verify this is actually the smallest penetration vector
+            # by checking both directions
+            opposite_normal = -edge.normal
+            opposite_point = support(collision.shape1, collision.shape2, opposite_normal)
+            opposite_dist = abs(-opposite_normal.dot(opposite_point))
+            
+            if opposite_dist < support_dist:
+                return Penetration(opposite_normal, opposite_dist)
+            return Penetration(edge.normal, edge.distance)
 
-        # Insert support point into polytope
         polytope.insert(edge.index, support_point)
+
+    # Fallback to center vector if EPA fails
+    direction = (collision.shape1.center - collision.shape2.center).normalize()
+    return Penetration(direction, EPSILON)

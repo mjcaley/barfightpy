@@ -124,3 +124,26 @@ def test_gjk_again():
     result = penetration(collision)
 
     assert result is not None
+
+
+def test_epa_no_depth():
+    r1 = Rectangle(origin=Vec2(x=250.0, y=141.90910799981793), size=Vec2(x=100, y=100))
+    r2 = Rectangle(origin=Vec2(x=350.0, y=150.0), size=Vec2(x=100, y=100))
+
+    collision = colliding(r1, r2)
+    assert collision is not None
+
+    p = penetration(collision)
+    assert p.distance != 0.0
+
+
+def test_epa_incorrect_penetration():
+    r1 = Rectangle(origin=Vec2(x=250.0, y=160.00352400002157), size=Vec2(x=100, y=100))
+    r2 = Rectangle(origin=Vec2(x=350.0, y=150.0), size=Vec2(x=100, y=100))
+
+    collision = colliding(r1, r2)
+    assert collision is not None
+
+    p = penetration(collision)
+
+    assert p.distance < 25

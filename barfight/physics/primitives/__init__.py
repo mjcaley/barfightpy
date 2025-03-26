@@ -45,10 +45,13 @@ def time_of_impact(primitive1: Primitive, primitive2: Primitive, relative_veloci
     first_at_destination = middle = copy(primitive1)
     first_at_destination.center += relative_velocity * dt
 
-    if early_hit := gjk.penetration(gjk.colliding(primitive1, primitive2)):
+    if early_collision := gjk.colliding(primitive1, primitive2):
+        early_hit = gjk.penetration(early_collision)
         return TimeOfImpact(0.0, early_hit.normal, early_hit.distance)
     
-    late_hit = gjk.penetration(gjk.colliding(first_at_destination, primitive2))
+    late_hit = None
+    if late_collision := gjk.colliding(first_at_destination, primitive2):
+        late_hit = gjk.penetration(late_collision)
     if not late_hit:
         return None
 
@@ -66,7 +69,8 @@ def time_of_impact(primitive1: Primitive, primitive2: Primitive, relative_veloci
         else:
             dt_min = dt_mid
     
-    if middle_hit := gjk.penetration(gjk.colliding(middle, primitive2)):
+    if middle_collision := gjk.colliding(middle, primitive2):
+        middle_hit = gjk.penetration(middle_collision)
         return TimeOfImpact(dt_mid, middle_hit.normal, middle_hit.distance)
     else:
         return TimeOfImpact(dt_min, late_hit.normal, late_hit.distance)

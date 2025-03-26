@@ -45,10 +45,23 @@ def perpendicular(v: Vec2) -> Vec2:
     return Vec2(-v.y, v.x)
 
 
-def gjk(shape1: GJKShape, shape2: GJKShape) -> list[Vec2] | None:
+def left(v: Vec2) -> Vec2:
+    return Vec2(v.y, -v.x)
+
+
+GJK_EPSILON = 0.00001
+
+
+def gjk_orig(shape1: GJKShape, shape2: GJKShape) -> list[Vec2] | None:
     # First point
-    # a = support2(shape1, shape2, Vec2(1, 1))
-    a = support2(shape1, shape2, (shape2.center - shape1.center).normalize())
+    v = (shape2.center - shape1.center).normalize()
+    if v == Vec2(0, 0):
+        v = Vec2(1, 0)
+    a = support2(shape1, shape2, v)
+    
+    # Is a past the origin?
+    if a.dot(v) <= 0.0:
+        return None
 
     # First direction
     v = -a
@@ -59,10 +72,8 @@ def gjk(shape1: GJKShape, shape2: GJKShape) -> list[Vec2] | None:
     # Second direction
     ab = b - a
     v = triple_product(ab, -a, ab)
-    if v == Vec2(0, 0):
-        # Probably lies on the line
-        # Need the left/right normal of ab
-        return None
+    if v.length_squared() <= GJK_EPSILON:
+        v = left(ab)
 
     while True:
         # Third point
@@ -86,6 +97,69 @@ def gjk(shape1: GJKShape, shape2: GJKShape) -> list[Vec2] | None:
             v = cb_perp
         else:
             return [a, b, c]
+
+
+GJK_MAX_ITERATIONS = 32
+# DETECT_EPSILON = 0.000001
+DETECT_EPSILON = 0.5
+while 1.0 + DETECT_EPSILON > 1.0:
+    DETECT_EPSILON *= 0.5
+
+
+def gjk(shape1: GJKShape, shape2: GJKShape) -> list[Vec2] | None:
+    simplex = []
+    d = (shape1.center - shape2.center).normalize()
+    if d == Vec2(0, 0):
+        d = Vec2(1, 0)
+    simplex.append(support2(shape1, shape2, d))
+
+    # Past the origin?
+    if simplex[-1].dot(d) <= 0.0:
+        return None
+    
+    d = -d
+
+    for _ in range(GJK_MAX_ITERATIONS):
+        support_point = support2(shape1, shape2, d)
+        simplex.append(support_point)
+
+        # Past the origin?
+        if support_point.dot(d) <= DETECT_EPSILON:
+            return None
+        else:
+            # Check simplex
+            a = simplex[-1]
+            ao = -a
+            if len(simplex) == 3:
+                b = simplex[1]
+                c = simplex[0]
+
+                ab = b - a
+                ac = c - a
+
+                dot = ab.x * ac.y - ac.x * ab.y
+                ac_perp = Vec2(-ac.y * dot, ac.x * dot)
+
+                ac_location = ac_perp.dot(ao)
+                if ac_location >= 0.0:
+                    simplex.pop(1)
+                    d = ac_perp
+                else:
+                    ab_perp = Vec2(ab.y * dot, -ab.x * dot)
+                    ab_location = ab_perp.dot(ao)
+                    if ab_location < 0.0:
+                        return simplex
+                    else:
+                        simplex.pop(0)
+                        d = ab_perp
+            else:
+                b = simplex[0]
+                ab = b - a
+                d = triple_product(ab, ao, ab)
+                if d.length_squared() <= GJK_EPSILON:
+                    d = left(ab)
+
+    return None
 
 
 @dataclass
