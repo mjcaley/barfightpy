@@ -1,8 +1,11 @@
 """Implementation based off https://observablehq.com/@esperanc/2d-gjk-and-epa-algorithms"""
 
 from dataclasses import dataclass
-from math import inf
-from typing import Protocol
+from enum import Enum, auto
+from heapq import heappop, heappush
+from itertools import chain, islice, pairwise
+from math import inf, sqrt
+from typing import Protocol, Self
 
 from pyglet.math import Vec2
 
@@ -47,6 +50,10 @@ def perpendicular(v: Vec2) -> Vec2:
 
 def left(v: Vec2) -> Vec2:
     return Vec2(v.y, -v.x)
+
+
+def right(v: Vec2) -> Vec2:
+    return Vec2(-v.y, v.x)
 
 
 GJK_EPSILON = 0.00001
@@ -162,45 +169,125 @@ def gjk(shape1: GJKShape, shape2: GJKShape) -> list[Vec2] | None:
     return None
 
 
-@dataclass
+class WindingDirection(Enum):
+    CW = -1
+    CCW = 1
+
+
 class Edge:
-    distance: float
-    index: int
-    first: Vec2
-    second: Vec2
+    def __init__(self, point1: Vec2, point2: Vec2, winding: WindingDirection):
+        self.point1 = point1
+        self.point2 = point2
+        
+        normal = point2 - point1
+        if winding == WindingDirection.CW:
+            self.normal = right(normal).normalize()
+        else:
+            self.normal = left(normal).normalize()
+
+        self.distance = abs(self.point1.x * self.normal.x + self.point1.y * self.normal.y)
+        
+    def __gt__(self, other: Self) -> bool:
+        if self.distance < other.distance:
+            return -1
+        elif self.distance > other.distance:
+            return 1
+        else:
+            return 0
+
+
+def get_winding(simplex: list[Vec2]) -> WindingDirection:
+    for a, b in pairwise(chain(simplex, islice(simplex, 1))):
+        if a.cross(b) > 0:
+            return WindingDirection.CCW
+        elif a.cross(b) < 0:
+            return WindingDirection.CW
+
+
+class EPASimplex:
+    def __init__(self, simplex: list[Vec2]):
+        self.simplex = simplex
+        self.winding = get_winding(self.simplex)
+        self.queue = []
+        for a, b in pairwise(chain(simplex, islice(simplex, 1))):
+            heappush(self.queue, Edge(a, b, self.winding))
+
+    def closest_edge(self) -> Edge:
+        return self.queue[0]
+    
+    def expand(self, point: Vec2):
+        edge: Edge = heappop(self.queue)
+        edge1 = Edge(edge.point1, point, self.winding)
+        edge2 = Edge(point, edge.point2, self.winding)
+        heappush(self.queue, edge1)
+        heappush(self.queue, edge2)
+
+
+@dataclass(frozen=True)
+class Penetration:
     normal: Vec2
+    depth: float
 
 
-def closest_edge(polytope: list[Vec2]) -> Edge:
-    npts = len(polytope)
-    dmin = inf
-    closest: Edge
-    for i in range(npts):
-        p, q = polytope[i], polytope[(i + 1) % npts]
-        e = q - p
-        n = triple_product(e, p, e).normalize()
-        dist = n.dot(p)
-        if dist < dmin:
-            dmin = dist
-            closest = Edge(dist, i, p, q, n)
-
-    return closest
-
-
-@dataclass
-class Intersection:
-    first: Vec2
-    second: Vec2
-    distance: float
-    normal: Vec2
+EPA_MAX_ITERATIONS = 100
+EPA_EPSILON = sqrt(GJK_EPSILON)
 
 
 def epa(shape1: GJKShape, shape2: GJKShape, a: Vec2, b: Vec2, c: Vec2):
-    polytope = [a, b, c]
+    epa_simplex = EPASimplex([a, b, c])
 
-    while True:
-        edge = closest_edge(polytope)
-        r = support2(shape1, shape2, edge.normal)
-        if abs(edge.normal.dot(r) - edge.distance < 0.0001):
-            return Intersection(edge.first, edge.second, edge.distance, edge.normal)
-        polytope.insert(edge.index + 1, r)
+    for _ in range(EPA_MAX_ITERATIONS):
+        edge = epa_simplex.closest_edge()
+        support_point = support2(shape1, shape2, edge.normal)
+
+        projection = support_point.dot(edge.normal)
+        if projection - edge.distance < EPA_EPSILON:
+            return Penetration(edge.normal, projection)
+        
+        epa_simplex.expand(support_point)
+
+    return Penetration(edge.normal, support_point.dot(edge.normal))
+
+
+# @dataclass
+# class Edge:
+#     distance: float
+#     index: int
+#     first: Vec2
+#     second: Vec2
+#     normal: Vec2
+
+
+# def closest_edge(polytope: list[Vec2]) -> Edge:
+#     npts = len(polytope)
+#     dmin = inf
+#     closest: Edge
+#     for i in range(npts):
+#         p, q = polytope[i], polytope[(i + 1) % npts]
+#         e = q - p
+#         n = triple_product(e, p, e).normalize()
+#         dist = n.dot(p)
+#         if dist < dmin:
+#             dmin = dist
+#             closest = Edge(dist, i, p, q, n)
+
+#     return closest
+
+
+# @dataclass
+# class Intersection:
+#     first: Vec2
+#     second: Vec2
+#     distance: float
+#     normal: Vec2
+
+
+# def epa(shape1: GJKShape, shape2: GJKShape, a: Vec2, b: Vec2, c: Vec2):
+#     polytope = [a, b, c]
+
+#     while True:
+#         edge = closest_edge(polytope)
+#         r = support2(shape1, shape2, edge.normal)
+#         if abs(edge.normal.dot(r) - edge.distance < 0.0001):
+#             return Intersection(edge.first, edge.second, edge.distance, edge.normal)
+#         polytope.insert(edge.index + 1, r)
