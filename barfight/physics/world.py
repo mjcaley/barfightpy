@@ -10,8 +10,7 @@ from pyglet.math import Vec2
 from barfight.physics.primitives.objects import TimeOfImpact
 
 from .body import Body, BodyKind
-from .primitives import Circle, OrientedRectangle, Rectangle, time_of_impact
-from .primitives.gjk import colliding, penetration
+from .primitives import Circle, OrientedRectangle, Rectangle, colliding, time_of_impact
 from .raycast import Ray
 from .response import Arbiter
 from .shapes import CircleShape, OrientedRectangleShape
@@ -131,9 +130,8 @@ class PhysicsWorld:
             if collision := colliding(
                 bc.first.shape.primitive, bc.second.shape.primitive
             ):
-                pen_vec = penetration(collision)
                 pair = CollisionPair(bc.first, bc.second)
-                resolution = Resolution(pen_vec.normal, pen_vec.distance)
+                resolution = Resolution(collision.penetration, collision.depth)
                 discrete_collisions.add(pair)
                 collision_resolution[pair] = resolution
 
@@ -160,6 +158,14 @@ class PhysicsWorld:
                         )
                         continue
 
+                    logger.debug(
+                        "Collision before resolution {body1} {body2} penetration={penetration} depth={depth}",
+                        body1=collision.first,
+                        body2=collision.second,
+                        penetration=resolutions[collision].penetration,
+                        depth=resolutions[collision].depth,
+                    )
+
                     collision.first.shape.position -= (
                         resolutions[collision].penetration
                         * resolutions[collision].depth
@@ -174,7 +180,7 @@ class PhysicsWorld:
                     )
 
                     logger.debug(
-                        "Collision resolved {body1} {body2} penetration={penetration} depth={depth}",
+                        "Collision after resolution {body1} {body2} penetration={penetration} depth={depth}",
                         body1=collision.first,
                         body2=collision.second,
                         penetration=resolutions[collision].penetration,

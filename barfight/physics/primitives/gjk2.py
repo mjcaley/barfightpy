@@ -107,7 +107,6 @@ def gjk_orig(shape1: GJKShape, shape2: GJKShape) -> list[Vec2] | None:
 
 
 GJK_MAX_ITERATIONS = 32
-# DETECT_EPSILON = 0.000001
 DETECT_EPSILON = 0.5
 while 1.0 + DETECT_EPSILON > 1.0:
     DETECT_EPSILON *= 0.5
@@ -188,12 +187,13 @@ class Edge:
         self.distance = abs(self.point1.x * self.normal.x + self.point1.y * self.normal.y)
         
     def __gt__(self, other: Self) -> bool:
-        if self.distance < other.distance:
-            return -1
-        elif self.distance > other.distance:
-            return 1
-        else:
-            return 0
+        return self.distance > other.distance
+        # if self.distance < other.distance:
+        #     return -1
+        # elif self.distance > other.distance:
+        #     return 1
+        # else:
+        #     return 0
 
 
 def get_winding(simplex: list[Vec2]) -> WindingDirection:
@@ -247,47 +247,3 @@ def epa(shape1: GJKShape, shape2: GJKShape, a: Vec2, b: Vec2, c: Vec2):
         epa_simplex.expand(support_point)
 
     return Penetration(edge.normal, support_point.dot(edge.normal))
-
-
-# @dataclass
-# class Edge:
-#     distance: float
-#     index: int
-#     first: Vec2
-#     second: Vec2
-#     normal: Vec2
-
-
-# def closest_edge(polytope: list[Vec2]) -> Edge:
-#     npts = len(polytope)
-#     dmin = inf
-#     closest: Edge
-#     for i in range(npts):
-#         p, q = polytope[i], polytope[(i + 1) % npts]
-#         e = q - p
-#         n = triple_product(e, p, e).normalize()
-#         dist = n.dot(p)
-#         if dist < dmin:
-#             dmin = dist
-#             closest = Edge(dist, i, p, q, n)
-
-#     return closest
-
-
-# @dataclass
-# class Intersection:
-#     first: Vec2
-#     second: Vec2
-#     distance: float
-#     normal: Vec2
-
-
-# def epa(shape1: GJKShape, shape2: GJKShape, a: Vec2, b: Vec2, c: Vec2):
-#     polytope = [a, b, c]
-
-#     while True:
-#         edge = closest_edge(polytope)
-#         r = support2(shape1, shape2, edge.normal)
-#         if abs(edge.normal.dot(r) - edge.distance < 0.0001):
-#             return Intersection(edge.first, edge.second, edge.distance, edge.normal)
-#         polytope.insert(edge.index + 1, r)
