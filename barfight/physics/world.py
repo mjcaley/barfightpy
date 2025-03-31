@@ -262,19 +262,29 @@ class PhysicsWorld:
             # if body.velocity != Vec2():
             #     breakpoint()
             leftover_dt = dt
+            movement_vector = Vec2(0, 0)
 
             for _ in range(8):
                 toi = self.time_of_impact(body, leftover_dt)
                 if not toi:
                     break
+                breakpoint()
 
                 leftover_dt -= toi.impact_time
-                new_velocity = toi.penetration * (body.velocity * leftover_dt).length()
+                new_velocity = Vec2(-toi.penetration.y, toi.penetration.x) * leftover_dt
+                movement_vector += body.velocity * toi.impact_time
+
+                # breakpoint()
 
                 # Move to impact position
                 body.position += body.velocity * toi.impact_time
                 body.velocity = new_velocity
-                logger.debug("Move leftover_dt: {}, new velocity: {}, new position: {}", leftover_dt, new_velocity, body.position)
+                logger.debug(
+                    "Move leftover_dt: {}, new velocity: {}, new position: {}",
+                    leftover_dt,
+                    new_velocity,
+                    body.position,
+                )
 
             body.position += body.velocity * leftover_dt
             self._call_position_change(body)
@@ -287,17 +297,18 @@ class PhysicsWorld:
         for other in colliding_bodies:
             if other.kind != BodyKind.Static:
                 continue
-            
+
             if other is body:
                 continue
 
-            if toi := time_of_impact(body.shape.primitive, other.shape.primitive, body.velocity, dt):
+            if toi := time_of_impact(
+                body.shape.primitive, other.shape.primitive, body.velocity, dt
+            ):
                 if toi.impact_time < earliest_impact:
                     closest = toi
                     earliest_impact = toi.impact_time
 
         return closest if earliest_impact < inf else None
-
 
     def query(self, area: Rectangle) -> list[Body]:
         return self.root.query(area)

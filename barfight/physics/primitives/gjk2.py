@@ -1,7 +1,7 @@
 """Implementation based off https://observablehq.com/@esperanc/2d-gjk-and-epa-algorithms"""
 
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import Enum
 from heapq import heappop, heappush
 from itertools import chain, islice, pairwise
 from math import inf, sqrt
@@ -65,7 +65,7 @@ def gjk_orig(shape1: GJKShape, shape2: GJKShape) -> list[Vec2] | None:
     if v == Vec2(0, 0):
         v = Vec2(1, 0)
     a = support2(shape1, shape2, v)
-    
+
     # Is a past the origin?
     if a.dot(v) <= 0.0:
         return None
@@ -122,7 +122,7 @@ def gjk(shape1: GJKShape, shape2: GJKShape) -> list[Vec2] | None:
     # Past the origin?
     if simplex[-1].dot(d) <= 0.0:
         return None
-    
+
     d = -d
 
     for _ in range(GJK_MAX_ITERATIONS):
@@ -177,23 +177,19 @@ class Edge:
     def __init__(self, point1: Vec2, point2: Vec2, winding: WindingDirection):
         self.point1 = point1
         self.point2 = point2
-        
+
         normal = point2 - point1
         if winding == WindingDirection.CW:
             self.normal = right(normal).normalize()
         else:
             self.normal = left(normal).normalize()
 
-        self.distance = abs(self.point1.x * self.normal.x + self.point1.y * self.normal.y)
-        
+        self.distance = abs(
+            self.point1.x * self.normal.x + self.point1.y * self.normal.y
+        )
+
     def __gt__(self, other: Self) -> bool:
         return self.distance > other.distance
-        # if self.distance < other.distance:
-        #     return -1
-        # elif self.distance > other.distance:
-        #     return 1
-        # else:
-        #     return 0
 
 
 def get_winding(simplex: list[Vec2]) -> WindingDirection:
@@ -203,18 +199,20 @@ def get_winding(simplex: list[Vec2]) -> WindingDirection:
         elif a.cross(b) < 0:
             return WindingDirection.CW
 
+    raise ValueError("Couldn't determine the winding direction for the simplex")
+
 
 class EPASimplex:
     def __init__(self, simplex: list[Vec2]):
         self.simplex = simplex
         self.winding = get_winding(self.simplex)
-        self.queue = []
+        self.queue: list[Edge] = []
         for a, b in pairwise(chain(simplex, islice(simplex, 1))):
             heappush(self.queue, Edge(a, b, self.winding))
 
     def closest_edge(self) -> Edge:
         return self.queue[0]
-    
+
     def expand(self, point: Vec2):
         edge: Edge = heappop(self.queue)
         edge1 = Edge(edge.point1, point, self.winding)
@@ -242,8 +240,8 @@ def epa(shape1: GJKShape, shape2: GJKShape, a: Vec2, b: Vec2, c: Vec2):
 
         projection = support_point.dot(edge.normal)
         if projection - edge.distance < EPA_EPSILON:
-            return Penetration(edge.normal, projection)
-        
+            return Penetration(edge.normal, abs(projection))
+
         epa_simplex.expand(support_point)
 
-    return Penetration(edge.normal, support_point.dot(edge.normal))
+    return Penetration(edge.normal, abs(support_point.dot(edge.normal)))

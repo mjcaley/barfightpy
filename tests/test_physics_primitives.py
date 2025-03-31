@@ -1,7 +1,7 @@
 from math import radians
 
-from pyglet.math import Vec2
 import pytest
+from pyglet.math import Vec2
 
 from barfight.physics.primitives import (
     Circle,
@@ -13,6 +13,24 @@ from barfight.physics.primitives import (
     time_of_impact,
 )
 from barfight.physics.primitives.objects import Point
+
+
+def test_time_to_impact():
+    shape1 = Rectangle(Vec2(0, 0), Vec2(1, 1))
+    shape2 = Rectangle(Vec2(1.5, 0), Vec2(1, 1))
+    result = time_of_impact(shape1, shape2, Vec2(1, 0), 1)
+
+    assert 0.5 == pytest.approx(result.impact_time, 1e-4, 1e-4)
+    assert 0.5 == pytest.approx(result.depth)
+    assert Vec2(1, 0) == result.penetration
+
+
+def test_time_to_impact_angle():
+    shape1 = Rectangle(Vec2(0, 0), Vec2(1, 1))
+    shape2 = OrientedRectangle(Vec2(5, 0), Vec2(1, 1), radians(45))
+    result = time_of_impact(shape1, shape2, Vec2(1, 0), 5)
+
+    assert result is not None
 
 
 def test_rect_rect_collision():
@@ -200,4 +218,3 @@ def test_time_of_impact():
     assert 0.5 == pytest.approx(result.impact_time, rel=1e-4, abs=1e-4)
     assert Vec2(1, 0) == result.penetration
     assert 0.5 == result.depth
-
