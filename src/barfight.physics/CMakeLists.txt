@@ -21,9 +21,10 @@ CPMAddPackage("gh:g-truc/glm#1.0.1")
 find_package(nanobind REQUIRED)
 
 add_library(bfphysicslib STATIC
-  lib/World.cpp
   lib/primitives/Circle.cpp
   lib/primitives/Rectangle.cpp
+  lib/Shape.cpp
+  lib/World.cpp
 )
 set_property(TARGET bfphysicslib PROPERTY CXX_STANDARD 23)
 target_include_directories(bfphysicslib PUBLIC include)
@@ -34,3 +35,8 @@ nanobind_add_module(bfphysicsmod
 )
 set_property(TARGET bfphysicsmod PROPERTY CXX_STANDARD 23)
 target_link_libraries(bfphysicsmod PRIVATE bfphysicslib)
+
+CPMAddPackage("gh:boost-ext/ut@2.3.0")
+add_executable(bfphysicstest test/main.cpp)
+set_property(TARGET bfphysicstest PROPERTY CXX_STANDARD 23)
+target_link_libraries(bfphysicstest PRIVATE Boost::ut bfphysicslib)

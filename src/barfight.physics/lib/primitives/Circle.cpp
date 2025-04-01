@@ -18,7 +18,7 @@ auto barfight::physics::primitives::Circle::set_vec2_position(glm::dvec2 positio
     center = position;
 }
 
-auto barfight::physics::primitives::Circle::furthest_vec2(const glm::dvec2& direction) const -> std::expected<glm::dvec2, barfight::physics::primitives::FurthestError> {
+auto barfight::physics::primitives::Circle::furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, barfight::physics::primitives::FurthestError> {
     using barfight::physics::primitives::FurthestError;
 
     if (glm::dvec2 {0.0, 0.0} == direction) {
@@ -34,12 +34,6 @@ auto barfight::physics::primitives::Circle::get_tuple_position() const -> std::t
     return std::make_tuple(position.x, position.y);
 }
 
-auto barfight::physics::primitives::Circle::set_tuple_position(const std::tuple<double, double>& position) {
+auto barfight::physics::primitives::Circle::set_tuple_position(const std::tuple<double, double>& position) -> void {
     set_vec2_position(glm::dvec2 { std::get<0>(position), std::get<1>(position) });
-}
-
-auto barfight::physics::primitives::Circle::furthest_tuple(const std::tuple<double, double>& direction) const -> std::tuple<double, double> {
-    auto point = furthest_vec2(glm::dvec2 { std::get<0>(direction), std::get<1>(direction) });
-
-    return std::make_tuple(point.x, point.y);
 }

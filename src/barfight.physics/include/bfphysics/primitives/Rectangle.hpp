@@ -17,11 +17,15 @@ namespace barfight::physics::primitives {
         glm::dvec2 size;
 
         auto get_vec2_position() const -> glm::dvec2;
-        auto set_vec2_position(const glm::dvec2& position);
-        auto furthest_vec2(const glm::dvec2& direction) const -> glm::dvec2;
+        auto set_vec2_position(glm::dvec2 position) -> void;
 
         auto get_tuple_position() const -> std::tuple<double, double>;
-        auto set_tuple_position(const std::tuple<double, double>& position);
-        auto furthest_tuple(const std::tuple<double, double>& direction) -> std::tuple<double, double>;
+        auto set_tuple_position(const std::tuple<double, double>& position) -> void;
+        auto get_tuple_origin() const -> std::tuple<double, double>;
+        auto set_tuple_origin(std::tuple<double, double> value) -> void;
+        auto get_tuple_size() const -> std::tuple<double, double>;
+        auto set_tuple_size(const std::tuple<double, double>& value) -> void;
+        
+        auto furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, barfight::physics::primitives::FurthestError>;
     };
 }

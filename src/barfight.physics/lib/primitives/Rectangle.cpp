@@ -10,7 +10,7 @@ auto barfight::physics::primitives::Rectangle::set_vec2_position(glm::dvec2 posi
     origin = position - (size / 2.0);
 }
 
-auto barfight::physics::primitives::Rectangle::furthest_vec2(const glm::dvec2& direction) const -> std::expected<glm::dvec2, barfight::physics::primitives::FurthestError> {
+auto barfight::physics::primitives::Rectangle::furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, barfight::physics::primitives::FurthestError> {
     using barfight::physics::primitives::FurthestError;
 
     if (glm::dvec2 {0.0, 0.0} == direction) {
@@ -31,18 +31,28 @@ auto barfight::physics::primitives::Rectangle::furthest_vec2(const glm::dvec2& d
     }
 }
 
+auto barfight::physics::primitives::Rectangle::get_tuple_origin() const -> std::tuple<double, double> {
+    return { origin.x, origin.y };
+}
+
+auto barfight::physics::primitives::Rectangle::set_tuple_origin(std::tuple<double, double> value) -> void {
+    origin = { std::get<0>(value), std::get<1>(value) };
+}
+
+auto barfight::physics::primitives::Rectangle::get_tuple_size() const -> std::tuple<double, double> {
+    return { size.x, size.y };
+}
+
+auto barfight::physics::primitives::Rectangle::set_tuple_size(const std::tuple<double, double>& value) -> void {
+    size = { std::get<0>(value), std::get<1>(value) };
+}
+
 auto barfight::physics::primitives::Rectangle::get_tuple_position() const -> std::tuple<double, double> {
     auto position = get_vec2_position();
 
-    return std::make_tuple(position.x, position.y);
+    return { position.x, position.y };
 }
 
-auto barfight::physics::primitives::Rectangle::set_tuple_position(const std::tuple<double, double>& position) {
-    set_vec2_position(glm::dvec2 { std::get<0>(position), std::get<1>(position) });
-}
-
-auto barfight::physics::primitives::Rectangle::furthest_tuple(const std::tuple<double, double>& direction) const -> std::tuple<double, double> {
-    auto point = furthest_vec2(glm::dvec2 { std::get<0>(direction), std::get<1>(direction) });
-
-    return std::make_tuple(point.x, point.y);
+auto barfight::physics::primitives::Rectangle::set_tuple_position(const std::tuple<double, double>& position) -> void {
+    set_vec2_position({ std::get<0>(position), std::get<1>(position) });
 }
