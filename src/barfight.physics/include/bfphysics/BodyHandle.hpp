@@ -10,7 +10,7 @@ namespace barfight::physics {
         public:
         BodyHandle(std::size_t id) : id(id) {}
 
-        auto get_id() -> std::size_t const {
+        auto get_id() const -> std::size_t {
             return id;
         }
     };

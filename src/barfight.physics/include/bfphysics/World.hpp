@@ -10,9 +10,11 @@ namespace barfight::physics {
     class World {
         private:
         std::vector<std::optional<Body>> bodies = {};
-        std::vector<std::size_t> body_free_list = {};
+        std::vector<BodyHandle> body_free_list = {};
 
         public:
         auto add(const BodyDescriptor& bodyDesc) -> BodyHandle;
+        auto remove(BodyHandle handle) -> void;
+        auto clear() -> void;
     };
 }

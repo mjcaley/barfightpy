@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.28)
 
-project(bf_physics)
+project(bf_physics LANGUAGES CXX)
 
 include(cmake/CPM.cmake)
 
@@ -20,11 +20,17 @@ find_package(nanobind CONFIG REQUIRED)
 CPMAddPackage("gh:g-truc/glm#1.0.1")
 find_package(nanobind REQUIRED)
 
-nanobind_add_module(bfphysics
-    lib/lib.cpp
-    lib/World.cpp
-    lib/primitives/Circle.cpp
+add_library(bfphysicslib STATIC
+  lib/World.cpp
+  lib/primitives/Circle.cpp
+  lib/primitives/Rectangle.cpp
 )
-set_property(TARGET bfphysics PROPERTY CXX_STANDARD 23)
-target_include_directories(bfphysics PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/)
-target_link_libraries(bfphysics PRIVATE glm::glm)
+set_property(TARGET bfphysicslib PROPERTY CXX_STANDARD 23)
+target_include_directories(bfphysicslib PUBLIC include)
+target_link_libraries(bfphysicslib PUBLIC glm::glm)
+
+nanobind_add_module(bfphysicsmod
+    src/mod.cpp
+)
+set_property(TARGET bfphysicsmod PROPERTY CXX_STANDARD 23)
+target_link_libraries(bfphysicsmod PRIVATE bfphysicslib)
