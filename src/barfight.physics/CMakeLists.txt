@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.28)
 
 project(bf_physics LANGUAGES CXX)
 
+enable_testing()
+
+
 include(cmake/CPM.cmake)
 
 find_package(Python 3.13 COMPONENTS Interpreter Development.Module REQUIRED)
@@ -23,6 +26,7 @@ find_package(nanobind REQUIRED)
 add_library(bfphysicslib STATIC
   lib/primitives/Circle.cpp
   lib/primitives/Rectangle.cpp
+  # lib/Collision.cpp
   lib/Shape.cpp
   lib/World.cpp
 )
@@ -37,6 +41,11 @@ set_property(TARGET bfphysicsmod PROPERTY CXX_STANDARD 23)
 target_link_libraries(bfphysicsmod PRIVATE bfphysicslib)
 
 CPMAddPackage("gh:boost-ext/ut@2.3.0")
-add_executable(bfphysicstest test/main.cpp)
+add_executable(bfphysicstest
+  test/main.cpp
+  test/primitives.cpp
+  test/collision.cpp
+)
 set_property(TARGET bfphysicstest PROPERTY CXX_STANDARD 23)
 target_link_libraries(bfphysicstest PRIVATE Boost::ut bfphysicslib)
+add_test(NAME tests COMMAND bfphysicstest)
