@@ -24,8 +24,8 @@ CPMAddPackage("gh:g-truc/glm#1.0.1")
 find_package(nanobind REQUIRED)
 
 add_library(bfphysicslib STATIC
-  lib/primitives/Circle.cpp
-  lib/primitives/Rectangle.cpp
+  lib/Circle.cpp
+  lib/Rectangle.cpp
   # lib/Collision.cpp
   lib/Shape.cpp
   lib/World.cpp

@@ -4,8 +4,8 @@
 #include <bfphysics/BodyKind.hpp>
 #include <bfphysics/BodyHandle.hpp>
 #include <bfphysics/World.hpp>
-#include <bfphysics/primitives/Circle.hpp>
-#include <bfphysics/primitives/Rectangle.hpp>
+#include <bfphysics/Circle.hpp>
+#include <bfphysics/Rectangle.hpp>
 #include <bfphysics/Shape.hpp>
 
 namespace nb = nanobind;
@@ -14,63 +14,63 @@ using namespace nb::literals;
 NB_MODULE(bfphysics, m) {
     nb::module_ primitives = m.def_submodule("primitives");
 
-    nb::class_<barfight::physics::primitives::Circle>(primitives, "Circle")
+    nb::class_<barfight::physics::Circle>(primitives, "Circle")
         .def(nb::init<std::tuple<double, double>, double>())
         .def_prop_rw(
             "center",
-            [](barfight::physics::primitives::Circle& self) {
+            [](barfight::physics::Circle& self) {
                 return self.get_tuple_center();
             },
-            [](barfight::physics::primitives::Circle& self, std::tuple<double, double> value) {
+            [](barfight::physics::Circle& self, std::tuple<double, double> value) {
                 self.set_tuple_center(value);
             })
         .def_prop_rw(
             "radius",
-            [](barfight::physics::primitives::Circle& self) {
+            [](barfight::physics::Circle& self) {
                 return self.radius;
             },
-            [](barfight::physics::primitives::Circle& self, double value) {
+            [](barfight::physics::Circle& self, double value) {
                 self.radius = value;
             })
         .def_prop_rw(
             "position",
-            [](barfight::physics::primitives::Circle& self) {
+            [](barfight::physics::Circle& self) {
                 return self.get_tuple_position();
             },
-            [](barfight::physics::primitives::Circle& self, std::tuple<double, double> value) {
+            [](barfight::physics::Circle& self, std::tuple<double, double> value) {
                 self.set_tuple_position(value);
             });
 
-    nb::class_<barfight::physics::primitives::Rectangle>(primitives, "Rectangle")
+    nb::class_<barfight::physics::Rectangle>(primitives, "Rectangle")
     .def(nb::init<std::tuple<double, double>, std::tuple<double, double>>())
         .def_prop_rw(
             "origin",
-            [](barfight::physics::primitives::Rectangle& self) {
+            [](barfight::physics::Rectangle& self) {
                 return self.get_tuple_origin();
             },
-            [](barfight::physics::primitives::Rectangle& self, std::tuple<double, double> value) {
+            [](barfight::physics::Rectangle& self, std::tuple<double, double> value) {
                 self.set_tuple_origin(value);
             })
         .def_prop_rw(
             "size",
-            [](barfight::physics::primitives::Rectangle& self) {
+            [](barfight::physics::Rectangle& self) {
                 return self.get_tuple_size();
             },
-            [](barfight::physics::primitives::Rectangle& self, std::tuple<double, double> value) {
+            [](barfight::physics::Rectangle& self, std::tuple<double, double> value) {
                 self.set_tuple_size(value);
             })
         .def_prop_rw(
             "position",
-            [](const barfight::physics::primitives::Rectangle& self) {
+            [](const barfight::physics::Rectangle& self) {
                 return self.get_tuple_position();
             },
-            [](barfight::physics::primitives::Rectangle& self, std::tuple<double, double> value) {
+            [](barfight::physics::Rectangle& self, std::tuple<double, double> value) {
                 self.set_tuple_position(value);
             });
 
     nb::class_<barfight::physics::Shape>(m, "Shape")
-        .def(nb::init<barfight::physics::primitives::Circle>())
-        .def(nb::init<barfight::physics::primitives::Rectangle>())
+        .def(nb::init<barfight::physics::Circle>())
+        .def(nb::init<barfight::physics::Rectangle>())
         .def_prop_rw(
             "position",
             [](const barfight::physics::Shape& self) { return self.get_tuple_position(); },
@@ -94,7 +94,7 @@ NB_MODULE(bfphysics, m) {
             [](barfight::physics::World& w, barfight::physics::BodyKind kind) {
                 barfight::physics::BodyDescriptor desc = {
                     kind,
-                    barfight::physics::Shape { barfight::physics::primitives::Circle { std::make_tuple(0.0, 0.0), 10.0 } }
+                    barfight::physics::Shape { barfight::physics::Circle { std::make_tuple(0.0, 0.0), 10.0 } }
                 };
 
                 return w.add(desc);

@@ -1,12 +1,12 @@
 #include <boost/ut.hpp>
-#include <bfphysics/primitives/Circle.hpp>
-#include <bfphysics/primitives/Rectangle.hpp>
+#include <bfphysics/Circle.hpp>
+#include <bfphysics/Rectangle.hpp>
 
 using namespace boost::ut;
 
 suite primitives = [] {
     "circle properties set"_test = [] {
-        auto c = barfight::physics::primitives::Circle { std::make_tuple(4.0, 2.0), 10.0 };
+        auto c = barfight::physics::Circle { std::make_tuple(4.0, 2.0), 10.0 };
 
         expect(4.0 == c.center.x);
         expect(2.0 == c.center.y);
@@ -14,7 +14,7 @@ suite primitives = [] {
     };
 
     "rectangle properties set"_test = [] {
-        auto r = barfight::physics::primitives::Rectangle { std::make_tuple(1.0, 2.0), std::make_tuple(3.0, 4.0) };
+        auto r = barfight::physics::Rectangle { std::make_tuple(1.0, 2.0), std::make_tuple(3.0, 4.0) };
 
         expect(1.0 == r.origin.x);
         expect(2.0 == r.origin.y);
