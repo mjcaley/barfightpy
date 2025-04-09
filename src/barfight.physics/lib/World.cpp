@@ -32,4 +32,5 @@ auto barfight::physics::World::remove(barfight::physics::BodyHandle handle) -> v
 auto barfight::physics::World::clear() -> void {
     bodies.clear();
     body_free_list.clear();
+    tree.clear();
 }

@@ -106,7 +106,7 @@ NB_MODULE(bfphysics, m) {
         .def_prop_ro("id_", [](const barfight::physics::BodyHandle& h) { return h.get_id(); });
 
     nb::class_<barfight::physics::World>(m, "World")
-        .def(nb::init<>())
+        .def(nb::init<std::tuple<double, double>, std::tuple<double, double>>())
         .def(
             "add",
             [](barfight::physics::World& w, barfight::physics::BodyKind kind) {
