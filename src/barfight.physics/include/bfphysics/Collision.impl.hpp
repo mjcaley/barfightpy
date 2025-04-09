@@ -18,6 +18,12 @@
 
 
 namespace barfight::physics::impl {
+    template<class... Ts>
+    struct overloaded : Ts... { using Ts::operator()...; };
+    
+    template<class... Ts>
+    overloaded(Ts...) -> overloaded<Ts...>;
+
     struct collision {
         glm::dvec2 normal;
         double depth;
@@ -78,28 +84,14 @@ namespace barfight::physics::impl {
 
     using gjk_result = std::variant<gjk_result_evolving, gjk_result_not_found, gjk_result_found>;
 
-    auto gjk_add = [](auto&& arg, auto&& variant, const glm::dvec2 point) {
-        gjk_simplex new_simplex;
-
-        using T = std::decay_t<decltype(arg)>;
-        if constexpr (std::is_same_v<T, gjk_zero_simplex>) {
-            new_simplex = gjk_one_simplex { point };
-        }
-        else if constexpr (std::is_same_v<T, gjk_one_simplex>) {
-            new_simplex = gjk_two_simplex { point, arg.a };
-        }
-        else if constexpr (std::is_same_v<T, gjk_two_simplex>) {
-            new_simplex = gjk_three_simplex { point, arg.a, arg.b };
-        }
-        else if constexpr (std::is_same_v<T, gjk_three_simplex>) {
-            new_simplex = gjk_three_simplex { point, arg.a, arg.b };
-        }
-        else {
-            static_assert(false, "non-exhaustive type");
-        }
-
-        variant.swap(new_simplex);
-    };
+    auto gjk_add(gjk_simplex& simplex, const glm::dvec2 point) -> void {
+        std::visit(overloaded{
+            [&](const gjk_zero_simplex& arg) { simplex = gjk_one_simplex { point }; },
+            [&](const gjk_one_simplex& arg) { simplex = gjk_two_simplex { point, arg.a }; },
+            [&](const gjk_two_simplex& arg) { simplex = gjk_three_simplex { point, arg.a, arg.b }; },
+            [&](const gjk_three_simplex& arg) { simplex = gjk_three_simplex { point, arg.a, arg.b }; },
+        }, simplex);
+    }
 
     const auto gjk_max_iterations = 32;
 
@@ -120,7 +112,7 @@ namespace barfight::physics::impl {
         }
         auto support_point = support(shape1, shape2, direction);
         if (!support_point) { return {}; }
-        std::visit([&](auto&& s) { gjk_add(s, simplex, support_point.value()); }, simplex);
+        gjk_add(simplex, support_point.value());
 
         if (glm::dot(std::get<gjk_one_simplex>(simplex).a, direction) <= 0.0) {
             return {};
@@ -131,7 +123,7 @@ namespace barfight::physics::impl {
         for (auto _ : std::ranges::views::iota(1, gjk_max_iterations)) {
             support_point = support(shape1, shape2, direction);
             if (!support_point) { return {}; }
-            std::visit([&](auto&& s) { gjk_add(s, simplex, support_point.value()); }, simplex);
+            gjk_add(simplex, support_point.value());
 
             if (glm::dot(support_point.value(), direction) <= gjk_epsilon()) {
                 return {};
