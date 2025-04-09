@@ -63,5 +63,8 @@ ut::suite collision = [] {
         const auto result = colliding(r1, r2);
 
         expect(true == result.has_value()) << "No collision detected\n";
+        expect(0.5_d == result->depth) << "depth incorrect\n";
+        expect(1.0_d == result->normal.x) << "normal x mismatch\n";
+        expect(0.0_d == result->normal.y) << "normal y mismatch\n";
     };
 };
