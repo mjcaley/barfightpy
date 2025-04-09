@@ -1,5 +1,6 @@
 #include <numbers>
 #include <boost/ut.hpp>
+#include <bfphysics/BoundingBox.hpp>
 #include <bfphysics/Collision.hpp>
 #include <bfphysics/Circle.hpp>
 #include <bfphysics/Rectangle.hpp>
@@ -66,5 +67,17 @@ ut::suite collision = [] {
         expect(0.5_d == result->depth) << "depth incorrect\n";
         expect(1.0_d == result->normal.x) << "normal x mismatch\n";
         expect(0.0_d == result->normal.y) << "normal y mismatch\n";
+    };
+
+    "bounding box overlaps"_test = [] {
+        using barfight::physics::BoundingBox;
+        using barfight::physics::overlaps;
+
+        const auto b1 = BoundingBox { glm::dvec2 { 0.0, 0.0 }, glm::dvec2 { 1.0, 1.0 } };
+        const auto b2 = BoundingBox { glm::dvec2 { 0.5, 0.0 }, glm::dvec2 { 1.0, 1.0 } };
+        const auto b3 = BoundingBox { glm::dvec2 { 2.0, 0.0 }, glm::dvec2 { 1.0, 1.0 } };
+
+        expect(overlaps(b1, b2)) << "b1 and b2 should overlap but don't\n";
+        expect(!overlaps(b1, b3)) << "b1 and b3 don't overlap but do\n";
     };
 };

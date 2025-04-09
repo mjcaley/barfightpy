@@ -1,17 +1,14 @@
 #pragma once
 
+#include <bfphysics/BoundingBox.hpp>
 #include <bfphysics/Circle.hpp>
 #include <glm/glm.hpp>
 #include <bfphysics/Collision.impl.hpp>
 
 namespace barfight::physics {
+    using barfight::physics::BoundingBox;
     using barfight::physics::Circle;
-
     using collision = impl::collision;
-
-    auto resolution(auto shape1, auto shape2) -> std::optional<collision> {
-        return {};
-    }
 
     auto colliding(const auto& shape1, const auto& shape2) -> std::optional<collision> {
         return impl::gjk(shape1, shape2)
@@ -31,5 +28,12 @@ namespace barfight::physics {
         }
 
         return {};
+    }
+
+    auto overlaps(const BoundingBox& b1, const BoundingBox& b2) -> bool {
+        return b1.origin.x <= b2.origin.x + b2.size.x
+            && b1.origin.x + b1.size.x >= b2.origin.x
+            && b1.origin.y <= b2.origin.y + b2.size.y
+            && b1.origin.y + b1.size.y >= b2.origin.y;
     }
 }
