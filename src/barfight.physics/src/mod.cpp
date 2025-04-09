@@ -3,6 +3,7 @@
 #include <nanobind/stl/tuple.h>
 #include <bfphysics/BodyKind.hpp>
 #include <bfphysics/BodyHandle.hpp>
+#include <bfphysics/BoundingBox.hpp>
 #include <bfphysics/World.hpp>
 #include <bfphysics/Circle.hpp>
 #include <bfphysics/Polygon.hpp>

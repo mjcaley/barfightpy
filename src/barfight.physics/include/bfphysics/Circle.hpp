@@ -2,6 +2,7 @@
 
 #include <expected>
 #include <tuple>
+#include <bfphysics/BoundingBox.hpp>
 #include <bfphysics/PrimitiveCommon.hpp>
 #include <glm/vec2.hpp>
 
@@ -28,6 +29,7 @@ namespace barfight::physics {
         auto get_tuple_position() const -> std::tuple<double, double>;
         auto set_tuple_position(const std::tuple<double, double>& position) -> void;
 
+        auto bounding_box() const -> BoundingBox;
         auto furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, FurthestError>;
     };
 }

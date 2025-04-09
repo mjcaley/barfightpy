@@ -27,6 +27,10 @@ auto barfight::physics::Circle::set_vec2_position(glm::dvec2 position) -> void {
     center = position;
 }
 
+auto barfight::physics::Circle::bounding_box() const -> barfight::physics::BoundingBox {
+    return { glm::dvec2 { center.x - radius, center.y - radius }, glm::dvec2 { center.x - radius, center.y - radius } };
+}
+
 auto barfight::physics::Circle::furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, barfight::physics::FurthestError> {
     using barfight::physics::FurthestError;
 
