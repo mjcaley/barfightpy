@@ -3,7 +3,7 @@
 
 namespace barfight::physics {
     struct BoundingBox {
-        const glm::dvec2 origin;
-        const glm::dvec2 size;
+        glm::dvec2 origin;
+        glm::dvec2 size;
     };
 }
