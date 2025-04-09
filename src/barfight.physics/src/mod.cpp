@@ -5,6 +5,7 @@
 #include <bfphysics/BodyHandle.hpp>
 #include <bfphysics/World.hpp>
 #include <bfphysics/Circle.hpp>
+#include <bfphysics/Polygon.hpp>
 #include <bfphysics/Rectangle.hpp>
 #include <bfphysics/Shape.hpp>
 
@@ -41,8 +42,24 @@ NB_MODULE(bfphysics, m) {
                 self.set_tuple_position(value);
             });
 
+    nb::class_<barfight::physics::Polygon>(primitives, "Polygon")
+        .def(nb::init<std::vector<std::tuple<double, double>>>())
+        .def_prop_rw(
+            "points",
+            [](barfight::physics::Polygon& self) { return self.get_tuple_points(); },
+            [](barfight::physics::Polygon & self, std::vector<std::tuple<double, double>> value) { self.set_tuple_points(value); }
+        )
+        .def_prop_rw(
+            "position",
+            [](const barfight::physics::Polygon& self) {
+                return self.get_tuple_position();
+            },
+            [](barfight::physics::Polygon& self, std::tuple<double, double> value) {
+                self.set_tuple_position(value);
+            });
+
     nb::class_<barfight::physics::Rectangle>(primitives, "Rectangle")
-    .def(nb::init<std::tuple<double, double>, std::tuple<double, double>>())
+        .def(nb::init<std::tuple<double, double>, std::tuple<double, double>>())
         .def_prop_rw(
             "origin",
             [](barfight::physics::Rectangle& self) {

@@ -25,8 +25,8 @@ find_package(nanobind REQUIRED)
 
 add_library(bfphysicslib STATIC
   lib/Circle.cpp
+  lib/Polygon.cpp
   lib/Rectangle.cpp
-  # lib/Collision.cpp
   lib/Shape.cpp
   lib/World.cpp
 )
