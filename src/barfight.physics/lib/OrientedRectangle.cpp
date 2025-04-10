@@ -1,4 +1,9 @@
 #include <bfphysics/OrientedRectangle.hpp>
+#include <ranges>
+#ifndef GLM_ENABLE_EXPERIMENTAL
+#define GLM_ENABLE_EXPERIMENTAL
+#endif
+#include <glm/gtx/rotate_vector.hpp>
 
 auto barfight::physics::OrientedRectangle::get_center() const -> glm::dvec2 {
     return center + half_size;
@@ -61,4 +66,21 @@ auto barfight::physics::OrientedRectangle::get_tuple_position() const -> std::tu
 
 auto barfight::physics::OrientedRectangle::set_tuple_position(const std::tuple<double, double>& position) -> void {
     set_vec2_position({ std::get<0>(position), std::get<1>(position) });
+}
+
+auto barfight::physics::OrientedRectangle::get_bounding_box() const -> BoundingBox {
+    double min_x = -std::numeric_limits<double>::infinity();
+    double min_y = -std::numeric_limits<double>::infinity();
+    double max_x = std::numeric_limits<double>::infinity();
+    double max_y = std::numeric_limits<double>::infinity();
+
+    for (auto rotation_product : std::views::iota(0, 4)) {
+        auto point = glm::rotate(center * half_size, rotation * rotation_product);
+        min_x = std::min(min_x, point.x);
+        min_y = std::min(min_y, point.y);
+        max_x = std::max(max_x, point.x);
+        max_y = std::max(max_y, point.y);
+    }
+    
+    return BoundingBox { {min_x, min_y}, {max_x, max_y} };
 }

@@ -2,6 +2,7 @@
 #include <expected>
 #include <tuple>
 #include <glm/glm.hpp>
+#include <bfphysics/BoundingBox.hpp>
 #include <bfphysics/PrimitiveCommon.hpp>
 
 namespace barfight::physics {
@@ -30,5 +31,6 @@ namespace barfight::physics {
         auto set_tuple_half_size(const std::tuple<double, double>& value) -> void;
 
         auto furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, barfight::physics::FurthestError>;
+        auto get_bounding_box() const -> BoundingBox;
     };
 }

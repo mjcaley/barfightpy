@@ -38,11 +38,11 @@ set_property(TARGET bfphysicslib PROPERTY CXX_STANDARD 23)
 target_include_directories(bfphysicslib PUBLIC include)
 target_link_libraries(bfphysicslib PUBLIC glm::glm)
 
-nanobind_add_module(bfphysicsmod
+nanobind_add_module(bfphysics
     src/mod.cpp
 )
-set_property(TARGET bfphysicsmod PROPERTY CXX_STANDARD 23)
-target_link_libraries(bfphysicsmod PRIVATE bfphysicslib)
+set_property(TARGET bfphysics PROPERTY CXX_STANDARD 23)
+target_link_libraries(bfphysics PRIVATE bfphysicslib)
 
 CPMAddPackage("gh:boost-ext/ut@2.3.0")
 add_executable(bfphysicstest

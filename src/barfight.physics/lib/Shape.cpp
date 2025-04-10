@@ -34,7 +34,7 @@ auto barfight::physics::Shape::get_bounding_box() const -> BoundingBox {
     return std::visit([](const auto& shape) { return shape.get_bounding_box(); }, shape);
 }
 
-auto barfight::physics::Shape::get_shape() const -> const std::variant<barfight::physics::Circle, barfight::physics::Rectangle, barfight::physics::Polygon>& {
+auto barfight::physics::Shape::get_shape() const -> const std::variant<barfight::physics::Circle, barfight::physics::OrientedRectangle, barfight::physics::Polygon, barfight::physics::Rectangle>& {
     return shape;
 }
 

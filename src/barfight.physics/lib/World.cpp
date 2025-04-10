@@ -5,7 +5,7 @@
 auto barfight::physics::World::add(const barfight::physics::BodyDescriptor& desc) -> barfight::physics::BodyHandle {
     auto body = Body {
         desc.kind,
-        desc.shape
+        Shape { desc.shape }
     };
 
     if (body_free_list.empty()) {
@@ -77,7 +77,7 @@ auto barfight::physics::World::narrowphase(const std::vector<std::pair<BodyHandl
             continue;
         }
 
-        auto collision = body1->shape.colliding(body2->shape); //colliding(body1->shape.get_shape(), body2->shape.get_shape());
+        auto collision = body1->shape.colliding(body2->shape);
 
         if (collision.has_value()) {
             collisions.emplace_back(handle1, handle2, collision.value());
