@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.28)
 
 project(bf_physics LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+
 
 enable_testing()
 
@@ -37,6 +39,35 @@ add_library(bfphysicslib STATIC
 set_property(TARGET bfphysicslib PROPERTY CXX_STANDARD 23)
 target_include_directories(bfphysicslib PUBLIC include)
 target_link_libraries(bfphysicslib PUBLIC glm::glm)
+
+# add_library(bfphysicslib)
+# set_property(TARGET bfphysicslib PROPERTY CXX_STANDARD 23)
+# target_sources(
+#   bfphysicslib
+#   PUBLIC
+#   FILE_SET CXX_MODULES
+#   FILES
+#     lib/lib.cppm
+#     lib/BoundingBox.cppm
+# )
+
+add_library(bfphysicslib_module)
+set_property(TARGET bfphysicslib_module PROPERTY CXX_STANDARD 23)
+target_sources(
+  bfphysicslib_module
+  PUBLIC
+  FILE_SET CXX_MODULES
+  FILES
+    newlib/lib.cppm
+    newlib/PrimitiveCommon.cppm
+    newlib/BoundingBox.cppm
+    newlib/Circle.cppm
+    newlib/OrientedRectangle.cppm
+    newlib/Polygon.cppm
+    newlib/Rectangle.cppm
+    newlib/Shape.cppm
+)
+target_link_libraries(bfphysicslib_module PUBLIC glm::glm)
 
 nanobind_add_module(bfphysics
     src/mod.cpp
