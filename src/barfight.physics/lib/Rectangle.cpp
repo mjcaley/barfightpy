@@ -1,4 +1,5 @@
 #include <expected>
+#include <bfphysics/BoundingBox.hpp>
 #include "bfphysics/Rectangle.hpp"
 #include <glm/glm.hpp>
 
@@ -64,4 +65,11 @@ auto barfight::physics::Rectangle::get_tuple_position() const -> std::tuple<doub
 
 auto barfight::physics::Rectangle::set_tuple_position(const std::tuple<double, double>& position) -> void {
     set_vec2_position({ std::get<0>(position), std::get<1>(position) });
+}
+
+auto barfight::physics::Rectangle::get_bounding_box() const -> barfight::physics::BoundingBox {
+    return BoundingBox {
+        origin,
+        size
+    };
 }

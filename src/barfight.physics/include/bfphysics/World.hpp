@@ -16,6 +16,9 @@ namespace barfight::physics {
             origin(glm::dvec2 { std::get<0>(origin), std::get<1>(origin) }),
             size(glm::dvec2 { std::get<0>(size), std::get<1>(size) }) {}
 
+        auto broadphase() const -> std::vector<std::pair<BodyHandle, BodyHandle>>;
+        auto narrowphase(const std::vector<std::pair<BodyHandle, BodyHandle>>& broad_collisions) const -> std::vector<std::tuple<BodyHandle, BodyHandle, collision>>;
+
         auto add(const BodyDescriptor& bodyDesc) -> BodyHandle;
         auto remove(BodyHandle handle) -> void;
         auto clear() -> void;

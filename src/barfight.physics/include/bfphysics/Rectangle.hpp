@@ -30,5 +30,6 @@ namespace barfight::physics {
         auto set_tuple_size(const std::tuple<double, double>& value) -> void;
 
         auto furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, barfight::physics::FurthestError>;
+        auto get_bounding_box() const -> BoundingBox;
     };
 }

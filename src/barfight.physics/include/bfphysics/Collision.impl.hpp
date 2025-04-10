@@ -20,26 +20,19 @@
 namespace barfight::physics::impl {
     template<class... Ts>
     struct overloaded : Ts... { using Ts::operator()...; };
-    
+
     template<class... Ts>
     overloaded(Ts...) -> overloaded<Ts...>;
-
-    struct collision {
-        glm::dvec2 normal;
-        double depth;
-    };
 
     enum class SupportError {
         ZeroDirection
     };
 
-    auto triple_product(glm::dvec2 a, glm::dvec2 b, glm::dvec2 c) -> glm::dvec2 {
-        auto z = a.x * b.y - a.y * b.x;
+    auto triple_product(glm::dvec2 a, glm::dvec2 b, glm::dvec2 c) -> glm::dvec2;
+    auto left_normal(const glm::dvec2& v) -> glm::dvec2;
+    auto right_normal(const glm::dvec2& v) -> glm::dvec2;
 
-        return { -c.y * z, c.x * z};
-    }
-
-    auto support(const auto& shape1, const auto& shape2, const glm::dvec2& direction) -> std::expected<glm::dvec2, SupportError> {
+    auto support(const auto& shape1, const auto& shape2, const glm::dvec2& direction) -> std::expected<glm::dvec2, SupportError>  {
         auto furthest1 = shape1.furthest(direction);
         auto furthest2 = shape2.furthest(-direction);
         if (!furthest1 || !furthest2) {
@@ -47,14 +40,6 @@ namespace barfight::physics::impl {
         }
 
         return *furthest1 - *furthest2;
-    }
-
-    auto left_normal(const glm::dvec2& v) -> glm::dvec2 {
-        return glm::normalize(glm::dvec2 { v.y, -v.x });
-    }
-
-    auto right_normal(const glm::dvec2& v) -> glm::dvec2 {
-        return glm::normalize(glm::dvec2 { -v.y, v.x });
     }
 
     #pragma region GJK
@@ -84,14 +69,7 @@ namespace barfight::physics::impl {
 
     using gjk_result = std::variant<gjk_result_evolving, gjk_result_not_found, gjk_result_found>;
 
-    auto gjk_add(gjk_simplex& simplex, const glm::dvec2 point) -> void {
-        std::visit(overloaded{
-            [&](const gjk_zero_simplex& arg) { simplex = gjk_one_simplex { point }; },
-            [&](const gjk_one_simplex& arg) { simplex = gjk_two_simplex { point, arg.a }; },
-            [&](const gjk_two_simplex& arg) { simplex = gjk_three_simplex { point, arg.a, arg.b }; },
-            [&](const gjk_three_simplex& arg) { simplex = gjk_three_simplex { point, arg.a, arg.b }; },
-        }, simplex);
-    }
+    auto gjk_add(gjk_simplex& simplex, const glm::dvec2 point) -> void;
 
     const auto gjk_max_iterations = 32;
 
@@ -106,7 +84,7 @@ namespace barfight::physics::impl {
 
     auto gjk(const auto& shape1, const auto& shape2) -> std::optional<gjk_three_simplex> {
         auto simplex = gjk_simplex { gjk_zero_simplex {} };
-        auto direction = glm::normalize(shape1.get_center() - shape2.get_center());
+        auto direction = glm::normalize(shape1.get_vec2_position() - shape2.get_vec2_position());
         if (direction == glm::dvec2(0.0, 0.0)) {
             direction = glm::dvec2(1.0, 0.0);
         }
@@ -218,27 +196,7 @@ namespace barfight::physics::impl {
         }
     };
 
-    auto get_winding(const gjk_three_simplex& simplex) -> epa_winding_direction {
-        const auto& a = simplex.a;
-        const auto& b = simplex.b;
-        const auto& c = simplex.c;
-
-        const auto ab = b - a;
-        const auto ac = c - a;
-
-        auto ab_cross = glm::cross(a, b);
-        auto bc_cross = glm::cross(b, c);
-        auto ca_cross = glm::cross(c, a);
-
-        if (ab_cross > 0.0) {
-            return epa_winding_direction::clockwise;
-        }
-        else if (bc_cross > 0.0) {
-            return epa_winding_direction::counter_clockwise;
-        }
-
-        return epa_winding_direction::unknown;
-    }
+    auto get_winding(const gjk_three_simplex& simplex) -> epa_winding_direction;
 
     class epa_polytope {
         public:
@@ -278,7 +236,12 @@ namespace barfight::physics::impl {
         return std::sqrt(gjk_epsilon());
     }
 
-    auto epa(const auto& shape1, const auto& shape2, const gjk_three_simplex& simplex) -> collision {
+    struct epa_result {
+        glm::dvec2 normal;
+        double depth;
+    };
+
+    auto epa(const auto& shape1, const auto& shape2, const gjk_three_simplex& simplex) -> epa_result {
         auto polytope = epa_polytope(simplex);
         epa_edge edge;
         glm::dvec2 support_point;

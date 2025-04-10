@@ -13,5 +13,9 @@ namespace barfight::physics {
         auto get_id() const -> std::size_t {
             return id;
         }
+
+        auto operator==(const BodyHandle& other) const -> bool {
+            return id == other.id;
+        }
     };
 }

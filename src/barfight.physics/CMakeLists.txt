@@ -29,6 +29,8 @@ add_library(bfphysicslib STATIC
   lib/Polygon.cpp
   lib/QuadTree.cpp
   lib/Rectangle.cpp
+  lib/Collision.cpp
+  lib/Collision.impl.cpp
   lib/Shape.cpp
   lib/World.cpp
 )

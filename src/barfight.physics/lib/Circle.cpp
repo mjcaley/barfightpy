@@ -27,7 +27,7 @@ auto barfight::physics::Circle::set_vec2_position(glm::dvec2 position) -> void {
     center = position;
 }
 
-auto barfight::physics::Circle::bounding_box() const -> barfight::physics::BoundingBox {
+auto barfight::physics::Circle::get_bounding_box() const -> barfight::physics::BoundingBox {
     return { glm::dvec2 { center.x - radius, center.y - radius }, glm::dvec2 { center.x - radius, center.y - radius } };
 }
 
