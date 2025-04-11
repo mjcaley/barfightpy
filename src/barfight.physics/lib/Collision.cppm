@@ -42,5 +42,10 @@ namespace barfight::physics {
             && b1.origin.y + b1.size.y >= b2.origin.y;
     }
 
-
+    export auto contains(const BoundingBox& parent, const BoundingBox& child) -> bool {
+        return parent.origin.x <= child.origin.x
+            && parent.origin.x + parent.size.x >= child.origin.x + child.size.x
+            && parent.origin.y <= child.origin.y
+            && parent.origin.y + parent.size.y >= child.origin.y + child.size.y;
+    }
 }

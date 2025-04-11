@@ -111,6 +111,6 @@ namespace barfight::physics {
         glm::dvec2 size;
         std::vector<std::optional<Body>> bodies {};
         std::vector<BodyHandle> body_free_list {};
-        QuadTreeNode tree { origin, size };
+        QuadTreeNode tree { origin, size, bodies };
     };
 }
