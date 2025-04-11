@@ -1,4 +1,5 @@
 module;
+#include <memory>
 #include <optional>
 #include <ranges>
 #include <vector>
@@ -10,18 +11,18 @@ import :BodyDescriptor;
 import :BodyHandle;
 import :Collision;
 import :QuadTree;
-import :QuadTreeNode;
-import :QuadTreeChildren;
 import :Shape;
 
 namespace barfight::physics {
     export class World {
         public:
-        World(const glm::dvec2 origin, const glm::dvec2 size) :
-            origin(origin), size(size) {}
-        World(const std::tuple<double, double>& origin, const std::tuple<double, double>& size) :
-            origin(glm::dvec2 { std::get<0>(origin), std::get<1>(origin) }),
-            size(glm::dvec2 { std::get<0>(size), std::get<1>(size) }) {}
+        // World(const glm::dvec2 origin, const glm::dvec2 size);
+        // World(const std::tuple<double, double>& origin, const std::tuple<double, double>& size);
+        // ~World();
+
+        World(const glm::dvec2 origin, const glm::dvec2 size) : origin(origin), size(size) {}    
+        World(const std::tuple<double, double>& origin, const std::tuple<double, double>& size)
+            : origin(glm::dvec2 { std::get<0>(origin), std::get<1>(origin) }), size(glm::dvec2 { std::get<0>(size), std::get<1>(size) }) {}
 
         auto broadphase() const -> std::vector<std::pair<BodyHandle, BodyHandle>> {
             std::vector<std::pair<BodyHandle, BodyHandle>> pairs {};
@@ -102,6 +103,7 @@ namespace barfight::physics {
             body_free_list.emplace_back(handle);
         }
 
+        // auto clear() -> void;
         auto clear() -> void {
             bodies.clear();
             body_free_list.clear();
