@@ -1,1 +1,13 @@
 export module barfight.physics;
+export import :Body;
+export import :BodyDescriptor;
+export import :BodyHandle;
+export import :BodyKind;
+export import :BoundingBox;
+export import :Circle;
+export import :Collision;
+export import :OrientedRectangle;
+export import :Polygon;
+export import :Rectangle;
+export import :Shape;
+export import :World;

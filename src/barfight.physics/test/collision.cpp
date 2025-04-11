@@ -1,12 +1,15 @@
 #include <numbers>
 #include <boost/ut.hpp>
-#include <bfphysics/BoundingBox.hpp>
-#include <bfphysics/Collision.hpp>
-#include <bfphysics/Circle.hpp>
-#include <bfphysics/Rectangle.hpp>
+// #include <bfphysics/BoundingBox.hpp>
+// #include <bfphysics/Collision.hpp>
+// #include <bfphysics/Circle.hpp>
+// #include <bfphysics/Rectangle.hpp>
 #include <glm/vec2.hpp>
 #include <glm/geometric.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/rotate_vector.hpp>
+
+import barfight.physics;
 
 namespace ut = boost::ut;
 

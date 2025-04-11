@@ -1,11 +1,8 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 4.0)
 
 project(bf_physics LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 20)
-
 
 enable_testing()
-
 
 include(cmake/CPM.cmake)
 
@@ -51,7 +48,7 @@ target_link_libraries(bfphysicslib PUBLIC glm::glm)
 #     lib/BoundingBox.cppm
 # )
 
-add_library(bfphysicslib_module)
+add_library(bfphysicslib_module STATIC)
 set_property(TARGET bfphysicslib_module PROPERTY CXX_STANDARD 23)
 target_sources(
   bfphysicslib_module
@@ -66,6 +63,16 @@ target_sources(
     newlib/Polygon.cppm
     newlib/Rectangle.cppm
     newlib/Shape.cppm
+    newlib/BodyKind.cppm
+    newlib/Collision.cppm
+    newlib/CollisionImpl.cppm
+    newlib/BodyDescriptor.cppm
+    newlib/BodyHandle.cppm
+    newlib/Body.cppm
+    newlib/QuadTree.cppm
+    newlib/QuadTreeNode.cppm
+    newlib/QuadTreeChildren.cppm
+    newlib/World.cppm
 )
 target_link_libraries(bfphysicslib_module PUBLIC glm::glm)
 
@@ -73,14 +80,17 @@ nanobind_add_module(bfphysics
     src/mod.cpp
 )
 set_property(TARGET bfphysics PROPERTY CXX_STANDARD 23)
-target_link_libraries(bfphysics PRIVATE bfphysicslib)
+target_link_libraries(bfphysics PRIVATE bfphysicslib_module)
 
-CPMAddPackage("gh:boost-ext/ut@2.3.0")
-add_executable(bfphysicstest
-  test/main.cpp
-  test/primitives.cpp
-  test/collision.cpp
-)
+CPMAddPackage("gh:boost-ext/ut@2.3.1")
+add_executable(bfphysicstest)
 set_property(TARGET bfphysicstest PROPERTY CXX_STANDARD 23)
-target_link_libraries(bfphysicstest PRIVATE Boost::ut bfphysicslib)
+set_property(TARGET bfphysicstest PROPERTY CMAKE_CXX_SCAN_FOR_MODULES 1)
+target_compile_features(bfphysicstest PRIVATE cxx_std_23)
+target_sources(bfphysicstest PRIVATE
+    test/main.cpp
+    test/primitives.cpp
+    test/collision.cpp
+)
+target_link_libraries(bfphysicstest PRIVATE Boost::ut bfphysicslib_module)
 add_test(NAME tests COMMAND bfphysicstest)

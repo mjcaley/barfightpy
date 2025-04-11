@@ -12,9 +12,10 @@ import :Circle;
 import :OrientedRectangle;
 import :Polygon;
 import :Rectangle;
+import :Collision;
 
 namespace barfight::physics {
-    auto colliding_visitor = [](const auto& shape1, const auto& shape2) -> std::optional<barfight::physics::collision> {
+    auto colliding_visitor = [](const auto& shape1, const auto& shape2) -> std::optional<barfight::physics::Collision> {
         return barfight::physics::colliding(shape1, shape2);
     };
 
@@ -59,7 +60,7 @@ namespace barfight::physics {
             return shape;
         }
 
-        auto colliding(const Shape& other) const -> std::optional<collision> {
+        auto colliding(const Shape& other) const -> std::optional<Collision> {
             return std::visit(colliding_visitor, shape, other.shape);
         }
 

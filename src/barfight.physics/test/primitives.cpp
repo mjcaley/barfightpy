@@ -1,6 +1,8 @@
 #include <boost/ut.hpp>
-#include <bfphysics/Circle.hpp>
-#include <bfphysics/Rectangle.hpp>
+// #include <bfphysics/Circle.hpp>
+// #include <bfphysics/Rectangle.hpp>
+
+import barfight.physics;
 
 using namespace boost::ut;
 

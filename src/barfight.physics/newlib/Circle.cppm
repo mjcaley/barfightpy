@@ -5,7 +5,7 @@ module;
 #include <glm/vec2.hpp>
 #include <glm/geometric.hpp>
 
-module barfight.physics:Circle;
+export module barfight.physics:Circle;
 import :BoundingBox;
 import :PrimitiveCommon;
 
@@ -34,7 +34,7 @@ namespace barfight::physics {
 
         auto get_tuple_position() const -> std::tuple<double, double> {
             auto position = get_vec2_position();
-        
+
             return std::make_tuple(position.x, position.y);
         }
 
@@ -48,11 +48,11 @@ namespace barfight::physics {
 
         auto furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, FurthestError> {
             using barfight::physics::FurthestError;
-        
+
             if (glm::dvec2 {0.0, 0.0} == direction) {
                 return std::unexpected { FurthestError::ZERO_VECTOR };
             }
-        
+
             return center + radius * glm::normalize(direction);
         }
     };
