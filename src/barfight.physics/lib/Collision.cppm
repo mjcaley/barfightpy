@@ -8,9 +8,6 @@ import :Circle;
 import :CollisionImpl;
 
 namespace barfight::physics {
-    using barfight::physics::BoundingBox;
-    using barfight::physics::Circle;
-
     export struct Collision {
         glm::dvec2 normal;
         double depth;

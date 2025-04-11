@@ -87,7 +87,7 @@ namespace barfight::physics {
             set_vec2_position({std::get<0>(position), std::get<1>(position)});
         }
 
-        auto furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, barfight::physics::FurthestError> {
+        auto furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, FurthestError> {
             if (direction == glm::dvec2 { 0.0, 0.0 }) {
                 return std::unexpected(FurthestError::ZERO_VECTOR);
             }

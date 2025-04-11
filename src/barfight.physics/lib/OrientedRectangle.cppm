@@ -46,9 +46,7 @@ namespace barfight::physics {
             half_size = { std::get<0>(value), std::get<1>(value) };
         }
 
-        auto furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, barfight::physics::FurthestError> {
-            using barfight::physics::FurthestError;
-        
+        auto furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, FurthestError> {
             if (glm::dvec2 {0.0, 0.0} == direction) {
                 return std::unexpected { FurthestError::ZERO_VECTOR };
             }

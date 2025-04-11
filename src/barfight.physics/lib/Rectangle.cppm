@@ -42,9 +42,7 @@ namespace barfight::physics {
         auto get_tuple_size() const -> std::tuple<double, double> { return { size.x, size.y }; }
         auto set_tuple_size(const std::tuple<double, double>& value) -> void { size = { std::get<0>(value), std::get<1>(value) }; }
 
-        auto furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, barfight::physics::FurthestError> {
-            using barfight::physics::FurthestError;
-        
+        auto furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, FurthestError> {
             if (glm::dvec2 {0.0, 0.0} == direction) {
                 return std::unexpected { FurthestError::ZERO_VECTOR };
             }

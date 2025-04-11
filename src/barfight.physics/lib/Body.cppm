@@ -8,6 +8,6 @@ import :Shape;
 namespace barfight::physics {
     export struct Body {
         BodyKind kind;
-        barfight::physics::Shape shape;
+        Shape shape;
     };
 }
