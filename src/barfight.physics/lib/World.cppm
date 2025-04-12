@@ -1,4 +1,5 @@
 module;
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -19,6 +20,89 @@ namespace barfight::physics {
         World(const glm::dvec2 origin, const glm::dvec2 size) : origin(origin), size(size) {}
         World(const std::tuple<double, double>& origin, const std::tuple<double, double>& size)
             : origin(glm::dvec2 { std::get<0>(origin), std::get<1>(origin) }), size(glm::dvec2 { std::get<0>(size), std::get<1>(size) }) {}
+
+        auto add(const BodyDescriptor& desc) -> BodyHandle {
+            auto body = Body {
+                desc.kind,
+                Shape { desc.shape }
+            };
+            if (body_free_list.empty()) {
+                bodies.emplace_back(body);
+
+                auto handle = BodyHandle { bodies.size() - 1 };
+                tree.add(handle);
+
+                return handle;
+            }
+            else {
+                auto handle = BodyHandle { body_free_list.back() };
+                body_free_list.pop_back();
+                bodies[handle.get_id()] = body;
+                tree.add(handle);
+
+                return handle;
+            }
+        }
+
+        auto remove(const BodyHandle handle) -> void {
+            if (bodies.size() < handle.get_id() + 1) {
+                return;
+            }
+
+            bodies[handle.get_id()] = {};
+            body_free_list.emplace_back(handle);
+
+            tree.remove(handle);
+        }
+
+        auto clear() -> void {
+            bodies.clear();
+            body_free_list.clear();
+            tree.clear();
+        }
+
+        auto resize(glm::dvec2 new_origin, glm::dvec2 new_size) -> void {
+            origin = new_origin;
+            size = new_size;
+            tree = QuadTreeNode { origin, size, bodies };
+            tree.clear();
+            for (const auto [id, body]: std::views::enumerate(bodies)) {
+                tree.add(BodyHandle { static_cast<std::size_t>(id) });
+            }
+        }
+
+        auto get(const BodyHandle handle) const -> std::optional<Body> {
+            if (bodies.size() < handle.get_id() + 1) {
+                return {};
+            }
+
+            return bodies[handle.get_id()];
+        }
+
+        auto query(const auto& shape) -> std::vector<BodyHandle> {
+            auto found = tree.query(shape.get_bounding_box());
+            std::vector<BodyHandle> result {};
+
+            std::ranges::copy(
+                found
+                | std::views::filter([&](const auto& handle) {
+                    // In range of bodies
+                    return handle.get_id() < bodies.size();
+                })
+                | std::views::filter([&](const auto& handle) {
+                    // Body that exists
+                    const auto& body = bodies[handle.get_id()];
+                    if (!body) { return false; }
+                })
+                | std::views::filter([&](const auto& body) {
+                    // Body that collides
+                    return collision(shape, body->shape).has_value();
+                }),
+                std::back_inserter(result)
+            );
+
+            return result;
+        }
 
         auto broadphase() const -> std::vector<std::pair<BodyHandle, BodyHandle>> {
             std::vector<std::pair<BodyHandle, BodyHandle>> pairs {};
@@ -68,56 +152,6 @@ namespace barfight::physics {
             }
 
             return collisions;
-        }
-
-        auto add(const BodyDescriptor& desc) -> BodyHandle {
-            auto body = Body {
-                desc.kind,
-                Shape { desc.shape }
-            };
-            if (body_free_list.empty()) {
-                bodies.emplace_back(body);
-
-                auto handle = BodyHandle { bodies.size() - 1 };
-                tree.add(handle);
-
-                return handle;
-            }
-            else {
-                auto handle = BodyHandle { body_free_list.back() };
-                body_free_list.pop_back();
-                bodies[handle.get_id()] = body;
-                tree.add(handle);
-
-                return handle;
-            }
-        }
-
-        auto remove(BodyHandle handle) -> void {
-            if (bodies.size() < handle.get_id() + 1) {
-                return;
-            }
-
-            bodies[handle.get_id()] = {};
-            body_free_list.emplace_back(handle);
-
-            tree.remove(handle);
-        }
-
-        auto clear() -> void {
-            bodies.clear();
-            body_free_list.clear();
-            tree.clear();
-        }
-
-        auto resize(glm::dvec2 new_origin, glm::dvec2 new_size) -> void {
-            origin = new_origin;
-            size = new_size;
-            tree.clear();
-            tree = QuadTreeNode { origin, size, bodies };
-            for (const auto [id, body]: std::views::enumerate(bodies)) {
-                tree.add(BodyHandle { static_cast<std::size_t>(id) });
-            }
         }
 
         private:
