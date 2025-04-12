@@ -43,18 +43,18 @@ target_sources(
     lib/Polygon.cppm
     lib/Rectangle.cppm
     lib/BodyDescriptor.cppm
-    
+
     lib/Shape.cppm
     lib/Collision.cppm
     lib/CollisionImpl.cppm
     lib/Body.cppm
-    
+
     lib/QuadTree.cppm
     lib/QuadTreeNode.cppm
     lib/QuadTreeImpl.cppm
-    
+
     lib/World.cppm
-    
+
     lib/lib.cppm
 )
 target_compile_features(bfphysicslib PRIVATE cxx_std_23)
@@ -73,6 +73,7 @@ target_sources(bfphysicstest PRIVATE
     test/main.cpp
     test/primitives.cpp
     test/collision.cpp
+    test/quadtree.cpp
 )
 target_link_libraries(bfphysicstest PRIVATE Boost::ut bfphysicslib)
 add_test(NAME tests COMMAND bfphysicstest)

@@ -1,6 +1,4 @@
 #include <boost/ut.hpp>
-// #include <bfphysics/Circle.hpp>
-// #include <bfphysics/Rectangle.hpp>
 
 import barfight.physics;
 
