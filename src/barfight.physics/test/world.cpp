@@ -1,0 +1,71 @@
+#include <variant>
+#include <boost/ut.hpp>
+#include <glm/vec2.hpp>
+
+import barfight.physics;
+
+using namespace boost::ut;
+
+suite world = [] {
+    using barfight::physics::World;
+    using barfight::physics::BoundingBox;
+    using barfight::physics::BodyDescriptor;
+    using barfight::physics::BodyHandle;
+    using barfight::physics::BodyKind;
+    using barfight::physics::Shape;
+    using barfight::physics::Circle;
+
+    "world properties set with defaults"_test = [] {
+        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
+        expect(0.0_d == world.get_bounding_box().origin.x) << "origin.x is not 0.0";
+        expect(0.0_d == world.get_bounding_box().origin.y) << "origin.y is not 0.0";
+        expect(10.0_d == world.get_bounding_box().size.x) << "size.x is not 10.0";
+        expect(10.0_d == world.get_bounding_box().size.y) << "size.y is not 10.0";
+    };
+
+    "world adds and gets body"_test = [] {
+        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
+        auto desc = BodyDescriptor { BodyKind::DYNAMIC, Circle { glm::dvec2 {5.0, 5.0}, 1.0 } };
+        auto handle = world.add(desc);
+        auto body = world.get(handle);
+
+        expect(fatal(body.has_value())) << "Body doesn't exist in world";
+        expect(fatal(holds_alternative<Circle>(body->shape.get_shape()))) << "Body isn't a circle";
+        expect(BodyKind::DYNAMIC == body->kind) << "Not a dynamic body";
+        expect(1.0_d == std::get<Circle>(body->shape.get_shape()).radius) << "Circle radius isn't correct";
+        expect(5.0_d == std::get<Circle>(body->shape.get_shape()).center.x) << "Circle center.x isn't correct";
+        expect(5.0_d == std::get<Circle>(body->shape.get_shape()).center.y) << "Circle center.y isn't correct";
+    };
+
+    "world removes body"_test = [] {
+        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
+        auto desc = BodyDescriptor { BodyKind::DYNAMIC, Circle { glm::dvec2 {5.0, 5.0}, 1.0 } };
+        auto handle = world.add(desc);
+        world.remove(handle);
+        auto body = world.get(handle);
+
+        expect(!body.has_value()) << "Body still exists in world after removal";
+    };
+
+    "world query primitive returns bodies"_test = [] {
+        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
+        auto desc = BodyDescriptor { BodyKind::DYNAMIC, Circle { glm::dvec2 {5.0, 5.0}, 1.0 } };
+        auto handle = world.add(desc);
+
+        auto result = world.query(Circle { glm::dvec2 {5.0, 5.0}, 1.0 });
+
+        expect(fatal(result.size() == 1)) << "Query returned no bodies";
+        expect(std::get<0>(result[0]) == handle) << "Handles are not the same";
+    };
+
+    "world query bounding box returns bodies"_test = [] {
+        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
+        auto desc = BodyDescriptor { BodyKind::DYNAMIC, Circle { glm::dvec2 {5.0, 5.0}, 1.0 } };
+        auto handle = world.add(desc);
+
+        auto result = world.query(BoundingBox { glm::dvec2 {4.0, 4.0}, glm::dvec2 {6.0, 6.0} });
+
+        expect(fatal(result.size() == 1)) << "Query returned no bodies";
+        expect(std::get<0>(result[0]) == handle) << "Handles are not the same";
+    };
+};

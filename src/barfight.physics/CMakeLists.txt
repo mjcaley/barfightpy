@@ -74,6 +74,7 @@ target_sources(bfphysicstest PRIVATE
     test/primitives.cpp
     test/collision.cpp
     test/quadtree.cpp
+    test/world.cpp
 )
 target_link_libraries(bfphysicstest PRIVATE Boost::ut bfphysicslib)
 add_test(NAME tests COMMAND bfphysicstest)

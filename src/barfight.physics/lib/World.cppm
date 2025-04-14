@@ -3,6 +3,8 @@ module;
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <set>
+#include <tuple>
 #include <vector>
 #include <glm/vec2.hpp>
 
@@ -16,6 +18,20 @@ import :Shape;
 
 namespace barfight::physics {
     export class World {
+        private:
+        auto filter_active_bodies() const {
+            return bodies
+                | std::views::enumerate
+                | std::views::filter([](const auto id_body) {
+                    const auto [id, body] = id_body;
+                    return body.has_value();
+                })
+                | std::views::transform([](const auto id_body) {
+                    const auto [id, body] = id_body;
+                    return std::make_tuple(BodyHandle { static_cast<std::size_t>(id) }, *body);
+                });
+        }
+
         public:
         World(const glm::dvec2 origin, const glm::dvec2 size) : origin(origin), size(size) {}
         World(const std::tuple<double, double>& origin, const std::tuple<double, double>& size)
@@ -61,6 +77,10 @@ namespace barfight::physics {
             tree.clear();
         }
 
+        auto get_bounding_box() const -> BoundingBox {
+            return BoundingBox { origin, size };
+        }
+
         auto resize(glm::dvec2 new_origin, glm::dvec2 new_size) -> void {
             origin = new_origin;
             size = new_size;
@@ -79,33 +99,51 @@ namespace barfight::physics {
             return bodies[handle.get_id()];
         }
 
-        auto query(const auto& shape) -> std::vector<BodyHandle> {
-            auto found = tree.query(shape.get_bounding_box());
-            std::vector<BodyHandle> result {};
-
-            std::ranges::copy(
-                found
-                | std::views::filter([&](const auto& handle) {
-                    // In range of bodies
-                    return handle.get_id() < bodies.size();
+        auto query(const BoundingBox& bounding_box) -> std::vector<std::tuple<BodyHandle, Body>> {
+            return tree.query(bounding_box)
+                | std::views::transform([this](const auto& handle) {
+                    const auto& body = get(handle);
+                    return std::make_tuple(handle, body);
                 })
-                | std::views::filter([&](const auto& handle) {
-                    // Body that exists
-                    const auto& body = bodies[handle.get_id()];
-                    if (!body) { return false; }
+                | std::views::filter([](const auto& handle_body) {
+                    const auto [handle, body] = handle_body;
+                    return body.has_value();
                 })
-                | std::views::filter([&](const auto& body) {
-                    // Body that collides
-                    return collision(shape, body->shape).has_value();
-                }),
-                std::back_inserter(result)
-            );
+                | std::views::transform([](const auto& handle_body) {
+                    const auto [handle, body] = handle_body;
+                    return std::make_tuple(handle, *body);
+                })
+                | std::ranges::to<std::vector<std::tuple<BodyHandle, Body>>>();
+        }
 
-            return result;
+        auto query(const auto& shape) -> std::vector<std::tuple<BodyHandle, Body>> {
+            return tree.query(shape.get_bounding_box())
+                | std::views::transform([this](const auto& handle) {
+                    const auto& body = get(handle);
+                    return std::make_tuple(handle, body);
+                })
+                | std::views::filter([](const auto& handle_body) {
+                    const auto [handle, body] = handle_body;
+                    return body.has_value();
+                })
+                | std::views::transform([](const auto& handle_body) {
+                    const auto [handle, body] = handle_body;
+                    return std::make_tuple(handle, *body);
+                })
+                | std::views::filter([&](const auto& handle_body) {
+                    const auto [handle, body] = handle_body;
+                    return body.shape.colliding(shape).has_value();
+                })
+                | std::ranges::to<std::vector<std::tuple<BodyHandle, Body>>>();
         }
 
         auto broadphase() const -> std::vector<std::pair<BodyHandle, BodyHandle>> {
             std::vector<std::pair<BodyHandle, BodyHandle>> pairs {};
+
+            for (const auto [handle1, body1] : filter_active_bodies()) {
+                auto body_bounding_box = body1.shape.get_bounding_box();
+                auto found = tree.query(body_bounding_box);
+            }
 
             for (const auto [id1, body1] : std::views::enumerate(bodies)) {
                 if (!body1.has_value()) {

@@ -15,10 +15,6 @@ import :Rectangle;
 import :Collision;
 
 namespace barfight::physics {
-    auto colliding_visitor = [](const auto& shape1, const auto& shape2) -> std::optional<Collision> {
-        return colliding(shape1, shape2);
-    };
-
     export class Shape {
         public:
         Shape(Circle circle) : shape(circle) {}
@@ -60,8 +56,21 @@ namespace barfight::physics {
             return shape;
         }
 
+        auto colliding(const auto& other) const -> std::optional<Collision> {
+            return std::visit(
+                [&](const auto& this_shape) -> std::optional<Collision> {
+                    return barfight::physics::colliding(this_shape, other);
+                },
+                shape);
+        }
+
         auto colliding(const Shape& other) const -> std::optional<Collision> {
-            return std::visit(colliding_visitor, shape, other.shape);
+            return std::visit(
+                [](const auto& this_shape, const auto& other_shape) -> std::optional<Collision> {
+                    return barfight::physics::colliding(this_shape, other_shape);
+                },
+                shape,
+                other.shape);
         }
 
         private:
