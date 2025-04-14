@@ -52,39 +52,33 @@ namespace barfight::physics {
         return *furthest1 - *furthest2;
     }
 
-    #pragma region GJK
+#pragma region GJK
 
-    export struct gjk_three_simplex {
+    export struct GJKThreeSimplex {
         glm::dvec2 a;
         glm::dvec2 b;
         glm::dvec2 c;
     };
 
-    struct gjk_two_simplex {
+    struct GJKTwoSimplex {
         glm::dvec2 a;
         glm::dvec2 b;
     };
 
-    struct gjk_one_simplex {
+    struct GJKOneSimplex {
         glm::dvec2 a;
     };
 
-    struct gjk_zero_simplex {};
+    struct GJKZeroSimplex {};
 
-    using gjk_simplex = std::variant<gjk_zero_simplex, gjk_one_simplex, gjk_two_simplex, gjk_three_simplex>;
+    using GJKSimplex = std::variant<GJKZeroSimplex, GJKOneSimplex, GJKTwoSimplex, GJKThreeSimplex>;
 
-    struct gjk_result_evolving {};
-    struct gjk_result_not_found {};
-    struct gjk_result_found {};
-
-    using gjk_result = std::variant<gjk_result_evolving, gjk_result_not_found, gjk_result_found>;
-
-    auto gjk_add(gjk_simplex& simplex, const glm::dvec2 point) -> void {
+    auto gjk_add(GJKSimplex& simplex, const glm::dvec2 point) -> void {
         std::visit(overloaded{
-            [&](const gjk_zero_simplex& arg) { simplex = gjk_one_simplex { point }; },
-            [&](const gjk_one_simplex& arg) { simplex = gjk_two_simplex { point, arg.a }; },
-            [&](const gjk_two_simplex& arg) { simplex = gjk_three_simplex { point, arg.a, arg.b }; },
-            [&](const gjk_three_simplex& arg) { simplex = gjk_three_simplex { point, arg.a, arg.b }; },
+            [&](const GJKZeroSimplex& arg) { simplex = GJKOneSimplex { point }; },
+            [&](const GJKOneSimplex& arg) { simplex = GJKTwoSimplex { point, arg.a }; },
+            [&](const GJKTwoSimplex& arg) { simplex = GJKThreeSimplex { point, arg.a, arg.b }; },
+            [&](const GJKThreeSimplex& arg) { simplex = GJKThreeSimplex { point, arg.a, arg.b }; },
         }, simplex);
     }
 
@@ -99,8 +93,8 @@ namespace barfight::physics {
         return epsilon;
     }
 
-    export auto gjk(const auto& shape1, const auto& shape2) -> std::optional<gjk_three_simplex> {
-        auto simplex = gjk_simplex { gjk_zero_simplex {} };
+    export auto gjk(const auto& shape1, const auto& shape2) -> std::optional<GJKThreeSimplex> {
+        auto simplex = GJKSimplex { GJKZeroSimplex {} };
         auto direction = glm::normalize(shape1.get_vec2_position() - shape2.get_vec2_position());
         if (direction == glm::dvec2(0.0, 0.0)) {
             direction = glm::dvec2(1.0, 0.0);
@@ -109,7 +103,7 @@ namespace barfight::physics {
         if (!support_point) { return {}; }
         gjk_add(simplex, support_point.value());
 
-        if (glm::dot(std::get<gjk_one_simplex>(simplex).a, direction) <= 0.0) {
+        if (glm::dot(std::get<GJKOneSimplex>(simplex).a, direction) <= 0.0) {
             return {};
         }
 
@@ -124,10 +118,10 @@ namespace barfight::physics {
                 return {};
             }
             else {
-                if (std::holds_alternative<gjk_three_simplex>(simplex)) {
-                    auto a = std::get<gjk_three_simplex>(simplex).a;
-                    auto b = std::get<gjk_three_simplex>(simplex).b;
-                    auto c = std::get<gjk_three_simplex>(simplex).c;
+                if (std::holds_alternative<GJKThreeSimplex>(simplex)) {
+                    auto a = std::get<GJKThreeSimplex>(simplex).a;
+                    auto b = std::get<GJKThreeSimplex>(simplex).b;
+                    auto c = std::get<GJKThreeSimplex>(simplex).c;
 
                     auto ao = -a;
                     auto ab = b - a;
@@ -138,23 +132,23 @@ namespace barfight::physics {
 
                     auto ac_location = glm::dot(ac_perp, ao);
                     if (ac_location >= 0.0) {
-                        simplex = gjk_two_simplex { a, c };
+                        simplex = GJKTwoSimplex { a, c };
                     }
                     else {
                         auto ab_perp = glm::dvec2 { ab.y * dot, -ab.x * dot };
                         auto ab_location = glm::dot(ab_perp, ao);
                         if (ab_location < 0.0) {
-                            return std::get<gjk_three_simplex>(simplex);
+                            return std::get<GJKThreeSimplex>(simplex);
                         }
                         else {
-                            simplex = gjk_two_simplex { a, b };
+                            simplex = GJKTwoSimplex { a, b };
                             direction = ab_perp;
                         }
                     }
                 }
-                else if (std::holds_alternative<gjk_two_simplex>(simplex)) {
-                    auto a = std::get<gjk_two_simplex>(simplex).a;
-                    auto b = std::get<gjk_two_simplex>(simplex).b;
+                else if (std::holds_alternative<GJKTwoSimplex>(simplex)) {
+                    auto a = std::get<GJKTwoSimplex>(simplex).a;
+                    auto b = std::get<GJKTwoSimplex>(simplex).b;
 
                     auto ao = -a;
                     auto ab = b - a;
@@ -170,22 +164,23 @@ namespace barfight::physics {
         return {};
     }
 
-    #pragma endregion GJK
+#pragma endregion GJK
 
+#pragma region EPA
 
-    enum class epa_winding_direction {
+    enum class EPAWindingDirection {
         unknown,
         clockwise,
         counter_clockwise
     };
 
-    class epa_edge {
+    class EPAEdge {
         public:
-        epa_edge() {}
-        epa_edge(glm::dvec2 point1, glm::dvec2 point2, epa_winding_direction winding)
+        EPAEdge() {}
+        EPAEdge(glm::dvec2 point1, glm::dvec2 point2, EPAWindingDirection winding)
             : point1(point1), point2(point2) {
                 normal = point2 - point1;
-                if (winding == epa_winding_direction::clockwise) {
+                if (winding == EPAWindingDirection::clockwise) {
                     normal = right_normal(normal);
                 }
                 else {
@@ -200,7 +195,7 @@ namespace barfight::physics {
         glm::dvec2 normal;
         double distance;
 
-        auto operator <=>(const epa_edge& other) const -> std::strong_ordering {
+        auto operator <=>(const EPAEdge& other) const -> std::strong_ordering {
             if (distance < other.distance) {
                 return std::strong_ordering::less;
             }
@@ -213,7 +208,7 @@ namespace barfight::physics {
         }
     };
 
-    auto get_winding(const gjk_three_simplex& simplex) -> epa_winding_direction {
+    auto get_winding(const GJKThreeSimplex& simplex) -> EPAWindingDirection {
         const auto& a = simplex.a;
         const auto& b = simplex.b;
         const auto& c = simplex.c;
@@ -226,18 +221,18 @@ namespace barfight::physics {
         auto ca_cross = glm::cross(c, a);
 
         if (ab_cross > 0.0) {
-            return epa_winding_direction::clockwise;
+            return EPAWindingDirection::clockwise;
         }
         else if (bc_cross > 0.0) {
-            return epa_winding_direction::counter_clockwise;
+            return EPAWindingDirection::counter_clockwise;
         }
 
-        return epa_winding_direction::unknown;
+        return EPAWindingDirection::unknown;
     }
 
-    class epa_polytope {
+    class EPAPolytope {
         public:
-        epa_polytope(const gjk_three_simplex& simplex) {
+        EPAPolytope(const GJKThreeSimplex& simplex) {
             winding = get_winding(simplex);
             edges = {
                 { simplex.c, simplex.b, winding },
@@ -247,7 +242,7 @@ namespace barfight::physics {
             std::make_heap(edges.begin(), edges.end(), std::greater<>{});
         }
 
-        auto closest_edge() const -> const epa_edge& {
+        auto closest_edge() const -> const EPAEdge& {
             return edges.front();
         }
 
@@ -255,8 +250,8 @@ namespace barfight::physics {
             std::pop_heap(edges.begin(), edges.end(), std::greater<>{});
             auto edge = edges.back();
             edges.pop_back();
-            epa_edge edge1 { edge.point1, point, winding };
-            epa_edge edge2 { point, edge.point2, winding };
+            EPAEdge edge1 { edge.point1, point, winding };
+            EPAEdge edge2 { point, edge.point2, winding };
             edges.push_back(edge1);
             std::push_heap(edges.begin(), edges.end(), std::greater<>{});
             edges.push_back(edge2);
@@ -264,8 +259,8 @@ namespace barfight::physics {
         }
 
         private:
-        std::vector<epa_edge> edges {};
-        epa_winding_direction winding;
+        std::vector<EPAEdge> edges {};
+        EPAWindingDirection winding;
     };
 
     const int epa_max_iterations = 100;
@@ -273,14 +268,14 @@ namespace barfight::physics {
         return std::sqrt(gjk_epsilon());
     }
 
-    export struct epa_result {
+    export struct EPAResult {
         glm::dvec2 normal;
         double depth;
     };
 
-    export auto epa(const auto& shape1, const auto& shape2, const gjk_three_simplex& simplex) -> epa_result {
-        auto polytope = epa_polytope(simplex);
-        epa_edge edge;
+    export auto epa(const auto& shape1, const auto& shape2, const GJKThreeSimplex& simplex) -> EPAResult {
+        auto polytope = EPAPolytope(simplex);
+        EPAEdge edge;
         glm::dvec2 support_point;
 
         for (auto _ : std::views::iota(0, epa_max_iterations)) {
@@ -298,3 +293,5 @@ namespace barfight::physics {
         return { edge.normal, glm::dot(support_point, edge.normal) };
     }
 }
+
+#pragma endregion EPA

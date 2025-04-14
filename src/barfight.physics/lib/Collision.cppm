@@ -16,7 +16,7 @@ namespace barfight::physics {
     export auto colliding(const auto& shape1, const auto& shape2) -> std::optional<Collision> {
         return gjk(shape1, shape2)
             .transform([&](auto&& simplex) -> Collision {
-                    epa_result epa_collision = epa(shape1, shape2, simplex);
+                    EPAResult epa_collision = epa(shape1, shape2, simplex);
                     return Collision { epa_collision.normal, epa_collision.depth };
                 }
             );
