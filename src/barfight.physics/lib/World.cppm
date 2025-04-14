@@ -101,15 +101,15 @@ namespace barfight::physics {
 
         auto query(const BoundingBox& bounding_box) -> std::vector<std::tuple<BodyHandle, Body>> {
             return tree.query(bounding_box)
-                | std::views::transform([this](const auto& handle) {
+                | std::views::transform([this](auto&& handle) {
                     const auto& body = get(handle);
                     return std::make_tuple(handle, body);
                 })
-                | std::views::filter([](const auto& handle_body) {
+                | std::views::filter([](auto&& handle_body) {
                     const auto [handle, body] = handle_body;
                     return body.has_value();
                 })
-                | std::views::transform([](const auto& handle_body) {
+                | std::views::transform([](auto&& handle_body) {
                     const auto [handle, body] = handle_body;
                     return std::make_tuple(handle, *body);
                 })
@@ -118,19 +118,19 @@ namespace barfight::physics {
 
         auto query(const auto& shape) -> std::vector<std::tuple<BodyHandle, Body>> {
             return tree.query(shape.get_bounding_box())
-                | std::views::transform([this](const auto& handle) {
+                | std::views::transform([this](auto&& handle) {
                     const auto& body = get(handle);
                     return std::make_tuple(handle, body);
                 })
-                | std::views::filter([](const auto& handle_body) {
+                | std::views::filter([](auto&& handle_body) {
                     const auto [handle, body] = handle_body;
                     return body.has_value();
                 })
-                | std::views::transform([](const auto& handle_body) {
+                | std::views::transform([](auto&& handle_body) {
                     const auto [handle, body] = handle_body;
                     return std::make_tuple(handle, *body);
                 })
-                | std::views::filter([&](const auto& handle_body) {
+                | std::views::filter([&](auto&& handle_body) {
                     const auto [handle, body] = handle_body;
                     return body.shape.colliding(shape).has_value();
                 })
@@ -143,29 +143,7 @@ namespace barfight::physics {
             for (const auto [handle1, body1] : filter_active_bodies()) {
                 auto body_bounding_box = body1.shape.get_bounding_box();
                 auto found = tree.query(body_bounding_box);
-            }
 
-            for (const auto [id1, body1] : std::views::enumerate(bodies)) {
-                if (!body1.has_value()) {
-                    continue;
-                }
-
-                for (const auto [id2, body2] : std::views::enumerate(bodies)) {
-                    if (!body2.has_value()) {
-                        continue;
-                    }
-
-                    if (id1 == id2) {
-                        continue;
-                    }
-
-                    if (overlaps(body1->shape.get_bounding_box(), body2->shape.get_bounding_box())) {
-                        pairs.emplace_back(
-                            BodyHandle { static_cast<std::size_t>(id1) },
-                            BodyHandle { static_cast<std::size_t>(id2) }
-                        );
-                    }
-                }
             }
 
             return pairs;
