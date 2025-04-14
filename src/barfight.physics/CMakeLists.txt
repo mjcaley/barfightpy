@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 4.0)
 
 project(bf_physics LANGUAGES CXX)
 
-set(CMAKE_CXX_SCAN_FOR_MODULES ON)
-
 enable_testing()
 
 include(cmake/CPM.cmake)
@@ -63,7 +61,7 @@ target_link_libraries(bfphysicslib PUBLIC glm::glm)
 nanobind_add_module(bfphysics
     src/mod.cpp
 )
-set_property(TARGET bfphysics PROPERTY CXX_STANDARD 23)
+target_compile_features(bfphysics PRIVATE cxx_std_23)
 target_link_libraries(bfphysics PRIVATE bfphysicslib)
 
 CPMAddPackage("gh:boost-ext/ut@2.3.1")
