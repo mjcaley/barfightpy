@@ -1,3 +1,4 @@
+#include <set>
 #include <variant>
 #include <boost/ut.hpp>
 #include <glm/vec2.hpp>
@@ -14,6 +15,7 @@ suite world = [] {
     using barfight::physics::BodyKind;
     using barfight::physics::Shape;
     using barfight::physics::Circle;
+    using barfight::physics::BroadCollisionPair;
 
     "world properties set with defaults"_test = [] {
         auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
@@ -55,7 +57,9 @@ suite world = [] {
         auto result = world.query(Circle { glm::dvec2 {5.0, 5.0}, 1.0 });
 
         expect(fatal(result.size() == 1)) << "Query returned no bodies";
-        expect(std::get<0>(result[0]) == handle) << "Handles are not the same";
+        for (const auto& h : result) {
+            expect(handle == h) << "Handles are not the same";
+        }
     };
 
     "world query bounding box returns bodies"_test = [] {
@@ -66,6 +70,25 @@ suite world = [] {
         auto result = world.query(BoundingBox { glm::dvec2 {4.0, 4.0}, glm::dvec2 {6.0, 6.0} });
 
         expect(fatal(result.size() == 1)) << "Query returned no bodies";
-        expect(std::get<0>(result[0]) == handle) << "Handles are not the same";
+        for (const auto& h : result) {
+            expect(handle == h.get_id()) << "Handles are not the same";
+        }
+    };
+
+    "world returns broadphase collisions"_test = [] {
+        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
+        auto handle1 = world.add({
+            BodyKind::DYNAMIC,
+            Circle { glm::dvec2 {5.0, 5.0}, 1.0 }
+        });
+        auto handle2 = world.add({
+            BodyKind::DYNAMIC,
+            Circle { glm::dvec2 {5.0, 5.0}, 1.0 }
+        });
+
+        auto results = world.broadphase();
+
+        expect(fatal(results.size() == 1)) << "Broadphase returned no collisions";
+        expect(results.contains(BroadCollisionPair { handle1, handle2 })) << "Broadphase doesn't contain collision pair";
     };
 };

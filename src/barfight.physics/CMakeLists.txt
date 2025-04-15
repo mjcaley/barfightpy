@@ -51,6 +51,8 @@ target_sources(
     lib/QuadTreeNode.cppm
     lib/QuadTreeImpl.cppm
 
+    lib/BroadCollisionPair.cppm
+    lib/NarrowCollisionPair.cppm
     lib/World.cppm
 
     lib/lib.cppm

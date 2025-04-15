@@ -11,4 +11,6 @@ export import :Polygon;
 export import :Rectangle;
 export import :Shape;
 export import :QuadTreeNode;
+export import :BroadCollisionPair;
+export import :NarrowCollisionPair;
 export import :World;
