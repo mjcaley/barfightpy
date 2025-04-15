@@ -24,12 +24,10 @@ namespace barfight::physics {
 
     export auto colliding(const Circle& c1, const Circle& c2) -> std::optional<Collision> {
         auto distance = glm::distance(c1.center, c2.center);
-        auto overlap = c1.radius + c2.radius - distance;
 
-        if (overlap > 0) {
+        if (distance < c1.radius + c2.radius) {
             auto normal = glm::normalize(c2.center - c1.center);
-            auto resolution_vector = normal;
-            return Collision { normal, overlap };
+            return Collision { normal, distance };
         }
 
         return {};

@@ -248,7 +248,7 @@ namespace barfight::physics {
 
         auto expand(const glm::dvec2 point) -> void {
             std::pop_heap(edges.begin(), edges.end(), std::greater<>{});
-            auto edge = edges.back();
+            const auto& edge = edges.back();
             edges.pop_back();
             EPAEdge edge1 { edge.point1, point, winding };
             EPAEdge edge2 { point, edge.point2, winding };
@@ -264,9 +264,7 @@ namespace barfight::physics {
     };
 
     const int epa_max_iterations = 100;
-    constexpr auto epa_epsilon() -> double {
-        return std::sqrt(gjk_epsilon());
-    }
+    auto epa_epsilon = std::sqrt(gjk_epsilon());
 
     export struct EPAResult {
         glm::dvec2 normal;
@@ -283,7 +281,7 @@ namespace barfight::physics {
             support_point = support(shape1, shape2, edge.normal).value();
 
             auto projection = glm::dot(support_point, edge.normal);
-            if (projection - edge.distance < epa_epsilon()) {
+            if (projection - edge.distance < epa_epsilon) {
                 return { edge.normal, edge.distance };
             }
 

@@ -16,6 +16,7 @@ suite world = [] {
     using barfight::physics::Shape;
     using barfight::physics::Circle;
     using barfight::physics::BroadCollisionPair;
+    using barfight::physics::NarrowCollisionPair;
 
     "world properties set with defaults"_test = [] {
         auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
@@ -88,7 +89,7 @@ suite world = [] {
 
         auto results = world.broadphase();
 
-        expect(fatal(results.size() == 2)) << "Broadphase didn't return 2 collisions";
+        expect(2 == results.size()) << "Broadphase didn't return 2 collisions";
         expect(results.contains(BroadCollisionPair { handle1, handle2 })) << "Broadphase doesn't contain collision pair 0-1";
         expect(results.contains(BroadCollisionPair { handle2, handle1 })) << "Broadphase doesn't contain collision pair 1-0";
     };
@@ -97,16 +98,17 @@ suite world = [] {
         auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
         auto handle1 = world.add({
             BodyKind::DYNAMIC,
-            Circle { glm::dvec2 {5.0, 5.0}, 1.0 }
+            Circle { glm::dvec2 {4.5, 5.0}, 1.0 }
         });
         auto handle2 = world.add({
             BodyKind::DYNAMIC,
-            Circle { glm::dvec2 {5.0, 5.0}, 1.0 }
+            Circle { glm::dvec2 {5.5, 5.0}, 1.0 }
         });
 
         auto broad = world.broadphase();
         auto result = world.narrowphase(broad);
 
-
+        expect(2 == result.size()) << "Narrowphase didn't return 2 collisions";
+        expect(result.contains(NarrowCollisionPair {handle1, handle2, {}})) << "";
     };
 };
