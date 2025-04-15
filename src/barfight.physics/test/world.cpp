@@ -108,7 +108,18 @@ suite world = [] {
         auto broad = world.broadphase();
         auto result = world.narrowphase(broad);
 
-        expect(2 == result.size()) << "Narrowphase didn't return 2 collisions";
-        expect(result.contains(NarrowCollisionPair {handle1, handle2, {}})) << "";
+        expect(fatal(result.contains(NarrowCollisionPair {handle1, handle2, {}}))) << "Doesn't contain collision 0-1";
+        auto collision0_1 = result.extract(NarrowCollisionPair {handle1, handle2, {}});
+        expect(fatal(collision0_1.value().collision.has_value())) << "No collision information in 0-1";
+        expect(1.0_d == collision0_1.value().collision->normal.x) << "Collision normal.x is not 1.0 in 0-1";
+        expect(0.0_d == collision0_1.value().collision->normal.y) << "Collision normal.y is not 0.0 in 0-1";
+        expect(1.0_d == collision0_1.value().collision->depth) << "Collision depth is not 1.0 in 0-1";
+
+        expect(fatal(result.contains(NarrowCollisionPair {handle2, handle1, {}}))) << "Doesn't contain collision 1-0";
+        auto collision1_0 = result.extract(NarrowCollisionPair {handle2, handle1, {}});
+        expect(fatal(collision1_0.value().collision.has_value())) << "No collision information in 1-0";
+        expect(-1.0_d == collision1_0.value().collision->normal.x) << "Collision normal.x is not -1.0 in 1-0";
+        expect(0.0_d == collision1_0.value().collision->normal.y) << "Collision normal.y is not 0.0 in 1-0";
+        expect(1.0_d == collision1_0.value().collision->depth) << "Collision depth is not 1.0 in 1-0";
     };
 };
