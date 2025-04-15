@@ -1,5 +1,5 @@
 module;
-#include <compare>
+#include <functional>
 #include <optional>
 
 export module barfight.physics:NarrowCollisionPair;
@@ -12,25 +12,20 @@ namespace barfight::physics {
         BodyHandle handle2;
         std::optional<Collision> collision;
 
-        auto operator<=>(this const NarrowCollisionPair& self, const NarrowCollisionPair& other) -> std::strong_ordering {
-            if (self.handle1 < other.handle1) {
-                if (self.handle2 < other.handle2) {
-                    return std::strong_ordering::less;
-                }
-                else if (self.handle2 > other.handle2) {
-                    return std::strong_ordering::greater;
-                }
-            }
-            else if (self.handle1 > other.handle1) {
-                if (self.handle2 < other.handle2) {
-                    return std::strong_ordering::less;
-                }
-                else if (self.handle2 > other.handle2) {
-                    return std::strong_ordering::greater;
-                }
-            }
+        auto operator==(const NarrowCollisionPair& other) const -> bool {
+            return handle1.get_id() == other.handle1.get_id() &&
+                   handle2.get_id() == other.handle2.get_id();
+        }
+    };
+}
 
-            return std::strong_ordering::equal;
+namespace std {
+    export template<>
+    struct hash<barfight::physics::NarrowCollisionPair> {
+        auto operator()(const barfight::physics::NarrowCollisionPair& b) const noexcept -> std::size_t {
+            return
+                std::hash<barfight::physics::BodyHandle>{}(b.handle1) ^
+                std::hash<barfight::physics::BodyHandle>{}(b.handle2);
         }
     };
 }

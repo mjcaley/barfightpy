@@ -1,7 +1,7 @@
 module;
 #include <memory>
 #include <optional>
-#include <set>
+#include <unordered_set>
 #include <vector>
 #include <glm/vec2.hpp>
 
@@ -78,8 +78,8 @@ namespace barfight::physics {
             bottom_right->remove(handle);
         }
 
-        auto query(const BoundingBox& target) const -> std::set<BodyHandle> {
-            std::set<BodyHandle> found {};
+        auto query(const BoundingBox& target) const -> std::unordered_set<BodyHandle> {
+            std::unordered_set<BodyHandle> found {};
 
             if (!overlaps(target, get_bounding_box())) { return found; }
 
@@ -120,7 +120,7 @@ namespace barfight::physics {
         int limit;
         int depth;
         std::vector<std::optional<Body>>& bodies;
-        std::set<BodyHandle> handles;
+        std::unordered_set<BodyHandle> handles;
 
         std::unique_ptr<QuadTreeNode> top_left;
         std::unique_ptr<QuadTreeNode> top_right;

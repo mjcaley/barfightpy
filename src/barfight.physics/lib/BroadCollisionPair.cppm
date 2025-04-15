@@ -1,5 +1,5 @@
 module;
-#include <compare>
+#include <functional>
 
 export module barfight.physics:BroadCollisionPair;
 import :BodyHandle;
@@ -9,25 +9,20 @@ namespace barfight::physics {
         BodyHandle handle1;
         BodyHandle handle2;
 
-        auto operator<=>(this const BroadCollisionPair& self, const BroadCollisionPair& other) -> std::strong_ordering {
-            if (self.handle1 < other.handle1) {
-                if (self.handle2 < other.handle2) {
-                    return std::strong_ordering::less;
-                }
-                else if (self.handle2 > other.handle2) {
-                    return std::strong_ordering::greater;
-                }
-            }
-            else if (self.handle1 > other.handle1) {
-                if (self.handle2 < other.handle2) {
-                    return std::strong_ordering::less;
-                }
-                else if (self.handle2 > other.handle2) {
-                    return std::strong_ordering::greater;
-                }
-            }
+        auto operator==(const BroadCollisionPair& other) const -> bool {
+            return handle1.get_id() == other.handle1.get_id() &&
+                   handle2.get_id() == other.handle2.get_id();
+        }
+    };
+}
 
-            return std::strong_ordering::equal;
+namespace std {
+    export template<>
+    struct hash<barfight::physics::BroadCollisionPair> {
+        auto operator()(const barfight::physics::BroadCollisionPair& b) const noexcept -> std::size_t {
+            return
+                std::hash<barfight::physics::BodyHandle>{}(b.handle1) ^
+                std::hash<barfight::physics::BodyHandle>{}(b.handle2);
         }
     };
 }

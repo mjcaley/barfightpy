@@ -1,6 +1,7 @@
 module;
 #include <compare>
 #include <cstddef>
+#include <functional>
 
 export module barfight.physics:BodyHandle;
 
@@ -24,6 +25,15 @@ namespace barfight::physics {
             if (id < other.id) { return std::strong_ordering::less; }
             else if (id == other.id) { return std::strong_ordering::equal; }
             else { return std::strong_ordering::greater; }
+        }
+    };
+}
+
+namespace std {
+    export template<>
+    struct hash<barfight::physics::BodyHandle> {
+        auto operator()(const barfight::physics::BodyHandle& b) const noexcept -> std::size_t {
+            return std::hash<std::size_t>{}(b.get_id());
         }
     };
 }

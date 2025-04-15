@@ -1,10 +1,11 @@
 module;
 #include <algorithm>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <ranges>
-#include <set>
 #include <tuple>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <glm/vec2.hpp>
@@ -102,20 +103,20 @@ namespace barfight::physics {
             return bodies[handle.get_id()];
         }
 
-        auto query(const BoundingBox& bounding_box) const -> std::set<BodyHandle> {
+        auto query(const BoundingBox& bounding_box) const -> std::unordered_set<BodyHandle> {
             return tree.query(bounding_box);
         }
 
-        auto query(const auto& shape) const -> std::set<BodyHandle> {
+        auto query(const auto& shape) const -> std::unordered_set<BodyHandle> {
             return tree.query(shape.get_bounding_box())
                 | std::views::filter([&](auto&& handle) {
                     const auto& body = get(handle);
                     return body->shape.colliding(shape).has_value();
                 })
-                | std::ranges::to<std::set<BodyHandle>>();
+                | std::ranges::to<std::unordered_set<BodyHandle>>();
         }
 
-        auto broadphase() const -> std::set<BroadCollisionPair> {
+        auto broadphase() const -> std::unordered_set<BroadCollisionPair> {
             return filter_active_bodies()
                 | std::views::transform([&](auto&& handle) {
                     const auto& body = get(handle);
@@ -133,13 +134,13 @@ namespace barfight::physics {
                     | std::views::transform([&](auto&& collision) {
                         return BroadCollisionPair {handle, collision};
                     })
-                    | std::ranges::to<std::set<BroadCollisionPair>>();
+                    | std::ranges::to<std::unordered_set<BroadCollisionPair>>();
                 })
                 | std::views::join
-                | std::ranges::to<std::set<BroadCollisionPair>>();
+                | std::ranges::to<std::unordered_set<BroadCollisionPair>>();
         }
 
-        auto narrowphase(const std::set<BroadCollisionPair>& broad_collisions) const -> std::set<NarrowCollisionPair> {
+        auto narrowphase(const std::unordered_set<BroadCollisionPair>& broad_collisions) const -> std::unordered_set<NarrowCollisionPair> {
             return broad_collisions
             | std::views::transform([&](auto&& pair) {
                 auto& [handle1, handle2] = pair;
@@ -157,7 +158,7 @@ namespace barfight::physics {
             | std::views::filter([](auto&& pair) {
                 return pair.collision.has_value();
             })
-            | std::ranges::to<std::set<NarrowCollisionPair>>();
+            | std::ranges::to<std::unordered_set<NarrowCollisionPair>>();
         }
 
         private:
