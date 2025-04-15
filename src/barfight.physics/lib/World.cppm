@@ -139,26 +139,25 @@ namespace barfight::physics {
                 | std::ranges::to<std::set<BroadCollisionPair>>();
         }
 
-        // auto narrowphase(const std::set<BroadCollisionPair>>& broad_collisions) const -> std::set<NarrowCollisionPair>> {
-        auto narrowphase(const std::vector<std::pair<BodyHandle, BodyHandle>>& broad_collisions) const -> std::vector<std::tuple<BodyHandle, BodyHandle, Collision>> {
-            std::vector<std::tuple<BodyHandle, BodyHandle, Collision>> collisions {};
-
-            for (auto [handle1, handle2] : broad_collisions) {
+        auto narrowphase(const std::set<BroadCollisionPair>& broad_collisions) const -> std::set<NarrowCollisionPair> {
+            return broad_collisions
+            | std::views::transform([&](auto&& pair) {
+                auto& [handle1, handle2] = pair;
                 auto& body1 = bodies[handle1.get_id()];
                 auto& body2 = bodies[handle2.get_id()];
 
                 if (!body1.has_value() || !body2.has_value()) {
-                    continue;
+                    return NarrowCollisionPair { handle1, handle2, {} };
                 }
 
                 auto collision = body1->shape.colliding(body2->shape);
 
-                if (collision.has_value()) {
-                    collisions.emplace_back(handle1, handle2, collision.value());
-                }
-            }
-
-            return collisions;
+                return NarrowCollisionPair { handle1, handle2, collision };
+            })
+            | std::views::filter([](auto&& pair) {
+                return pair.collision.has_value();
+            })
+            | std::ranges::to<std::set<NarrowCollisionPair>>();
         }
 
         private:

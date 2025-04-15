@@ -88,7 +88,25 @@ suite world = [] {
 
         auto results = world.broadphase();
 
-        expect(fatal(results.size() == 1)) << "Broadphase returned no collisions";
-        expect(results.contains(BroadCollisionPair { handle1, handle2 })) << "Broadphase doesn't contain collision pair";
+        expect(fatal(results.size() == 2)) << "Broadphase didn't return 2 collisions";
+        expect(results.contains(BroadCollisionPair { handle1, handle2 })) << "Broadphase doesn't contain collision pair 0-1";
+        expect(results.contains(BroadCollisionPair { handle2, handle1 })) << "Broadphase doesn't contain collision pair 1-0";
+    };
+
+    "world returns narrowphase collisions"_test = [] {
+        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
+        auto handle1 = world.add({
+            BodyKind::DYNAMIC,
+            Circle { glm::dvec2 {5.0, 5.0}, 1.0 }
+        });
+        auto handle2 = world.add({
+            BodyKind::DYNAMIC,
+            Circle { glm::dvec2 {5.0, 5.0}, 1.0 }
+        });
+
+        auto broad = world.broadphase();
+        auto result = world.narrowphase(broad);
+
+
     };
 };

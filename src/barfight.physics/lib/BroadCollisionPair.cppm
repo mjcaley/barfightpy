@@ -1,9 +1,8 @@
 module;
-#include <set>
+#include <compare>
 
 export module barfight.physics:BroadCollisionPair;
 import :BodyHandle;
-import :Body;
 
 namespace barfight::physics {
     export struct BroadCollisionPair {
