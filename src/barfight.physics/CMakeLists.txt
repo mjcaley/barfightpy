@@ -19,6 +19,7 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
 find_package(nanobind CONFIG REQUIRED)
 
+CPMAddPackage("gh:gabime/spdlog@1.15.2")
 CPMAddPackage("gh:g-truc/glm#1.0.1")
 find_package(nanobind REQUIRED)
 
@@ -58,7 +59,7 @@ target_sources(
     lib/lib.cppm
 )
 target_compile_features(bfphysicslib PRIVATE cxx_std_23)
-target_link_libraries(bfphysicslib PUBLIC glm::glm)
+target_link_libraries(bfphysicslib PUBLIC glm::glm PRIVATE spdlog::spdlog)
 
 nanobind_add_module(bfphysics
     src/mod.cpp

@@ -8,6 +8,7 @@ module;
 #include <variant>
 #include <vector>
 #include <glm/glm.hpp>
+#include "spdlog/spdlog.h"
 
 #ifndef GLM_ENABLE_EXPERIMENTAL
 #define GLM_ENABLE_EXPERIMENTAL
