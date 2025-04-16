@@ -5,7 +5,7 @@ import barfight.physics;
 
 using namespace boost::ut;
 
-suite quadtree = [] {
+suite<"quadtree"> quadtree = [] {
     using barfight::physics::QuadTreeNode;
     using barfight::physics::Body;
     using barfight::physics::BodyHandle;

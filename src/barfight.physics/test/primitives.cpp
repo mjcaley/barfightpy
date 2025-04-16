@@ -4,7 +4,7 @@ import barfight.physics;
 
 using namespace boost::ut;
 
-suite primitives = [] {
+suite<"primitives"> primitives = [] {
     "circle properties set"_test = [] {
         auto c = barfight::physics::Circle { std::make_tuple(4.0, 2.0), 10.0 };
 

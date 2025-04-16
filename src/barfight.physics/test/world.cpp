@@ -7,7 +7,7 @@ import barfight.physics;
 
 using namespace boost::ut;
 
-suite world = [] {
+suite<"world"> world = [] {
     using barfight::physics::World;
     using barfight::physics::BoundingBox;
     using barfight::physics::BodyDescriptor;

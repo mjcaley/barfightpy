@@ -1,9 +1,5 @@
 #include <numbers>
 #include <boost/ut.hpp>
-// #include <bfphysics/BoundingBox.hpp>
-// #include <bfphysics/Collision.hpp>
-// #include <bfphysics/Circle.hpp>
-// #include <bfphysics/Rectangle.hpp>
 #include <glm/vec2.hpp>
 #include <glm/geometric.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -11,11 +7,10 @@
 
 import barfight.physics;
 
-namespace ut = boost::ut;
+using namespace boost::ut;
 
-ut::suite collision = [] {
+suite<"collision"> collision = [] {
     using namespace barfight::physics;
-    using namespace boost::ut;
 
     "furthest point rectangle"_test = [] {
         const auto r1 = Rectangle { glm::dvec2 { 0.0, 0.0 }, glm::dvec2 { 1.0, 1.0 }};
@@ -83,4 +78,36 @@ ut::suite collision = [] {
         expect(overlaps(b1, b2)) << "b1 and b2 should overlap but don't\n";
         expect(!overlaps(b1, b3)) << "b1 and b3 don't overlap but do\n";
     };
+
+    "shape collision"_test = []<typename T>(T arg) {
+        auto [shape1, shape2] = arg;
+
+        auto result = colliding(shape1, shape2);
+
+        expect(result.has_value()) << "No collision detected\n";
+    } | std::tuple {
+        std::tuple {
+            Rectangle { glm::dvec2 { 0.0, 0.0 }, glm::dvec2 { 1.0, 1.0 }},
+            Rectangle { glm::dvec2 { 0.5, 0.0 }, glm::dvec2 { 1.0, 1.0 }}
+        },
+        std::tuple {
+            Circle { glm::dvec2 { 0.0, 0.0 }, 1.0},
+            Circle { glm::dvec2 { 0.5, 0.0 }, 1.0}
+        },
+        std::tuple {
+            OrientedRectangle { glm::dvec2 { 0.0, 0.0 }, glm::dvec2 { 0.5, 0.5 }, 0.0},
+            OrientedRectangle { glm::dvec2 { 0.5, 0.0 }, glm::dvec2 { 0.5, 0.5 }, 0.0}
+        },
+        std::tuple {
+            Polygon { {glm::dvec2{4.0, 5.0}, glm::dvec2{4.0, 11.0}, glm::dvec2{9.0, 9.0}} },
+            Polygon { {glm::dvec2{7.0, 3.0}, glm::dvec2{5.0, 7.0}, glm::dvec2{12.0, 7.0}, glm::dvec2{10.0, 2.0}} }
+        }
+    };
+
+    // >{
+    //     Rectangle { glm::dvec2 { 0.0, 0.0 }, glm::dvec2 { 1.0, 1.0 }},
+    //     Circle { glm::dvec2 { 0.5, 0.5 }, 1.0 },
+    //     OrientedRectangle { glm::dvec2 { 0.5, 0.5 }, glm::dvec2 { 1.0, 1.0 }, std::numbers::pi / 4 },
+    //     Polygon { std::vector<glm::dvec2> { glm::dvec2 { 0.0, 0.0 }, glm::dvec2 { 1.0, 1.0 }}}
+    // };
 };

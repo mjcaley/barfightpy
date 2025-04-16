@@ -18,12 +18,12 @@ namespace barfight::physics {
         public:
         Polygon(std::vector<glm::dvec2> points) : points(points) {}
         Polygon(const std::vector<std::tuple<double, double>>& _points) {
-            std::ranges::copy(
-                _points | std::views::transform(
-                    [](const auto& point) { return glm::dvec2 { std::get<0>(point), std::get<1>(point) }; }
-                ),
-                std::back_inserter(points)
-            );
+            points =
+                _points
+                | std::views::transform(
+                    [](auto&& point) { return glm::dvec2 { std::get<0>(point), std::get<1>(point) }; }
+                )
+                | std::ranges::to<std::vector<glm::dvec2>>();
         }
 
         std::vector<glm::dvec2> points;
@@ -36,7 +36,7 @@ namespace barfight::physics {
                 ),
                 std::back_inserter(tuple_points)
             );
-        
+
             return tuple_points;
         }
 
@@ -55,17 +55,17 @@ namespace barfight::physics {
             auto min_y = -std::numeric_limits<double>::infinity();
             auto max_x = std::numeric_limits<double>::infinity();
             auto max_y = std::numeric_limits<double>::infinity();
-        
+
             for (const auto& point : points) {
                 min_x = std::min(min_x, point.x);
                 min_y = std::min(min_y, point.y);
                 max_x = std::min(max_x, point.x);
                 max_y = std::min(max_y, point.y);
             }
-        
+
             auto width = max_x - min_x;
             auto height = max_y - min_y;
-        
+
             return glm::dvec2 { min_x + width / 2.0, min_y + height / 2.0 };
         }
 
@@ -79,7 +79,7 @@ namespace barfight::physics {
 
         auto get_tuple_position() const -> std::tuple<double, double> {
             const auto position = get_vec2_position();
-        
+
             return { position.x, position.y };
         }
 
@@ -91,10 +91,10 @@ namespace barfight::physics {
             if (direction == glm::dvec2 { 0.0, 0.0 }) {
                 return std::unexpected(FurthestError::ZERO_VECTOR);
             }
-        
+
             glm::dvec2 best = get_vec2_position();
             auto distance = -std::numeric_limits<double>::infinity();
-        
+
             for (auto& point : points) {
                 auto this_distance = glm::dot(point, direction);
                 if (this_distance > distance) {
@@ -102,7 +102,7 @@ namespace barfight::physics {
                     distance = this_distance;
                 }
             }
-        
+
             return best;
         }
 
@@ -111,14 +111,14 @@ namespace barfight::physics {
             auto min_y = std::numeric_limits<double>::infinity();
             auto max_x = -std::numeric_limits<double>::infinity();
             auto max_y = -std::numeric_limits<double>::infinity();
-        
+
             for (const auto& point : points) {
                 min_x = std::min(min_x, point.x);
                 min_y = std::min(min_y, point.y);
                 max_x = std::max(max_x, point.x);
                 max_y = std::max(max_y, point.y);
             }
-        
+
             return BoundingBox { glm::dvec2 { min_x, min_y }, glm::dvec2 { max_x, max_y } };
         }
     };
