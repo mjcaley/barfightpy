@@ -24,10 +24,10 @@ namespace barfight::physics {
         ZeroDirection
     };
 
-    auto triple_product(glm::dvec2 a, glm::dvec2 b, glm::dvec2 c) -> glm::dvec2 {
+    auto triple_product(const glm::dvec2& a, const glm::dvec2& b, const glm::dvec2& c) -> glm::dvec2 {
         auto z = a.x * b.y - a.y * b.x;
 
-        return { -c.y * z, c.x * z};
+        return glm::dvec2 { -c.y * z, c.x * z};
     }
 
     auto left_normal(const glm::dvec2& v) -> glm::dvec2 {
@@ -151,9 +151,9 @@ namespace barfight::physics {
                     auto ao = -a;
                     auto ab = b - a;
 
-                    direction = glm::normalize(triple_product(ab, ao, ab));
+                    direction = triple_product(ab, ao, ab);
                     if (glm::length2(direction) <= gjk_epsilon()) {
-                        direction = glm::dvec2 { direction.y, -direction.x }; // left normal
+                        direction = left_normal(ab);
                     }
                 }
             }

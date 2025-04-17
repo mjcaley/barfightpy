@@ -24,8 +24,8 @@ from barfight.physics.primitives.gjk2 import epa, gjk
         #     Rectangle(Vec2(1, 1), Vec2(1, 1)),
         # ),  # edge, fails, collision too small?
         (
-            OrientedRectangle(Vec2(0, 0), Vec2(5, 5), 45),
-            OrientedRectangle(Vec2(0.5, 0), Vec2(5, 5), 45),
+            OrientedRectangle(Vec2(0, 0), Vec2(5, 5), radians(45)),
+            OrientedRectangle(Vec2(0.5, 0), Vec2(5, 5), radians(45)),
         ),
         (
             Polygon([Vec2(-1, -1), Vec2(0, 1), Vec2(1, -1)]),
