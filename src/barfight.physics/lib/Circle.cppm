@@ -2,10 +2,9 @@ module;
 
 #include <expected>
 #include <tuple>
-#include <glm/vec2.hpp>
-#include <glm/geometric.hpp>
 
 export module barfight.physics:Circle;
+import glm;
 import :BoundingBox;
 import :PrimitiveCommon;
 

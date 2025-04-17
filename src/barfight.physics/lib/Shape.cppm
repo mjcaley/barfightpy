@@ -3,9 +3,9 @@ module;
 #include <optional>
 #include <tuple>
 #include <variant>
-#include <glm/vec2.hpp>
 
 export module barfight.physics:Shape;
+import glm;
 import :BoundingBox;
 import :PrimitiveCommon;
 import :Circle;

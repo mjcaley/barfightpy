@@ -6,10 +6,9 @@ module;
 #include <ranges>
 #include <tuple>
 #include <vector>
-#include <glm/vec2.hpp>
-#include <glm/geometric.hpp>
 
 export module barfight.physics:Polygon;
+import glm;
 import :BoundingBox;
 import :PrimitiveCommon;
 

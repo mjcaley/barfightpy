@@ -1,7 +1,5 @@
-module;
-#include <glm/vec2.hpp>
-
 export module barfight.physics:BoundingBox;
+import glm;
 
 namespace barfight::physics {
     export struct BoundingBox {

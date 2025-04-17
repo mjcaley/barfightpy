@@ -29,6 +29,8 @@ target_sources(
   PUBLIC
   FILE_SET CXX_MODULES
   FILES
+    ${glm_SOURCE_DIR}/glm/glm.cppm
+
     # Forward declarations
     lib/QuadTreeFwd.cppm
 
@@ -59,6 +61,7 @@ target_sources(
     lib/lib.cppm
 )
 target_compile_features(bfphysicslib PRIVATE cxx_std_23)
+target_compile_definitions(bfphysicslib PUBLIC GLM_ENABLE_EXPERIMENTAL GLM_EXT_INLINE_NAMESPACE GLM_GTX_INLINE_NAMESPACE)
 target_link_libraries(bfphysicslib PUBLIC glm::glm PRIVATE spdlog::spdlog)
 
 nanobind_add_module(bfphysics

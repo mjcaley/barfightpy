@@ -8,9 +8,9 @@ module;
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <glm/vec2.hpp>
 
 export module barfight.physics:World;
+import glm;
 import :Body;
 import :BodyDescriptor;
 import :BodyHandle;

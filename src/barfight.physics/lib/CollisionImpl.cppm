@@ -7,16 +7,11 @@ module;
 #include <ranges>
 #include <variant>
 #include <vector>
-#include <glm/glm.hpp>
 #include "spdlog/spdlog.h"
-
-#ifndef GLM_ENABLE_EXPERIMENTAL
-#define GLM_ENABLE_EXPERIMENTAL
-#endif
 #include <glm/gtx/exterior_product.hpp>
-#include <glm/gtx/norm.hpp>
 
 export module barfight.physics:CollisionImpl;
+import glm;
 
 namespace barfight::physics {
     template<class... Ts>
@@ -115,6 +110,7 @@ namespace barfight::physics {
             if (!support_point) { return {}; }
             gjk_add(simplex, support_point.value());
 
+            auto distance = glm::dot(support_point.value(), direction);
             if (glm::dot(support_point.value(), direction) <= gjk_epsilon()) {
                 return {};
             }

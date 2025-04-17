@@ -1,8 +1,8 @@
 module;
 #include <memory>
-#include <glm/vec2.hpp>
 
 module barfight.physics:QuadTreeImpl;
+import glm;
 import :QuadTreeNode;
 
 namespace barfight::physics {

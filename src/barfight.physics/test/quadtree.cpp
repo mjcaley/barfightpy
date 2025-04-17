@@ -1,7 +1,7 @@
 #include <boost/ut.hpp>
-#include <glm/vec2.hpp>
 
 import barfight.physics;
+import glm;
 
 using namespace boost::ut;
 

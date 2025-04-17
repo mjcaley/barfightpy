@@ -1,9 +1,9 @@
 #include <unordered_set>
 #include <variant>
 #include <boost/ut.hpp>
-#include <glm/vec2.hpp>
 
 import barfight.physics;
+import glm;
 
 using namespace boost::ut;
 

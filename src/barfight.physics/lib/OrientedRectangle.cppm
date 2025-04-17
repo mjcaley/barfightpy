@@ -3,11 +3,9 @@ module;
 #include <expected>
 #include <ranges>
 #include <tuple>
-#include <glm/vec2.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/rotate_vector.hpp>
 
 export module barfight.physics:OrientedRectangle;
+import glm;
 import :BoundingBox;
 import :PrimitiveCommon;
 

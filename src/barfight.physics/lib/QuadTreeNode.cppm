@@ -3,9 +3,9 @@ module;
 #include <optional>
 #include <unordered_set>
 #include <vector>
-#include <glm/vec2.hpp>
 
 export module barfight.physics:QuadTreeNode;
+import glm;
 import :QuadTreeFwd;
 import :Body;
 import :BodyHandle;

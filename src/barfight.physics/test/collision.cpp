@@ -2,10 +2,9 @@
 #include <boost/ut.hpp>
 #include <glm/vec2.hpp>
 #include <glm/geometric.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/rotate_vector.hpp>
 
 import barfight.physics;
+import glm;
 
 using namespace boost::ut;
 

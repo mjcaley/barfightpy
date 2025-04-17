@@ -2,9 +2,9 @@ module;
 
 #include <expected>
 #include <tuple>
-#include <glm/vec2.hpp>
 
 export module barfight.physics:Rectangle;
+import glm;
 import :BoundingBox;
 import :PrimitiveCommon;
 

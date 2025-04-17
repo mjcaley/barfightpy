@@ -1,8 +1,8 @@
 module;
 #include <optional>
-#include <glm/glm.hpp>
 
 export module barfight.physics:Collision;
+import glm;
 import :BoundingBox;
 import :Circle;
 import :CollisionImpl;
