@@ -31,6 +31,8 @@ target_sources(
   FILES
     ${glm_SOURCE_DIR}/glm/glm.cppm
 
+    lib/math.cppm
+
     # Forward declarations
     lib/QuadTreeFwd.cppm
 

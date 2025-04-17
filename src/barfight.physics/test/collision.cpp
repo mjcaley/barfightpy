@@ -1,14 +1,14 @@
 #include <numbers>
 #include <boost/ut.hpp>
-#include <glm/vec2.hpp>
-#include <glm/geometric.hpp>
 
+import barfight.math;
 import barfight.physics;
 import glm;
 
 using namespace boost::ut;
 
 suite<"collision"> collision = [] {
+    using namespace barfight::math;
     using namespace barfight::physics;
 
     "furthest point rectangle"_test = [] {
@@ -94,8 +94,8 @@ suite<"collision"> collision = [] {
             Circle { glm::dvec2 { 0.5, 0.0 }, 1.0}
         },
         std::tuple {
-            OrientedRectangle { glm::dvec2 { 0.0, 0.0 }, glm::dvec2 { 0.5, 0.5 }, 0.0},
-            OrientedRectangle { glm::dvec2 { 0.5, 0.0 }, glm::dvec2 { 0.5, 0.5 }, 0.0}
+            OrientedRectangle { glm::dvec2 { 0.0, 0.0 }, glm::dvec2 { 5.0, 5.0 }, to_radians(45.0)},
+            OrientedRectangle { glm::dvec2 { 0.5, 0.0 }, glm::dvec2 { 5.0, 5.0 }, to_radians(45.0)}
         },
         std::tuple {
             Polygon { {glm::dvec2{4.0, 5.0}, glm::dvec2{4.0, 11.0}, glm::dvec2{9.0, 9.0}} },

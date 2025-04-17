@@ -130,6 +130,7 @@ namespace barfight::physics {
                     auto ac_location = glm::dot(ac_perp, ao);
                     if (ac_location >= 0.0) {
                         simplex = GJKTwoSimplex { a, c };
+                        direction = ac_perp;
                     }
                     else {
                         auto ab_perp = glm::dvec2 { ab.y * dot, -ab.x * dot };
@@ -150,7 +151,7 @@ namespace barfight::physics {
                     auto ao = -a;
                     auto ab = b - a;
 
-                    direction = triple_product(ab, ao, ab);
+                    direction = glm::normalize(triple_product(ab, ao, ab));
                     if (glm::length2(direction) <= gjk_epsilon()) {
                         direction = glm::dvec2 { direction.y, -direction.x }; // left normal
                     }

@@ -1,6 +1,7 @@
 module;
-
+#include <algorithm>
 #include <expected>
+#include <limits>
 #include <ranges>
 #include <tuple>
 
@@ -48,19 +49,17 @@ namespace barfight::physics {
             if (glm::dvec2 {0.0, 0.0} == direction) {
                 return std::unexpected { FurthestError::ZERO_VECTOR };
             }
-        
-            if (direction.x <= 0 && direction.y <= 0) {
-                return center - half_size;
-            }
-            else if (direction.x <= 0 && direction.y >= 0) {
-                return center + glm::dvec2 { 0.0, -half_size.y };
-            }
-            else if (direction.x >= 0 && direction.y >= 0) {
-                return center + half_size;
-            }
-            else {
-                return center + glm::dvec2 { -half_size.x, 0.0 };
-            }
+
+            glm::dvec2 vertices[] = {
+                glm::rotate(half_size, rotation) + center,
+                glm::rotate( glm::dvec2{-half_size.x,  half_size.y}, rotation) + center,
+                glm::rotate(-glm::dvec2{ half_size.x,  half_size.y}, rotation) + center,
+                glm::rotate( glm::dvec2{ half_size.x, -half_size.y}, rotation) + center
+            };
+
+            return *std::ranges::max_element(vertices, [&direction](const auto& v1, const auto& v2) {
+                return glm::dot(v1, direction) < glm::dot(v2, direction);
+            });
         }
 
         auto get_bounding_box() const -> BoundingBox {
