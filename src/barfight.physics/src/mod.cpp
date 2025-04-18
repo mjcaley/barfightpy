@@ -2,15 +2,6 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/variant.h>
-// #include <bfphysics/BodyKind.hpp>
-// #include <bfphysics/BodyDescriptor.hpp>
-// #include <bfphysics/BodyHandle.hpp>
-// #include <bfphysics/BoundingBox.hpp>
-// #include <bfphysics/World.hpp>
-// #include <bfphysics/Circle.hpp>
-// #include <bfphysics/Polygon.hpp>
-// #include <bfphysics/Rectangle.hpp>
-// #include <bfphysics/Shape.hpp>
 
 import barfight.physics;
 
