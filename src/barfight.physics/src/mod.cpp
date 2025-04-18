@@ -56,12 +56,12 @@ NB_MODULE(bfphysics, m) {
             [](barfight::physics::OrientedRectangle & self, const std::tuple<double, double>& value) { self.set_tuple_center(value); }
         )
         .def_prop_rw(
-            "half_size",
+            "half_extent",
             [](const barfight::physics::OrientedRectangle& self) {
-                return self.get_tuple_half_size();
+                return self.get_tuple_half_extent();
             },
             [](barfight::physics::OrientedRectangle& self, std::tuple<double, double> value) {
-                self.set_tuple_half_size(value);
+                self.set_tuple_half_extent(value);
             })
         .def_prop_rw(
             "rotation",
