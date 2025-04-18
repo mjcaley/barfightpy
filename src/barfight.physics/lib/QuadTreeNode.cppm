@@ -117,9 +117,9 @@ namespace barfight::physics {
         private:
         glm::dvec2 origin;
         glm::dvec2 size;
-        int limit;
-        int depth;
         std::vector<std::optional<Body>>& bodies;
+        int depth;
+        int limit;
         std::unordered_set<BodyHandle> handles;
 
         std::unique_ptr<QuadTreeNode> top_left;
