@@ -1,6 +1,7 @@
 module;
 #include <algorithm>
 #include <functional>
+#include <map>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -17,8 +18,10 @@ import :BodyHandle;
 import :Collision;
 import :QuadTree;
 import :Shape;
+import :CollisionPair;
 import :BroadCollisionPair;
 import :NarrowCollisionPair;
+import :ResolvedCollisionPair;
 
 namespace barfight::physics {
     export class World {
@@ -95,12 +98,13 @@ namespace barfight::physics {
             }
         }
 
-        auto get(const BodyHandle handle) const -> std::optional<Body> {
+        auto get(const BodyHandle handle) const -> Body* {
             if (bodies.size() < handle.get_id() + 1) {
-                return {};
+                return nullptr;
             }
 
-            return bodies[handle.get_id()];
+            auto& opt_body = bodies[handle.get_id()];
+            return opt_body ? &(*opt_body) : nullptr;
         }
 
         auto query(const BoundingBox& bounding_box) const -> std::unordered_set<BodyHandle> {
@@ -110,7 +114,11 @@ namespace barfight::physics {
         auto query(const auto& shape) const -> std::unordered_set<BodyHandle> {
             return tree.query(shape.get_bounding_box())
                 | std::views::filter([&](auto&& handle) {
-                    const auto& body = get(handle);
+                    auto* body = get(handle);
+                    if (!body) {
+                        return false;
+                    }
+
                     return body->shape.colliding(shape).has_value();
                 })
                 | std::ranges::to<std::unordered_set<BodyHandle>>();
@@ -119,7 +127,11 @@ namespace barfight::physics {
         auto broadphase() const -> std::unordered_set<BroadCollisionPair> {
             return filter_active_bodies()
                 | std::views::transform([&](auto&& handle) {
-                    const auto& body = get(handle);
+                    auto* body = get(handle);
+                    if (!body) {
+                        return false;
+                    }
+
                     auto collisions = query(body->shape.get_bounding_box());
 
                     return std::make_tuple(handle, collisions);
@@ -140,25 +152,42 @@ namespace barfight::physics {
                 | std::ranges::to<std::unordered_set<BroadCollisionPair>>();
         }
 
-        auto narrowphase(const std::unordered_set<BroadCollisionPair>& broad_collisions) const -> std::unordered_set<NarrowCollisionPair> {
+        auto narrowphase(const std::unordered_set<BroadCollisionPair>& broad_collisions) const -> std::map<CollisionPair, Collision> {
             return broad_collisions
+            | std::views::filter([&](auto&& pair) {
+                auto [handle1, handle2] = pair;
+
+                return get(handle1) && get(handle2);
+            })
             | std::views::transform([&](auto&& pair) {
                 auto& [handle1, handle2] = pair;
-                auto& body1 = bodies[handle1.get_id()];
-                auto& body2 = bodies[handle2.get_id()];
-
-                if (!body1.has_value() || !body2.has_value()) {
-                    return NarrowCollisionPair { handle1, handle2, {} };
+                auto* body1 = get(handle1);
+                auto* body2 = get(handle1);
+                if (!body1 || !body2) {
+                    return std::make_tuple(std::nullopt, std::nullopt, std::nullopt);
                 }
 
                 auto collision = body1->shape.colliding(body2->shape);
 
-                return NarrowCollisionPair { handle1, handle2, collision };
+                return std::make_tuple(handle1, handle2, collision);
+                // return NarrowCollisionPair { handle1, handle2, collision };
             })
             | std::views::filter([](auto&& pair) {
-                return pair.collision.has_value();
+                return std::get<0>(pair).has_value() && std::get<1>(pair).has_value() && std::get<2>(pair).has_value();
             })
-            | std::ranges::to<std::unordered_set<NarrowCollisionPair>>();
+            | std::views::transform([](auto&& pair) {
+                auto [handle1, handle2, collision] = pair;
+
+                return std::make_pair(
+                    CollisionPair { handle1, handle2 },
+                    *collision
+                );
+            })
+            | std::ranges::to<std::map<CollisionPair, Collision>>();
+        }
+
+        auto step(double dt) -> void {
+            get_collisions(dt);
         }
 
         private:
@@ -167,5 +196,34 @@ namespace barfight::physics {
         std::vector<std::optional<Body>> bodies {};
         std::vector<BodyHandle> body_free_list {};
         QuadTreeNode tree { origin, size, bodies };
+
+        auto get_collisions(double dt) -> void {
+            auto broad_collisions = broadphase();
+            auto narrow_collisions = narrowphase(broad_collisions);
+            // auto resolved_collisions = resolve(narrow_collisions);
+            resolve(narrow_collisions);
+            // set active collisions
+        }
+
+        auto resolve(const std::unordered_set<NarrowCollisionPair>& narrow_collisions) -> void {
+            auto resolved = std::unordered_set<ResolvedCollisionPair> {};
+            auto still_colliding = std::unordered_set<NarrowCollisionPair> {}; // TODO: another type?
+
+            for (const auto& nc : narrow_collisions) {
+                const auto& body1 = get(nc.handle1);
+                const auto& body2 = get(nc.handle2);
+
+                if (!body1 || !body2) {
+                    continue;
+                }
+
+                if (body1->kind == BodyKind::DYNAMIC && body2->kind == BodyKind::STATIC) {
+
+                }
+                else if (body1->kind == BodyKind::DYNAMIC && body2->kind == BodyKind::SENSOR) {
+
+                }
+            }
+        }
     };
 }
