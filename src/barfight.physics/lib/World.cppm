@@ -5,6 +5,7 @@ module;
 #include <optional>
 #include <ranges>
 #include <tuple>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -17,8 +18,8 @@ import :BodyHandle;
 import :Collision;
 import :QuadTree;
 import :Shape;
-import :BroadCollisionPair;
-import :NarrowCollisionPair;
+import :CollisionPair;
+import :ResolvedCollisionPair;
 
 namespace barfight::physics {
     export class World {
@@ -95,76 +96,97 @@ namespace barfight::physics {
             }
         }
 
-        auto get(const BodyHandle handle) const -> std::optional<Body> {
+        auto get(const BodyHandle handle) -> std::optional<Body>& {
             if (bodies.size() < handle.get_id() + 1) {
-                return {};
+                return bodies[0];
             }
 
-            return bodies[handle.get_id()];
+            auto& opt_body = bodies[handle.get_id()];
+            return opt_body;
+        }
+
+        auto query(const auto& shape) -> std::unordered_set<BodyHandle>
+            requires (!std::same_as<std::remove_cvref_t<decltype(shape)>, BoundingBox>) {
+            return tree.query(shape.get_bounding_box())
+                | std::views::filter([&](auto&& handle) {
+                    auto& body = get(handle);
+                    if (!body) {
+                        return false;
+                    }
+
+                    return body->shape.colliding(shape).has_value();
+                })
+                | std::ranges::to<std::unordered_set<BodyHandle>>();
         }
 
         auto query(const BoundingBox& bounding_box) const -> std::unordered_set<BodyHandle> {
             return tree.query(bounding_box);
         }
 
-        auto query(const auto& shape) const -> std::unordered_set<BodyHandle> {
-            return tree.query(shape.get_bounding_box())
-                | std::views::filter([&](auto&& handle) {
-                    const auto& body = get(handle);
-                    return body->shape.colliding(shape).has_value();
-                })
-                | std::ranges::to<std::unordered_set<BodyHandle>>();
-        }
-
-        auto broadphase() const -> std::unordered_set<BroadCollisionPair> {
+        auto broadphase() -> std::unordered_set<CollisionPair> {
             return filter_active_bodies()
                 | std::views::transform([&](auto&& handle) {
-                    const auto& body = get(handle);
+                    auto& body = get(handle);
                     auto collisions = query(body->shape.get_bounding_box());
 
                     return std::make_tuple(handle, collisions);
                 })
                 | std::views::transform([](auto&& body_collisions) {
-                    auto& [handle, collisions] = body_collisions;
+                    auto [handle, collisions] = body_collisions;
 
                     return collisions
                     | std::views::filter([handle] (auto&& collision) {
                         return handle.get_id() != collision.get_id();
                     })
                     | std::views::transform([&](auto&& collision) {
-                        return BroadCollisionPair {handle, collision};
+                        return CollisionPair {handle, collision};
                     })
-                    | std::ranges::to<std::unordered_set<BroadCollisionPair>>();
+                    | std::ranges::to<std::unordered_set<CollisionPair>>();
                 })
                 | std::views::join
-                | std::ranges::to<std::unordered_set<BroadCollisionPair>>();
+                | std::ranges::to<std::unordered_set<CollisionPair>>();
         }
 
-        auto narrowphase(const std::unordered_set<BroadCollisionPair>& broad_collisions) const -> std::unordered_set<NarrowCollisionPair> {
-            return broad_collisions
-            | std::views::transform([&](auto&& pair) {
-                auto& [handle1, handle2] = pair;
-                auto& body1 = bodies[handle1.get_id()];
-                auto& body2 = bodies[handle2.get_id()];
+        auto narrowphase(const std::unordered_set<CollisionPair>& broad_collisions) -> std::unordered_map<CollisionPair, Collision> {
+            return
+            broad_collisions
+            | std::views::filter([&](auto&& pair) {
+                auto [handle1, handle2] = pair;
 
-                if (!body1.has_value() || !body2.has_value()) {
-                    return NarrowCollisionPair { handle1, handle2, {} };
+                return get(handle1) && get(handle2);
+            })
+            | std::views::transform([&](auto&& pair) {
+                auto [handle1, handle2] = pair;
+                const auto& body1 = get(handle1);
+                const auto& body2 = get(handle2);
+                auto collision = std::optional<Collision> {};
+
+                if (!body1 || !body2) {
+                    return std::make_tuple(handle1, handle2, collision);
                 }
 
-                auto collision = body1->shape.colliding(body2->shape);
+                collision = body1->shape.colliding(body2->shape);
 
-                return NarrowCollisionPair { handle1, handle2, collision };
+                return std::make_tuple(handle1, handle2, collision);
             })
             | std::views::filter([](auto&& pair) {
-                return pair.collision.has_value();
+                return std::get<2>(pair).has_value();
             })
-            | std::ranges::to<std::unordered_set<NarrowCollisionPair>>();
+            | std::views::transform([](auto&& pair) {
+                auto [handle1, handle2, collision] = pair;
+
+                return std::make_pair(
+                    CollisionPair { handle1, handle2 },
+                    *collision
+                );
+            })
+            | std::ranges::to<std::unordered_map<CollisionPair, Collision>>();
         }
 
         private:
         glm::dvec2 origin;
         glm::dvec2 size;
-        std::vector<std::optional<Body>> bodies {};
+        std::vector<std::optional<Body>> bodies { {} };
         std::vector<BodyHandle> body_free_list {};
         QuadTreeNode tree { origin, size, bodies };
     };

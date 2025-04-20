@@ -56,15 +56,19 @@ target_sources(
     lib/QuadTreeNode.cppm
     lib/QuadTreeImpl.cppm
 
-    lib/BroadCollisionPair.cppm
-    lib/NarrowCollisionPair.cppm
+    lib/CollisionPair.cppm
+    lib/ResolvedCollisionPair.cppm
     lib/World.cppm
 
     lib/lib.cppm
 )
 target_compile_features(bfphysicslib PRIVATE cxx_std_23)
 target_compile_definitions(bfphysicslib PUBLIC GLM_ENABLE_EXPERIMENTAL GLM_EXT_INLINE_NAMESPACE GLM_GTX_INLINE_NAMESPACE)
-target_compile_options(bfphysicslib PRIVATE -Wall)
+if(MSVC)
+    target_compile_options(bfphysicslib PRIVATE /EHsc /W4)
+else()
+    target_compile_options(bfphysicslib PRIVATE -fno-gnu-keywords -Wall -Wextra)
+endif()
 target_link_libraries(bfphysicslib PUBLIC glm::glm PRIVATE spdlog::spdlog)
 
 nanobind_add_module(bfphysics
@@ -76,6 +80,11 @@ target_link_libraries(bfphysics PRIVATE bfphysicslib)
 CPMAddPackage("gh:boost-ext/ut@2.3.1")
 add_executable(bfphysicstest)
 target_compile_features(bfphysicstest PRIVATE cxx_std_23)
+if(MSVC)
+    target_compile_options(bfphysicstest PRIVATE /EHsc /W4)
+else()
+    target_compile_options(bfphysicstest PRIVATE -fno-gnu-keywords -Wall -Wextra)
+endif()
 target_sources(bfphysicstest PRIVATE
     test/main.cpp
     test/primitives.cpp

@@ -1,4 +1,5 @@
 #include <unordered_set>
+#include <unordered_map>
 #include <variant>
 #include <boost/ut.hpp>
 
@@ -15,8 +16,7 @@ suite<"world"> world = [] {
     using barfight::physics::BodyKind;
     using barfight::physics::Shape;
     using barfight::physics::Circle;
-    using barfight::physics::BroadCollisionPair;
-    using barfight::physics::NarrowCollisionPair;
+    using barfight::physics::CollisionPair;
 
     "world properties set with defaults"_test = [] {
         auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
@@ -90,8 +90,8 @@ suite<"world"> world = [] {
         auto results = world.broadphase();
 
         expect(2 == results.size()) << "Broadphase didn't return 2 collisions";
-        expect(results.contains(BroadCollisionPair { handle1, handle2 })) << "Broadphase doesn't contain collision pair 0-1";
-        expect(results.contains(BroadCollisionPair { handle2, handle1 })) << "Broadphase doesn't contain collision pair 1-0";
+        expect(results.contains(CollisionPair { handle1, handle2 })) << "Broadphase doesn't contain collision pair 0-1";
+        expect(results.contains(CollisionPair { handle2, handle1 })) << "Broadphase doesn't contain collision pair 1-0";
     };
 
     "world returns narrowphase collisions"_test = [] {
@@ -108,18 +108,16 @@ suite<"world"> world = [] {
         auto broad = world.broadphase();
         auto result = world.narrowphase(broad);
 
-        expect(fatal(result.contains(NarrowCollisionPair {handle1, handle2, {}}))) << "Doesn't contain collision 0-1";
-        auto collision0_1 = result.extract(NarrowCollisionPair {handle1, handle2, {}});
-        expect(fatal(collision0_1.value().collision.has_value())) << "No collision information in 0-1";
-        expect(1.0_d == collision0_1.value().collision->normal.x) << "Collision normal.x is not 1.0 in 0-1";
-        expect(0.0_d == collision0_1.value().collision->normal.y) << "Collision normal.y is not 0.0 in 0-1";
-        expect(1.0_d == collision0_1.value().collision->depth) << "Collision depth is not 1.0 in 0-1";
+        expect(fatal(result.contains(CollisionPair {handle1, handle2}))) << "Doesn't contain collision 0-1";
+        auto collision0_1 = result.extract(CollisionPair {handle1, handle2});
+        expect(1.0_d == collision0_1.mapped().normal.x) << "Collision normal.x is not 1.0 in 0-1";
+        expect(0.0_d == collision0_1.mapped().normal.y) << "Collision normal.y is not 0.0 in 0-1";
+        expect(1.0_d == collision0_1.mapped().depth) << "Collision depth is not 1.0 in 0-1";
 
-        expect(fatal(result.contains(NarrowCollisionPair {handle2, handle1, {}}))) << "Doesn't contain collision 1-0";
-        auto collision1_0 = result.extract(NarrowCollisionPair {handle2, handle1, {}});
-        expect(fatal(collision1_0.value().collision.has_value())) << "No collision information in 1-0";
-        expect(-1.0_d == collision1_0.value().collision->normal.x) << "Collision normal.x is not -1.0 in 1-0";
-        expect(0.0_d == collision1_0.value().collision->normal.y) << "Collision normal.y is not 0.0 in 1-0";
-        expect(1.0_d == collision1_0.value().collision->depth) << "Collision depth is not 1.0 in 1-0";
+        expect(fatal(result.contains(CollisionPair {handle2, handle1}))) << "Doesn't contain collision 1-0";
+        auto collision1_0 = result.extract(CollisionPair {handle2, handle1});
+        expect(-1.0_d == collision1_0.mapped().normal.x) << "Collision normal.x is not -1.0 in 1-0";
+        expect(0.0_d == collision1_0.mapped().normal.y) << "Collision normal.y is not 0.0 in 1-0";
+        expect(1.0_d == collision1_0.mapped().depth) << "Collision depth is not 1.0 in 1-0";
     };
 };

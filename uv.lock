@@ -27,7 +27,7 @@ dev = [
 requires-dist = [
     { name = "esper", specifier = ">=3.2" },
     { name = "loguru", specifier = ">=0.7" },
-    { name = "nanobind", specifier = ">=2.6.1" },
+    { name = "nanobind", specifier = ">=2.7.0" },
     { name = "pyglet", specifier = ">=2.1" },
 ]
 
@@ -189,11 +189,11 @@ wheels = [
 
 [[package]]
 name = "nanobind"
-version = "2.6.1"
+version = "2.7.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e9/38/c28a15cfc2f311e79ea01a5eba8960eb02f64d58b6f675b8a14ef4680dac/nanobind-2.6.1.tar.gz", hash = "sha256:e05c6816a844aa699e46408add3bff8c743af9fd3d38eafa307a73633fddf94e", size = 968121 }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/7d/f77f2bc2e2a210502a164556f8a742cd0f72f39061b97cb9d73bbd3ff0ab/nanobind-2.7.0.tar.gz", hash = "sha256:f9f1b160580c50dcf37b6495a0fd5ec61dc0d95dae5f8004f87dd9ad7eb46b34", size = 976093 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/26/f9/0b11e9b99a35dbf91972845af6012c562f3f1845a33e5b4ea631568d2740/nanobind-2.6.1-py3-none-any.whl", hash = "sha256:678be25b6ffdb7e3776548c2c9f29072e7eb41219b72c51f8e14ac0fe5c8ae0b", size = 238966 },
+    { url = "https://files.pythonhosted.org/packages/96/14/989883082b395146120d34ca7e484a2b24cb73b0e428576a3a4249bd4082/nanobind-2.7.0-py3-none-any.whl", hash = "sha256:73b12d0e751d140d6c1bf4b215e18818a8debfdb374f08dc3776ad208d808e74", size = 241690 },
 ]
 
 [[package]]
