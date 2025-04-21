@@ -46,4 +46,48 @@ namespace barfight::physics {
             && parent.origin.y <= child.origin.y
             && parent.origin.y + parent.size.y >= child.origin.y + child.size.y;
     }
+
+    export struct TimeOfImpact {
+        double time;
+        glm::dvec2 normal;
+        double depth;
+    };
+
+    constexpr double epsilon = 1e-6;
+
+    export auto time_of_impact(const auto& shape1, const auto& shape2, const glm::dvec2& velocity, double dt) -> std::optional<TimeOfImpact> {
+        auto first_at_dest = shape1;
+        first_at_dest.set_vec2_position(shape1.get_vec2_position() + velocity * dt);
+
+        if (const auto early_collision = colliding(shape1, shape2)) {
+            return TimeOfImpact { 0.0, early_collision->normal, early_collision->depth };
+        }
+
+        const auto late_hit = colliding(first_at_dest, shape2);
+        if (!late_hit) {
+            return {};
+        }
+
+        auto dt_min = 0.0;
+        auto dt_mid = dt / 2.0;
+        auto dt_max = dt;
+        auto middle = shape1;
+
+        while (dt_max - dt_min > epsilon) {
+            dt_mid = dt_min + (dt_max - dt_min) / 2.0;
+            middle.set_vec2_position(shape1.get_vec2_position() + velocity * dt_mid);
+
+            if (const auto middle_hit = colliding(middle, shape2)) {
+                dt_max = dt_mid;
+            }
+            else {
+                dt_min = dt_mid;
+            }
+        }
+
+        middle.set_vec2_position(shape1.get_vec2_position() + velocity * dt_mid);
+        const auto middle_hit = colliding(middle, shape2);
+        if (!middle_hit) { return {}; }
+        return TimeOfImpact { dt_mid, middle_hit->normal, middle_hit->depth };
+    }
 }

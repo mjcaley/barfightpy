@@ -103,10 +103,16 @@ suite<"collision"> collision = [] {
         }
     };
 
-    // >{
-    //     Rectangle { glm::dvec2 { 0.0, 0.0 }, glm::dvec2 { 1.0, 1.0 }},
-    //     Circle { glm::dvec2 { 0.5, 0.5 }, 1.0 },
-    //     OrientedRectangle { glm::dvec2 { 0.5, 0.5 }, glm::dvec2 { 1.0, 1.0 }, std::numbers::pi / 4 },
-    //     Polygon { std::vector<glm::dvec2> { glm::dvec2 { 0.0, 0.0 }, glm::dvec2 { 1.0, 1.0 }}}
-    // };
+    "time of impact"_test = [] {
+
+        const auto r1 = Rectangle { glm::dvec2 {0.0, -5.0}, glm::dvec2 {10.0, 10} };
+        const auto r2 = Rectangle { glm::dvec2 {10.5, -5.0}, glm::dvec2 {20.0, 20} };
+        const auto velocity = glm::dvec2 { 1.0, 0.0 };
+        const auto dt = 1.0;
+
+        const auto result = time_of_impact(r1, r2, velocity, dt);
+
+        expect(fatal(result.has_value())) << "No time of impact detected\n";
+        expect(0.5_d == result->time) << "Time of impact mismatch\n";
+    };
 };
