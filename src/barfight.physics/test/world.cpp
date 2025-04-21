@@ -120,4 +120,26 @@ suite<"world"> world = [] {
         expect(0.0_d == collision1_0.mapped().normal.y) << "Collision normal.y is not 0.0 in 1-0";
         expect(1.0_d == collision1_0.mapped().depth) << "Collision depth is not 1.0 in 1-0";
     };
+
+    "world steps through iteration"_test = [] {
+        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
+        auto handle1 = world.add({
+            BodyKind::DYNAMIC,
+            Circle { glm::dvec2 {4.5, 5.0}, 1.0 }
+        });
+        auto handle2 = world.add({
+            BodyKind::STATIC,
+            Circle { glm::dvec2 {5.5, 5.0}, 1.0 }
+        });
+
+        world.step(1.0);
+
+        auto body1 = world.get(handle1);
+        auto body2 = world.get(handle2);
+
+        expect(fatal(body1.has_value())) << "Body 1 optional is empty";
+        expect(fatal(std::holds_alternative<Circle>(body1->shape.get_shape()))) << "Body 1 shape isn't circle";
+        expect(3.5_d == std::get<Circle>(body1->shape.get_shape()).get_center().x) << "Body 1 center.x still at 4.5";
+        expect(5.0_d == std::get<Circle>(body1->shape.get_shape()).get_center().y) << "Body 1 center.y still at 5.0";
+    };
 };

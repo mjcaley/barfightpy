@@ -20,6 +20,7 @@ import :QuadTree;
 import :Shape;
 import :CollisionPair;
 import :ResolvedCollisionPair;
+import :Arbiter;
 
 namespace barfight::physics {
     export class World {
@@ -183,11 +184,91 @@ namespace barfight::physics {
             | std::ranges::to<std::unordered_map<CollisionPair, Collision>>();
         }
 
+        auto set_on_collision_callback(std::function<void(BodyHandle, Arbiter)> callback) -> void {
+            on_collision_callback = callback;
+        }
+
+        auto clear_on_collision_callback() -> void {
+            on_collision_callback = [](BodyHandle, Arbiter) { };
+        }
+
+        auto set_on_sensor_callback(std::function<void(BodyHandle, Arbiter)> callback) -> void {
+            on_sensor_callback = callback;
+        }
+
+        auto clear_on_sensor_callback() -> void {
+            on_sensor_callback = [](BodyHandle, Arbiter) { };
+        }
+
+        auto set_on_position_change_callback(std::function<void(BodyHandle)> callback) -> void {
+            on_position_change_callback = callback;
+        }
+
+        auto clear_on_position_change_callback() -> void {
+            on_position_change_callback = [](BodyHandle) { };
+        }
+
+        auto step(double dt) -> void {
+            collisions(dt);
+        }
+
         private:
         glm::dvec2 origin;
         glm::dvec2 size;
         std::vector<std::optional<Body>> bodies { {} };
         std::vector<BodyHandle> body_free_list {};
         QuadTreeNode tree { origin, size, bodies };
+        std::function<void(BodyHandle, Arbiter)> on_collision_callback = [](BodyHandle, Arbiter) { };
+        std::function<void(BodyHandle, Arbiter)> on_sensor_callback = [](BodyHandle, Arbiter) { };
+        std::function<void(BodyHandle)> on_position_change_callback = [](BodyHandle) { };
+
+        auto collisions(double dt) -> void {
+            auto broad_collisions = broadphase();
+            auto narrow_collisions = narrowphase(broad_collisions);
+            // auto resolved_collisions = resolve(narrow_collisions);
+            resolve(narrow_collisions);
+            // set active collisions
+        }
+
+        auto resolve(const std::unordered_map<CollisionPair, Collision>& narrow_collisions) -> void {
+            auto resolved = std::unordered_set<CollisionPair> {};
+            auto still_colliding = std::unordered_set<CollisionPair> {};
+
+            for (const auto& [pair, _] : narrow_collisions) {
+                auto& body1 = get(pair.handle1);
+                auto& body2 = get(pair.handle2);
+
+                if (!body1 || !body2) {
+                    continue;
+                }
+
+                if (body1->kind == BodyKind::DYNAMIC && body2->kind == BodyKind::STATIC) {
+                    auto collision = body1->shape.colliding(body2->shape);
+                    if (!collision) {
+                        resolved.insert(pair);
+                        continue;
+                    }
+
+                    body1->shape.set_vec2_position(
+                        body1->shape.get_vec2_position() -
+                        collision->normal * collision->depth);
+                    resolved.insert(pair);
+
+                    // create arbiter
+                    on_position_change_callback(pair.handle1);
+                    on_collision_callback(pair.handle1, Arbiter { pair.handle1, pair.handle2, true });
+                }
+                else if (body1->kind == BodyKind::DYNAMIC && body2->kind == BodyKind::SENSOR) {
+                    auto collision = body1->shape.colliding(body2->shape);
+                    if (!collision) {
+                        resolved.insert(pair);
+                        continue;
+                    }
+
+                    // create arbiter
+                    on_sensor_callback(pair.handle1, Arbiter { pair.handle1, pair.handle2, true });
+                }
+            }
+        }
     };
 }

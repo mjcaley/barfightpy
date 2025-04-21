@@ -58,6 +58,7 @@ target_sources(
 
     lib/CollisionPair.cppm
     lib/ResolvedCollisionPair.cppm
+    lib/Arbiter.cppm
     lib/World.cppm
 
     lib/lib.cppm
@@ -67,7 +68,7 @@ target_compile_definitions(bfphysicslib PUBLIC GLM_ENABLE_EXPERIMENTAL GLM_EXT_I
 if(MSVC)
     target_compile_options(bfphysicslib PRIVATE /EHsc /W4)
 else()
-    target_compile_options(bfphysicslib PRIVATE -fno-gnu-keywords -Wall -Wextra)
+    target_compile_options(bfphysicslib PRIVATE -Wall -Wextra)
 endif()
 target_link_libraries(bfphysicslib PUBLIC glm::glm PRIVATE spdlog::spdlog)
 
