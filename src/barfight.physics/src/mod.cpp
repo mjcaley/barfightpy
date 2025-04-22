@@ -1,9 +1,11 @@
 #include <print>
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/variant.h>
 
 import barfight.physics;
+import glm;
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -107,6 +109,31 @@ NB_MODULE(bfphysics, m) {
             });
 #pragma endregion Primitives
 
+    nb::class_<barfight::physics::BoundingBox>(m, "BoundingBox")
+        .def(nb::init<barfight::physics::BoundingBox>())
+        .def("__init__", [](barfight::physics::BoundingBox* t, const std::tuple<double, double> origin, const std::tuple<double, double> size) {
+            new (t) barfight::physics::BoundingBox {
+                glm::dvec2 { std::get<0>(origin), std::get<1>(origin) },
+                glm::dvec2 { std::get<0>(size), std::get<1>(size) }
+            };
+        })
+        .def_prop_rw(
+            "origin",
+            [](const barfight::physics::BoundingBox& self) {
+                return std::make_tuple(self.origin.x, self.origin.y);
+            },
+            [](barfight::physics::BoundingBox& self, std::tuple<double, double> value) {
+                self.origin = glm::dvec2 { std::get<0>(value), std::get<1>(value) };
+            })
+        .def_prop_rw(
+            "size",
+            [](const barfight::physics::BoundingBox& self) {
+                return std::make_tuple(self.size.x, self.size.y);
+            },
+            [](barfight::physics::BoundingBox& self, std::tuple<double, double> value) {
+                self.size = glm::dvec2 { std::get<0>(value), std::get<1>(value) };
+            });
+
     nb::class_<barfight::physics::Shape>(m, "Shape")
         .def(nb::init<barfight::physics::Circle>())
         .def(nb::init<barfight::physics::OrientedRectangle>())
@@ -114,7 +141,7 @@ NB_MODULE(bfphysics, m) {
         .def(nb::init<barfight::physics::Rectangle>())
         .def_prop_rw(
             "position",
-            [](const barfight::physics::Shape& self) { return self.get_tuple_position(); },
+            &barfight::physics::Shape::get_tuple_position,
             [](barfight::physics::Shape& self, std::tuple<double, double> value) { self.set_tuple_position(value); }
         );
 
@@ -131,18 +158,25 @@ NB_MODULE(bfphysics, m) {
         .def_prop_ro("kind", [](const barfight::physics::BodyDescriptor& self) { return self.kind; })
         .def_prop_ro("shape", [](const barfight::physics::BodyDescriptor& self) { return self.shape; });
 
-    nb::class_<barfight::physics::Body>(m, "Body");
+    nb::class_<barfight::physics::Body>(m, "Body")
+        .def_prop_rw(
+            "kind",
+            [](const barfight::physics::Body& self) { return self.kind; },
+            [](barfight::physics::Body& self, barfight::physics::BodyKind value) { self.kind = value; }
+        )
+        .def_prop_rw("shape",
+            [](const barfight::physics::Body& self) { return self.shape.get_shape(); },
+            [](barfight::physics::Body& self, const barfight::physics::Shape& value) { self.shape = value; }
+        )
+        ;
 
     nb::class_<barfight::physics::BodyHandle>(m, "BodyHandle")
-        .def_prop_ro("id_", [](const barfight::physics::BodyHandle& h) { return h.get_id(); });
+        .def_prop_ro("id_", &barfight::physics::BodyHandle::get_id);
 
     nb::class_<barfight::physics::World>(m, "World")
         .def(nb::init<std::tuple<double, double>, std::tuple<double, double>>())
-        .def(
-            "add",
-            [](barfight::physics::World& w, const barfight::physics::BodyDescriptor& descriptor) {
-                return w.add(descriptor);
-            })
+        .def("add", &barfight::physics::World::add, "descriptor"_a)
         .def("remove", &barfight::physics::World::remove, "handle"_a)
-        .def("clear", &barfight::physics::World::clear);
+        .def("clear", &barfight::physics::World::clear)
+        .def("get", &barfight::physics::World::get, "handle"_a, nb::rv_policy::reference);
 }

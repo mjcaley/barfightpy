@@ -56,6 +56,26 @@ namespace barfight::physics {
             return shape;
         }
 
+        auto set_shape(std::variant<Circle, OrientedRectangle, Polygon, Rectangle> shape_) -> void {
+            shape = shape_;
+        }
+
+        auto set_shape(Circle shape_) -> void {
+            shape = shape_;
+        }
+
+        auto set_shape(OrientedRectangle shape_) -> void {
+            shape = shape_;
+        }
+
+        auto set_shape(Polygon shape_) -> void {
+            shape = shape_;
+        }
+
+        auto set_shape(Rectangle shape_) -> void {
+            shape = shape_;
+        }
+
         auto colliding(const auto& other) const -> std::optional<Collision> {
             return std::visit(
                 [&](const auto& this_shape) -> std::optional<Collision> {
