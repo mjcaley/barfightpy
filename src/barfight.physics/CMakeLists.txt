@@ -84,7 +84,7 @@ target_compile_features(bfphysicstest PRIVATE cxx_std_23)
 if(MSVC)
     target_compile_options(bfphysicstest PRIVATE /EHsc /W4)
 else()
-    target_compile_options(bfphysicstest PRIVATE -fno-gnu-keywords -Wall -Wextra)
+    target_compile_options(bfphysicstest PRIVATE -Wall -Wextra)
 endif()
 target_sources(bfphysicstest PRIVATE
     test/main.cpp
