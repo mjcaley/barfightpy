@@ -73,6 +73,22 @@ namespace barfight::physics {
                 other.shape);
         }
 
+        auto time_of_impact(const Shape& other, const glm::dvec2& velocity, double dt) const -> std::optional<TimeOfImpact> {
+            return std::visit(
+                [&](const auto& this_shape) -> std::optional<TimeOfImpact> {
+                    return barfight::physics::time_of_impact(this_shape, other, velocity, dt);
+                },
+                shape);
+        }
+
+        auto time_of_impact(const auto& other, const glm::dvec2& velocity, double dt) const -> std::optional<TimeOfImpact> {
+            return std::visit(
+                [&](const auto& this_shape) -> std::optional<TimeOfImpact> {
+                    return barfight::physics::time_of_impact(this_shape, other, velocity, dt);
+                },
+                shape);
+        }
+
         private:
         std::variant<Circle, OrientedRectangle, Polygon, Rectangle> shape;
     };

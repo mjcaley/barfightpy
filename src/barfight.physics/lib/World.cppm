@@ -124,6 +124,18 @@ namespace barfight::physics {
             return tree.query(bounding_box);
         }
 
+        auto time_of_impact(const BodyHandle handle) -> std::optional<TimeOfImpact> {
+            auto& body = get(handle);
+            if (!body) {
+                return {};
+            }
+
+            // get bounding box for body movement
+            // get all colliding bodies of bounding box
+            // filter bodies that aren't Static
+            // get shortest time to impact of remaining bodies
+        }
+
         auto broadphase() -> std::unordered_set<CollisionPair> {
             return filter_active_bodies()
                 | std::views::transform([&](auto&& handle) {
