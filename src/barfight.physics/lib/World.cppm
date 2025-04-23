@@ -122,15 +122,29 @@ namespace barfight::physics {
             return tree.query(bounding_box);
         }
 
-        auto time_of_impact(const BodyHandle handle) -> std::optional<TimeOfImpact> {
+        auto time_of_impact(const BodyHandle handle, const double dt) -> std::optional<TimeOfImpact> {
             auto& body = get(handle);
             if (!body) {
                 return {};
             }
 
             // get bounding box for body movement
+            auto box_at_dest = body->shape.get_bounding_box();
+            box_at_dest.origin = box_at_dest.origin * body->velocity * dt;
+            const auto movement_box = BoundingBox::encase(body->shape.get_bounding_box(), box_at_dest);
+
             // get all colliding bodies of bounding box
+            const auto bodies = query(movement_box);
+
             // filter bodies that aren't Static
+            // bodies
+            // | std::views::filter([&](auto&& b) {
+            //     return &body != &b;
+            // })
+            // | std::views::filter([&](auto&& b) {
+            //     return barfight::physics::time_of_impact(b.shape, box_at_dest); // Need a rect?
+            // })
+
             // get shortest time to impact of remaining bodies
         }
 
