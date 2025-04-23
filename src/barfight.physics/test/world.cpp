@@ -19,7 +19,7 @@ suite<"world"> world = [] {
     using barfight::physics::CollisionPair;
 
     "world properties set with defaults"_test = [] {
-        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
+        auto world = World { {0.0, 0.0}, {10.0, 10.0} };
         expect(0.0_d == world.get_bounding_box().origin.x) << "origin.x is not 0.0";
         expect(0.0_d == world.get_bounding_box().origin.y) << "origin.y is not 0.0";
         expect(10.0_d == world.get_bounding_box().size.x) << "size.x is not 10.0";
@@ -27,8 +27,8 @@ suite<"world"> world = [] {
     };
 
     "world adds and gets body"_test = [] {
-        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
-        auto desc = BodyDescriptor { BodyKind::DYNAMIC, Circle { glm::dvec2 {5.0, 5.0}, 1.0 } };
+        auto world = World { {0.0, 0.0}, {10.0, 10.0} };
+        auto desc = BodyDescriptor { BodyKind::DYNAMIC, Circle { {5.0, 5.0}, 1.0 } };
         auto handle = world.add(desc);
         auto body = world.get(handle);
 
@@ -41,8 +41,8 @@ suite<"world"> world = [] {
     };
 
     "world removes body"_test = [] {
-        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
-        auto desc = BodyDescriptor { BodyKind::DYNAMIC, Circle { glm::dvec2 {5.0, 5.0}, 1.0 } };
+        auto world = World { {0.0, 0.0}, {10.0, 10.0} };
+        auto desc = BodyDescriptor { BodyKind::DYNAMIC, Circle { {5.0, 5.0}, 1.0 } };
         auto handle = world.add(desc);
         world.remove(handle);
         auto body = world.get(handle);
@@ -51,11 +51,11 @@ suite<"world"> world = [] {
     };
 
     "world query primitive returns bodies"_test = [] {
-        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
-        auto desc = BodyDescriptor { BodyKind::DYNAMIC, Circle { glm::dvec2 {5.0, 5.0}, 1.0 } };
+        auto world = World { {0.0, 0.0}, {10.0, 10.0} };
+        auto desc = BodyDescriptor { BodyKind::DYNAMIC, Circle { {5.0, 5.0}, 1.0 } };
         auto handle = world.add(desc);
 
-        auto result = world.query(Circle { glm::dvec2 {5.0, 5.0}, 1.0 });
+        auto result = world.query(Circle { {5.0, 5.0}, 1.0 });
 
         expect(fatal(result.size() == 1)) << "Query returned no bodies";
         for (const auto& h : result) {
@@ -64,11 +64,11 @@ suite<"world"> world = [] {
     };
 
     "world query bounding box returns bodies"_test = [] {
-        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
-        auto desc = BodyDescriptor { BodyKind::DYNAMIC, Circle { glm::dvec2 {5.0, 5.0}, 1.0 } };
+        auto world = World { {0.0, 0.0}, {10.0, 10.0} };
+        auto desc = BodyDescriptor { BodyKind::DYNAMIC, Circle { {5.0, 5.0}, 1.0 } };
         auto handle = world.add(desc);
 
-        auto result = world.query(BoundingBox { glm::dvec2 {4.0, 4.0}, glm::dvec2 {6.0, 6.0} });
+        auto result = world.query(BoundingBox { {4.0, 4.0}, {6.0, 6.0} });
 
         expect(fatal(result.size() == 1)) << "Query returned no bodies";
         for (const auto& h : result) {
@@ -77,14 +77,14 @@ suite<"world"> world = [] {
     };
 
     "world returns broadphase collisions"_test = [] {
-        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
+        auto world = World { {0.0, 0.0}, {10.0, 10.0} };
         auto handle1 = world.add({
             BodyKind::DYNAMIC,
-            Circle { glm::dvec2 {5.0, 5.0}, 1.0 }
+            Circle { {5.0, 5.0}, 1.0 }
         });
         auto handle2 = world.add({
             BodyKind::DYNAMIC,
-            Circle { glm::dvec2 {5.0, 5.0}, 1.0 }
+            Circle { {5.0, 5.0}, 1.0 }
         });
 
         auto results = world.broadphase();
@@ -95,14 +95,14 @@ suite<"world"> world = [] {
     };
 
     "world returns narrowphase collisions"_test = [] {
-        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
+        auto world = World { {0.0, 0.0}, {10.0, 10.0} };
         auto handle1 = world.add({
             BodyKind::DYNAMIC,
-            Circle { glm::dvec2 {4.5, 5.0}, 1.0 }
+            Circle { {4.5, 5.0}, 1.0 }
         });
         auto handle2 = world.add({
             BodyKind::DYNAMIC,
-            Circle { glm::dvec2 {5.5, 5.0}, 1.0 }
+            Circle { {5.5, 5.0}, 1.0 }
         });
 
         auto broad = world.broadphase();
@@ -122,14 +122,14 @@ suite<"world"> world = [] {
     };
 
     "world steps through iteration"_test = [] {
-        auto world = World { glm::dvec2 {0.0, 0.0}, glm::dvec2 {10.0, 10.0} };
+        auto world = World { {0.0, 0.0}, {10.0, 10.0} };
         auto handle1 = world.add({
             BodyKind::DYNAMIC,
-            Circle { glm::dvec2 {4.5, 5.0}, 1.0 }
+            Circle { {4.5, 5.0}, 1.0 }
         });
         auto handle2 = world.add({
             BodyKind::STATIC,
-            Circle { glm::dvec2 {5.5, 5.0}, 1.0 }
+            Circle { {5.5, 5.0}, 1.0 }
         });
 
         world.step(1.0);
