@@ -1,7 +1,6 @@
 module;
 
 #include <expected>
-#include <tuple>
 
 export module barfight.physics:Circle;
 import glm;
@@ -11,35 +10,16 @@ import :PrimitiveCommon;
 namespace barfight::physics {
     export class Circle {
         public:
-        Circle(glm::dvec2 center, double radius) : center(center), radius(radius) {}
-        Circle(std::tuple<double, double> center, double radius) :
-            center(glm::dvec2 { std::get<0>(center), std::get<1>(center) }),
-            radius(radius)
-            {}
+        Circle(const glm::dvec2 center, const double radius) : center(center), radius(radius) {}
 
         glm::dvec2 center;
         double radius;
 
         auto get_center() const -> glm::dvec2 { return center; }
-        auto set_center(glm::dvec2 value) -> void { center = value; }
+        auto set_center(const glm::dvec2 value) -> void { center = value; }
 
-        auto get_tuple_center() const -> std::tuple<double, double> { return { center.x, center.y }; }
-        auto set_tuple_center(std::tuple<double, double> value) -> void {
-            center = { std::get<0>(value), std::get<1>(value) };
-        }
-
-        auto get_vec2_position() const -> glm::dvec2 { return center; }
-        auto set_vec2_position(glm::dvec2 position) -> void { center = position; }
-
-        auto get_tuple_position() const -> std::tuple<double, double> {
-            auto position = get_vec2_position();
-
-            return std::make_tuple(position.x, position.y);
-        }
-
-        auto set_tuple_position(const std::tuple<double, double>& position) -> void {
-            set_vec2_position(glm::dvec2 { std::get<0>(position), std::get<1>(position) });
-        }
+        auto get_position() const -> glm::dvec2 { return center; }
+        auto set_position(const glm::dvec2 position) -> void { center = position; }
 
         auto get_bounding_box() const -> BoundingBox {
             return { glm::dvec2 { center.x - radius, center.y - radius }, glm::dvec2 { center.x - radius, center.y - radius } };

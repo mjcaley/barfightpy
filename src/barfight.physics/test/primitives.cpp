@@ -1,13 +1,13 @@
 #include <boost/ut.hpp>
-#include <tuple>
 
 import barfight.physics;
+import glm;
 
 using namespace boost::ut;
 
 suite<"primitives"> primitives = [] {
     "circle properties set"_test = [] {
-        auto c = barfight::physics::Circle { std::make_tuple(4.0, 2.0), 10.0 };
+        auto c = barfight::physics::Circle { glm::dvec2 { 4.0, 2.0 }, 10.0 };
 
         expect(4.0 == c.center.x);
         expect(2.0 == c.center.y);
@@ -15,7 +15,7 @@ suite<"primitives"> primitives = [] {
     };
 
     "rectangle properties set"_test = [] {
-        auto r = barfight::physics::Rectangle { std::make_tuple(1.0, 2.0), std::make_tuple(3.0, 4.0) };
+        auto r = barfight::physics::Rectangle { glm::dvec2 {1.0, 2.0 }, glm::dvec2 { 3.0, 4.0 } };
 
         expect(1.0 == r.origin.x);
         expect(2.0 == r.origin.y);

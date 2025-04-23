@@ -91,7 +91,7 @@ namespace barfight::physics {
 
     export auto gjk(const auto& shape1, const auto& shape2) -> std::optional<GJKThreeSimplex> {
         auto simplex = GJKSimplex { GJKZeroSimplex {} };
-        auto direction = glm::normalize(shape1.get_vec2_position() - shape2.get_vec2_position());
+        auto direction = glm::normalize(shape1.get_position() - shape2.get_position());
         if (direction == glm::dvec2(0.0, 0.0)) {
             direction = glm::dvec2(1.0, 0.0);
         }

@@ -4,7 +4,6 @@ module;
 #include <expected>
 #include <iterator>
 #include <ranges>
-#include <tuple>
 #include <vector>
 
 export module barfight.physics:Polygon;
@@ -16,40 +15,10 @@ namespace barfight::physics {
     export class Polygon {
         public:
         Polygon(std::vector<glm::dvec2> points) : points(points) {}
-        Polygon(const std::vector<std::tuple<double, double>>& _points) {
-            points =
-                _points
-                | std::views::transform(
-                    [](auto&& point) { return glm::dvec2 { std::get<0>(point), std::get<1>(point) }; }
-                )
-                | std::ranges::to<std::vector<glm::dvec2>>();
-        }
 
         std::vector<glm::dvec2> points;
 
-        auto get_tuple_points() const -> std::vector<std::tuple<double, double>> {
-            std::vector<std::tuple<double, double>> tuple_points;
-            std::ranges::copy(
-                points | std::views::transform(
-                    [](const auto& point) { return std::make_tuple(point.x, point.y); }
-                ),
-                std::back_inserter(tuple_points)
-            );
-
-            return tuple_points;
-        }
-
-        auto set_tuple_points(const std::vector<std::tuple<double, double>>& value) -> void {
-            points.clear();
-            std::ranges::copy(
-                value | std::views::transform(
-                    [](const auto& point) { return glm::dvec2 { std::get<0>(point), std::get<1>(point) }; }
-                ),
-                std::back_inserter(points)
-            );
-        }
-
-        auto get_vec2_position() const -> glm::dvec2 {
+        auto get_position() const -> glm::dvec2 {
             auto min_x = std::numeric_limits<double>::infinity();
             auto min_y = std::numeric_limits<double>::infinity();
             auto max_x = -std::numeric_limits<double>::infinity();
@@ -68,22 +37,12 @@ namespace barfight::physics {
             return glm::dvec2 { min_x + width / 2.0, min_y + height / 2.0 };
         }
 
-        auto set_vec2_position(glm::dvec2 position) -> void {
-            auto center = get_vec2_position();
-            auto movement = center - position;
+        auto set_position(const glm::dvec2 position) -> void {
+            const auto center = get_position();
+            const auto movement = center - position;
             for (auto& point : points) {
                 point += movement;
             }
-        }
-
-        auto get_tuple_position() const -> std::tuple<double, double> {
-            const auto position = get_vec2_position();
-
-            return { position.x, position.y };
-        }
-
-        auto set_tuple_position(const std::tuple<double, double>& position) -> void {
-            set_vec2_position({std::get<0>(position), std::get<1>(position)});
         }
 
         auto furthest(const glm::dvec2& direction) const -> std::expected<glm::dvec2, FurthestError> {
