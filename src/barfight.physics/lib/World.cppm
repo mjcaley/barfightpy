@@ -136,16 +136,49 @@ namespace barfight::physics {
             // get all colliding bodies of bounding box
             const auto bodies = query(movement_box);
 
-            // filter bodies that aren't Static
-            // bodies
-            // | std::views::filter([&](auto&& b) {
-            //     return &body != &b;
-            // })
-            // | std::views::filter([&](auto&& b) {
-            //     return barfight::physics::time_of_impact(b.shape, box_at_dest); // Need a rect?
-            // })
+            auto tois = bodies
+                | std::views::filter([&](auto&& h) {
+                    return h != handle;
+                })
+                | std::views::transform([&](auto&& h) {
+                    auto& b1 = get(handle);
+                    auto& b2 = get(h);
 
-            // get shortest time to impact of remaining bodies
+                    return std::make_tuple(b1, b2);
+                })
+                | std::views::filter([](auto&& body_pair) {
+                    auto&& [b1, b2] = body_pair;
+                    return b1.has_value() && b2.has_value();
+                })
+                | std::views::transform([&](auto&& body_pair) {
+                    auto&& [b1, b2] = body_pair;
+                    auto toi = b1->shape.time_of_impact(b2->shape, b1->velocity, dt);
+                    return std::make_tuple(b2, toi);
+                })
+            | std::views::filter([](auto&& toi_pair) {
+                auto&& [body, toi] = toi_pair;
+                return body.has_value() && toi.has_value();
+            })
+            | std::views::transform([](auto&& toi_pair) {
+                auto&& [body, toi] = toi_pair;
+                return std::make_tuple(*body, *toi);
+            })
+            | std::ranges::to<std::vector<std::tuple<Body, TimeOfImpact>>>();
+
+            auto minimum = std::ranges::min_element(tois, [](auto&& toi1, auto&& toi2) {
+                auto&& [b1, t1] = toi1;
+                auto&& [b2, t2] = toi2;
+
+                return t1.time < t2.time;
+            });
+
+            if (minimum != std::end(tois)) {
+                auto [_, toi] = *minimum;
+
+                return toi;
+            }
+
+            return {};
         }
 
         auto broadphase() -> std::unordered_set<CollisionPair> {

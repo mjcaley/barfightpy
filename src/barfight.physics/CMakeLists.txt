@@ -65,11 +65,11 @@ target_sources(
 )
 target_compile_features(bfphysicslib PRIVATE cxx_std_23)
 target_compile_definitions(bfphysicslib PUBLIC GLM_ENABLE_EXPERIMENTAL GLM_EXT_INLINE_NAMESPACE GLM_GTX_INLINE_NAMESPACE)
-if(MSVC)
-    target_compile_options(bfphysicslib PRIVATE /EHsc /W4)
-else()
-    target_compile_options(bfphysicslib PRIVATE -Wall -Wextra)
-endif()
+#if(MSVC)
+#    target_compile_options(bfphysicslib PRIVATE /EHsc /W4)
+#else()
+#    target_compile_options(bfphysicslib PRIVATE -Wall -Wextra)
+#endif()
 target_link_libraries(bfphysicslib PUBLIC glm::glm PRIVATE spdlog::spdlog)
 
 nanobind_add_module(bfphysics

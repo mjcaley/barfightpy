@@ -142,4 +142,20 @@ suite<"world"> world = [] {
         expect(3.5_d == std::get<Circle>(body1->shape.get_shape()).get_center().x) << "Body 1 center.x still at 4.5";
         expect(5.0_d == std::get<Circle>(body1->shape.get_shape()).get_center().y) << "Body 1 center.y still at 5.0";
     };
+
+    "world gets bodies for time of impact"_test = [] {
+        auto world = World { {0.0, 0.0}, {10.0, 10.0} };
+        auto handle1 = world.add({
+            BodyKind::DYNAMIC,
+            Circle { {4.5, 5.0}, 1.0 }
+        });
+        auto handle2 = world.add({
+            BodyKind::STATIC,
+            Circle { {5.5, 5.0}, 1.0 }
+        });
+
+        auto result = world.time_of_impact(handle1, 1.0);
+
+        expect(fatal(result.has_value())) << "No TOI returned";
+    };
 };
